@@ -199,8 +199,8 @@ class CarLinkoClient:
         return decode_blob(blob)
 
 
-# Suspect/unconfirmed bytes (see memory + tools/recon.py hypotheses) surfaced as raw
-# diagnostic sensors so hypothesis testing can happen live in HA instead of only recon.py.
+# Suspect/unconfirmed bytes surfaced as raw diagnostic sensors so hypothesis testing can
+# happen live in HA instead of only in the parent project's docs/api-map.md notes.
 RAW_TEST_BYTES: tuple[int, ...] = (3, 5, 9, 57, 58, 59, 63, 69)
 
 
@@ -216,23 +216,11 @@ def _tyre_temp(x: int) -> int | None:
 def decode_blob(hexstr: str) -> dict[str, Any]:
     """Decode the action:6 status blob.
 
-    Validated against a Jaecoo J5 EV, then bit-for-bit against an Omoda E5's own app
-    display on 2026-07-14 (same CarLinko/Chery blob layout): battery, range, odometer,
-    12V, speed, consumption, tyre PSI/temp. Doors + trunk confirmed the same day via a
-    dedicated test session (open/close each door and the trunk one at a time, watch which
-    byte moves) — byte 2 is a 4-bit door mask, byte 4 is the trunk (on this car the charge
-    port is reached by opening the trunk, which is why it also fired during charge-port
-    tests). Power (byte 63) confirmed the same day against a real charge session — matched
-    the app's displayed "2.10 kW" exactly, twice, ~11 minutes apart. It's exposed as-is as
-    battery_power_kw (covers both charging and regen/braking power flow). Byte 58 (3=not
-    charging, 1=charging) additionally gates a charge_power_kw sensor — same value, zeroed
-    whenever byte 58 says the car isn't charging — for anyone who wants charging-only power
-    without reading the flag themselves; the flag itself stays available as the raw_byte58
-    diagnostic sensor. Bytes 3, 5, 9, 57, 58, 59, 63 and 69 are also exposed as raw, unscaled diagnostic sensors (raw_byteN) for
-    ongoing hypothesis testing in HA itself — see the byte-map notes in memory / the
-    parent project's tools/recon.py for what each is suspected to mean. Everything else
-    decoded here is confirmed; for exploring the rest of the blob, see tools/recon.py in
-    the parent project.
+    Byte map calibrated on a Jaecoo J5 EV, confirmed bit-for-bit on an Omoda E5. Byte 2 is
+    a 4-bit door mask, byte 4 the trunk. Byte 63 is power (kW, ×0.1); byte 58 (1=charging,
+    3=not) splits it into charge_power_kw / regen_power_kw. Bytes 3, 5, 9, 57, 58, 59, 63
+    and 69 are also exposed unscaled as raw_byteN diagnostic sensors for hypotheses still
+    being tested — see docs/api-map.md in the parent project for the rest of the blob.
     """
     b = bytes.fromhex(hexstr)
     d: dict[str, Any] = {"raw": hexstr}
@@ -255,8 +243,8 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
         d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
     if len(b) >= 64:
         power_kw = round(b[63] * 0.1, 1)
-        d["battery_power_kw"] = power_kw
         d["charge_power_kw"] = power_kw if b[58] == 1 else 0.0
+        d["regen_power_kw"] = power_kw if b[58] == 3 else 0.0
     if len(b) >= 52:
         tp, tt = b[44:48], b[48:52]
         d["tyre_psi"] = [_psi(x) for x in tp]

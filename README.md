@@ -37,17 +37,20 @@ with new fields on an Omoda E5.
 | 12 V battery (V) | 12–13 | uint16 × 0.01 |
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Consumption (kWh/100 km) | 55 | raw × 0.1 |
-| Battery Power (kW) | 63 | raw × 0.1 |
 | Charge Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 1, else 0 |
+| Regen Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 3, else 0 |
 | Tyre pressure ×4 (psi) | 44–47 | raw × 1.373 × 0.145 (0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40 (0xFF = n/a) |
 | Doors: driver / passenger / rear ×2 | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
 | Trunk | 4 | nonzero = open |
 | Online (binary_sensor) | — | derived: no fresh blob this poll |
 
-Bytes 3, 5, 9, 57, 58, 59, 69 aren't fully confirmed yet and are exposed as **diagnostic**
-`Raw Byte N` entities (raw, unscaled) so hypotheses can be tested live in HA — see `api.py`'s
-`decode_blob()` docstring. Once confirmed, a field graduates into a proper scaled sensor.
+Bytes 3, 5, 9, 57, 58, 59, 63 and 69 aren't confirmed enough for a proper sensor (or, for 63,
+are already covered above but kept here too for byte-level cross-check) — they're exposed as
+**diagnostic** entities with a working-hypothesis name (e.g. `Sunroof Position (byte 9)`)
+instead of a generic `Raw Byte N`. Three of them (9, 63, 69) also get a display unit (%, kW,
+kWh) since testing suggests an actual physical quantity — see `RAW_BYTE_LABELS`/`RAW_BYTE_UNITS`
+in `sensor.py`. Once a byte is confirmed it graduates into a proper scaled sensor.
 
 ## Options
 

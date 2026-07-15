@@ -93,13 +93,13 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("consumption_kwh_100km"),
     ),
     CarLinkoSensorDescription(
-        key="battery_power_kw",
-        translation_key="battery_power",
+        key="regen_power_kw",
+        translation_key="regen_power",
         icon="mdi:battery-charging-outline",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda d: d.get("battery_power_kw"),
+        value_fn=lambda d: d.get("regen_power_kw"),
     ),
     CarLinkoSensorDescription(
         key="charge_power_kw",
@@ -200,7 +200,7 @@ RAW_BYTE_LABELS: dict[int, str] = {
     57: "Charge Port State",
     58: "Charging Flag",
     59: "Charge Counter (unsolved)",
-    63: "Power (raw)",
+    63: "Power",
     69: "Net Energy Counter",
 }
 
@@ -208,6 +208,7 @@ RAW_BYTE_LABELS: dict[int, str] = {
 # a flag/enum — display-only, the raw_byteN value in coordinator.data stays the plain byte.
 RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {
     9: (PERCENTAGE, 10.0),  # 0-10 raw ramped smoothly like a 0-100% cover position
+    63: (UnitOfPower.KILO_WATT, 0.1),  # confirmed against the app's own displayed kW
     69: (UnitOfEnergy.KILO_WATT_HOUR, 0.1),  # ~0.1 kWh/unit, reference point unconfirmed
 }
 

@@ -59,8 +59,8 @@
       "volt12": { "name": "12V Battery" },
       "speed": { "name": "Speed" },
       "consumption": { "name": "Consumption" },
-      "battery_power": { "name": "Battery Power" },
-      "charge_power": { "name": "Charge Power" }
+      "charge_power": { "name": "Charge Power" },
+      "regen_power": { "name": "Regen Power" }
     },
     "binary_sensor": {
       "online": { "name": "Online" },
