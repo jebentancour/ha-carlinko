@@ -1,0 +1,11 @@
+{
+  "domain": "carlinko",
+  "name": "CarLinko (Jaecoo / Omoda / Chery EV)",
+  "codeowners": ["@jebentancour"],
+  "config_flow": true,
+  "documentation": "https://github.com/jebentancour/ha-carlinko",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/jebentancour/ha-carlinko/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

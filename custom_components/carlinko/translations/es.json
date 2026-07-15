@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectá tu cuenta CarLinko",
+        "description": "Si podés, usá una segunda cuenta CarLinko autorizada en tu auto — iniciar sesión acá puede cerrar la sesión de la app oficial en la cuenta principal.",
+        "data": {
+          "email": "Email",
+          "password": "Contraseña",
+          "region": "Región (ej. sea)"
+        }
+      },
+      "pick_vehicle": {
+        "title": "Elegí tu vehículo",
+        "data": {
+          "vehicle_id": "Vehículo"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Login fallido — revisá el email/contraseña.",
+      "cannot_connect": "No se pudo conectar a los servidores de CarLinko.",
+      "no_vehicles": "No se encontró ningún vehículo en esta cuenta."
+    },
+    "abort": {
+      "already_configured": "Este vehículo ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Intervalo de consulta (segundos)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": { "name": "Batería" },
+      "range": { "name": "Autonomía" },
+      "odometer": { "name": "Odómetro" },
+      "volt12": { "name": "Batería 12V" },
+      "speed": { "name": "Velocidad" },
+      "consumption": { "name": "Consumo" },
+      "charge_power": { "name": "Potencia de Carga" },
+      "regen_power": { "name": "Potencia de Regeneración" }
+    },
+    "binary_sensor": {
+      "online": { "name": "En línea" },
+      "door_driver": { "name": "Puerta Conductor" },
+      "door_passenger": { "name": "Puerta Acompañante" },
+      "door_rear_driver": { "name": "Puerta Trasera Conductor" },
+      "door_rear_passenger": { "name": "Puerta Trasera Acompañante" },
+      "trunk_open": { "name": "Cajuela" }
+    }
+  }
+}

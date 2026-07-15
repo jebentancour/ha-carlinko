@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your CarLinko account",
+        "description": "Use a second CarLinko account authorised on your car if possible — logging in here can sign you out of the official app on the primary account.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "region": "Region (e.g. sea)"
+        }
+      },
+      "pick_vehicle": {
+        "title": "Pick your vehicle",
+        "data": {
+          "vehicle_id": "Vehicle"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Login failed — check your email/password.",
+      "cannot_connect": "Could not reach CarLinko's servers.",
+      "no_vehicles": "No vehicle found on this account."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": { "name": "Battery" },
+      "range": { "name": "Range" },
+      "odometer": { "name": "Odometer" },
+      "volt12": { "name": "12V Battery" },
+      "speed": { "name": "Speed" },
+      "consumption": { "name": "Consumption" },
+      "charge_power": { "name": "Charge Power" },
+      "regen_power": { "name": "Regen Power" }
+    },
+    "binary_sensor": {
+      "online": { "name": "Online" },
+      "door_driver": { "name": "Driver Door" },
+      "door_passenger": { "name": "Passenger Door" },
+      "door_rear_driver": { "name": "Rear Driver Door" },
+      "door_rear_passenger": { "name": "Rear Passenger Door" },
+      "trunk_open": { "name": "Trunk" }
+    }
+  }
+}
