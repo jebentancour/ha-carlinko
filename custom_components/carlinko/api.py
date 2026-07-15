@@ -107,7 +107,8 @@ class CarLinkoClient:
 
         if str(data.get("code")) != "0000":
             raise CarLinkoAuthError(data.get("msg") or f"login failed: {data}")
-        token = (data.get("data") or {}).get("token")
+        payload = data.get("data")
+        token = payload if isinstance(payload, str) else (payload or {}).get("token")
         if not token:
             raise CarLinkoAuthError(f"login ok but no token in response: {data}")
         self.token = token
