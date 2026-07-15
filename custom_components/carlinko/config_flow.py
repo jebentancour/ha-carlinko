@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
 from .api import CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError, VehicleInfo
 from .const import (
@@ -23,6 +24,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MIN_SCAN_INTERVAL,
+    REGIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +33,9 @@ STEP_USER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_EMAIL): str,
         vol.Required(CONF_PASSWORD): str,
-        vol.Required(CONF_REGION, default=DEFAULT_REGION): str,
+        vol.Required(CONF_REGION, default=DEFAULT_REGION): SelectSelector(
+            SelectSelectorConfig(options=list(REGIONS), mode=SelectSelectorMode.DROPDOWN, translation_key="region")
+        ),
     }
 )
 
@@ -61,8 +65,12 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._vehicles = await client.get_vehicles()
             except CarLinkoAuthError:
                 errors["base"] = "invalid_auth"
-            except CarLinkoConnectionError:
+            except CarLinkoConnectionError as err:
+                _LOGGER.warning("Could not reach CarLinko region %s: %s", self._region, err)
                 errors["base"] = "cannot_connect"
+            except Exception:
+                _LOGGER.exception("Unexpected error talking to CarLinko region %s", self._region)
+                errors["base"] = "unknown"
             else:
                 if not self._vehicles:
                     errors["base"] = "no_vehicles"

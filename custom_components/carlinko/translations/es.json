@@ -7,7 +7,7 @@
         "data": {
           "email": "Email",
           "password": "Contraseña",
-          "region": "Región (ej. sea)"
+          "region": "Región"
         }
       },
       "pick_vehicle": {
@@ -20,10 +20,26 @@
     "error": {
       "invalid_auth": "Login fallido — revisá el email/contraseña.",
       "cannot_connect": "No se pudo conectar a los servidores de CarLinko.",
-      "no_vehicles": "No se encontró ningún vehículo en esta cuenta."
+      "no_vehicles": "No se encontró ningún vehículo en esta cuenta.",
+      "unknown": "Error inesperado — revisá el log de Home Assistant para más detalles."
     },
     "abort": {
       "already_configured": "Este vehículo ya está configurado."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "sam": "Sudamérica",
+        "sea": "Sudeste Asiático",
+        "ap": "Asia Pacífico",
+        "emea": "Europa, Medio Oriente y África",
+        "me": "Medio Oriente",
+        "naf": "Norte de África",
+        "saf": "Sur de África",
+        "uzb": "Uzbekistán",
+        "vn": "Vietnam"
+      }
     }
   },
   "options": {

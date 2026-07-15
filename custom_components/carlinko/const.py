@@ -10,7 +10,11 @@ their meaning isn't confirmed yet — treat them as diagnostic/raw only.
 DOMAIN = "carlinko"
 
 CONF_REGION = "region"
-DEFAULT_REGION = "sea"
+DEFAULT_REGION = "sam"
+
+# CarLinko API regions, recovered from libapp.so (cqr-api-<region>.hzhjcl.com /
+# wss-cqr-<region>.hzhjcl.com). Order shown to the user in the config flow dropdown.
+REGIONS: tuple[str, ...] = ("sam", "sea", "ap", "emea", "me", "naf", "saf", "uzb", "vn")
 CONF_VEHICLE_ID = "vehicle_id"
 CONF_DEVICE_SN = "device_sn"
 CONF_VEHICLE_MODEL = "vehicle_model"

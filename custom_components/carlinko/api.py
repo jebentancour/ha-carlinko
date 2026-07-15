@@ -97,9 +97,13 @@ class CarLinkoClient:
             async with self._session.post(
                 f"{self.api_base}/user/login", json=body, headers=headers, timeout=aiohttp.ClientTimeout(total=20)
             ) as resp:
-                data = await resp.json(content_type=None)
+                text = await resp.text()
         except aiohttp.ClientError as err:
             raise CarLinkoConnectionError(str(err)) from err
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as err:
+            raise CarLinkoConnectionError(f"non-JSON response from {self.api_base}: {text[:200]!r}") from err
 
         if str(data.get("code")) != "0000":
             raise CarLinkoAuthError(data.get("msg") or f"login failed: {data}")
@@ -118,9 +122,13 @@ class CarLinkoClient:
             async with self._session.get(
                 f"{self.api_base}/user/vehicle", headers=headers, timeout=aiohttp.ClientTimeout(total=20)
             ) as resp:
-                data = await resp.json(content_type=None)
+                text = await resp.text()
         except aiohttp.ClientError as err:
             raise CarLinkoConnectionError(str(err)) from err
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as err:
+            raise CarLinkoConnectionError(f"non-JSON response from {self.api_base}: {text[:200]!r}") from err
 
         raw = data.get("data")
         items = raw if isinstance(raw, list) else ([raw] if raw else [])
