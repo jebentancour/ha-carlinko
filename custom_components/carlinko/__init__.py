@@ -10,7 +10,7 @@ from .api import CarLinkoClient
 from .const import CONF_REGION, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.IMAGE]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

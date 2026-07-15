@@ -55,8 +55,11 @@ class VehicleInfo:
     vehicle_id: str
     device_sn: str
     model: str
-    vin: str
+    brand: str
     plate: str
+    img_front: str
+    img_side: str
+    img_top: str
 
 
 class CarLinkoClient:
@@ -133,17 +136,24 @@ class CarLinkoClient:
 
         raw = data.get("data")
         items = raw if isinstance(raw, list) else ([raw] if raw else [])
-        return [
-            VehicleInfo(
-                vehicle_id=str(v.get("vehicleId")),
-                device_sn=str(v.get("deviceId") or ""),
-                model=v.get("model") or "EV",
-                vin=v.get("vin") or "",
-                plate=v.get("licenseNumber") or "",
+        vehicles = []
+        for v in items:
+            if not v.get("vehicleId"):
+                continue
+            img_cfg = json.loads(v["vehicleImgConfig"])
+            vehicles.append(
+                VehicleInfo(
+                    vehicle_id=str(v.get("vehicleId")),
+                    device_sn=v.get("deviceId"),
+                    model=v.get("model"),
+                    brand=v.get("brand"),
+                    plate=v.get("licenseNumber"),
+                    img_front=img_cfg["Front"],
+                    img_side=img_cfg["Side"],
+                    img_top=img_cfg["Top"],
+                )
             )
-            for v in items
-            if v.get("vehicleId")
-        ]
+        return vehicles
 
     async def poll_telemetry(self, vehicle_id: str, device_sn: str, _retried: bool = False) -> dict[str, Any] | None:
         """Open the realtime WebSocket, request the status blob, decode it.

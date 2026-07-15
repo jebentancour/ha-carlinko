@@ -18,8 +18,11 @@ REGIONS: tuple[str, ...] = ("sam", "sea", "ap", "emea", "me", "naf", "saf", "uzb
 CONF_VEHICLE_ID = "vehicle_id"
 CONF_DEVICE_SN = "device_sn"
 CONF_VEHICLE_MODEL = "vehicle_model"
-CONF_VEHICLE_VIN = "vehicle_vin"
+CONF_VEHICLE_BRAND = "vehicle_brand"
 CONF_VEHICLE_PLATE = "vehicle_plate"
+CONF_VEHICLE_IMG_FRONT = "vehicle_img_front"
+CONF_VEHICLE_IMG_SIDE = "vehicle_img_side"
+CONF_VEHICLE_IMG_TOP = "vehicle_img_top"
 
 CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 120

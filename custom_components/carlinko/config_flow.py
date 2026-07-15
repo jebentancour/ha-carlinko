@@ -16,10 +16,13 @@ from .const import (
     CONF_DEVICE_SN,
     CONF_REGION,
     CONF_SCAN_INTERVAL,
+    CONF_VEHICLE_BRAND,
     CONF_VEHICLE_ID,
+    CONF_VEHICLE_IMG_FRONT,
+    CONF_VEHICLE_IMG_SIDE,
+    CONF_VEHICLE_IMG_TOP,
     CONF_VEHICLE_MODEL,
     CONF_VEHICLE_PLATE,
-    CONF_VEHICLE_VIN,
     DEFAULT_REGION,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -86,7 +89,7 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
             chosen = next(v for v in self._vehicles if v.vehicle_id == user_input[CONF_VEHICLE_ID])
             return await self._finish(chosen)
 
-        options = {v.vehicle_id: f"{v.model} ({v.plate or v.vin or v.vehicle_id})" for v in self._vehicles}
+        options = {v.vehicle_id: f"{v.model} ({v.plate})" for v in self._vehicles}
         schema = vol.Schema({vol.Required(CONF_VEHICLE_ID): vol.In(options)})
         return self.async_show_form(step_id="pick_vehicle", data_schema=schema)
 
@@ -94,7 +97,7 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(vehicle.vehicle_id)
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
-            title=vehicle.model or "CarLinko EV",
+            title="CarLinko",
             data={
                 CONF_EMAIL: self._email,
                 CONF_PASSWORD: self._password,
@@ -102,8 +105,11 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_VEHICLE_ID: vehicle.vehicle_id,
                 CONF_DEVICE_SN: vehicle.device_sn,
                 CONF_VEHICLE_MODEL: vehicle.model,
-                CONF_VEHICLE_VIN: vehicle.vin,
+                CONF_VEHICLE_BRAND: vehicle.brand,
                 CONF_VEHICLE_PLATE: vehicle.plate,
+                CONF_VEHICLE_IMG_FRONT: vehicle.img_front,
+                CONF_VEHICLE_IMG_SIDE: vehicle.img_side,
+                CONF_VEHICLE_IMG_TOP: vehicle.img_top,
             },
         )
 

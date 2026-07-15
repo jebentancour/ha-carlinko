@@ -75,6 +75,11 @@
       "window_rear_passenger": { "name": "Ventana Trasera Acompañante" },
       "trunk_open": { "name": "Cajuela" },
       "sunroof_open": { "name": "Techo Solar" }
+    },
+    "image": {
+      "front": { "name": "Frente" },
+      "side": { "name": "Lateral" },
+      "top": { "name": "Superior" }
     }
   }
 }

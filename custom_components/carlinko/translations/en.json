@@ -75,6 +75,11 @@
       "window_rear_passenger": { "name": "Window Rear Passenger" },
       "trunk_open": { "name": "Trunk" },
       "sunroof_open": { "name": "Sunroof" }
+    },
+    "image": {
+      "front": { "name": "Front" },
+      "side": { "name": "Side" },
+      "top": { "name": "Top" }
     }
   }
 }

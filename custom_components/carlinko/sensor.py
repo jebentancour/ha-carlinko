@@ -29,7 +29,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import RAW_TEST_BYTES
-from .const import CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, CONF_VEHICLE_VIN, DOMAIN
+from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
 TYRE_LABELS = ("Front Left", "Front Right", "Rear Left", "Rear Right")
@@ -137,10 +137,10 @@ class _CarLinkoEntityBase(CoordinatorEntity[CarLinkoCoordinator]):
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={(DOMAIN, self._entry.data[CONF_VEHICLE_ID])},
-            name=self._entry.data.get(CONF_VEHICLE_MODEL) or "CarLinko EV",
-            manufacturer="CarLinko (Chery / Jaecoo / Omoda)",
-            model=self._entry.data.get(CONF_VEHICLE_MODEL),
-            serial_number=self._entry.data.get(CONF_VEHICLE_VIN) or None,
+            name=self._entry.data[CONF_VEHICLE_PLATE],
+            manufacturer=self._entry.data[CONF_VEHICLE_BRAND],
+            model=self._entry.data[CONF_VEHICLE_MODEL],
+            serial_number=self._entry.data[CONF_DEVICE_SN],
         )
 
 
