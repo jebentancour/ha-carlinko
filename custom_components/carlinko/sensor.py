@@ -69,10 +69,10 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
     CarLinkoSensorDescription(
         key="volt12",
         translation_key="volt12",
+        icon="mdi:car-battery",
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("volt12"),
     ),
     CarLinkoSensorDescription(
@@ -92,6 +92,15 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("consumption_kwh_100km"),
     ),
     CarLinkoSensorDescription(
+        key="battery_power_kw",
+        translation_key="battery_power",
+        icon="mdi:battery-charging-outline",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("battery_power_kw"),
+    ),
+    CarLinkoSensorDescription(
         key="charge_power_kw",
         translation_key="charge_power",
         icon="mdi:ev-station",
@@ -99,15 +108,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("charge_power_kw"),
-    ),
-    CarLinkoSensorDescription(
-        key="regen_power_kw",
-        translation_key="regen_power",
-        icon="mdi:battery-charging-outline",
-        device_class=SensorDeviceClass.POWER,
-        native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda d: d.get("regen_power_kw"),
     ),
 )
 

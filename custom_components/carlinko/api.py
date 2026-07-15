@@ -223,11 +223,12 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     byte moves) — byte 2 is a 4-bit door mask, byte 4 is the trunk (on this car the charge
     port is reached by opening the trunk, which is why it also fired during charge-port
     tests). Power (byte 63) confirmed the same day against a real charge session — matched
-    the app's displayed "2.10 kW" exactly, twice, ~11 minutes apart. Byte 58 (3=not
-    charging, 1=charging) disambiguates that same byte 63 reading: it also spikes from
-    regen/braking while driving, not just while plugged in — so it's split into two
-    sensors, charge_power_kw and regen_power_kw, based on byte 58. Bytes 3, 5, 9, 57, 58,
-    59, 63 and 69 are also exposed as raw, unscaled diagnostic sensors (raw_byteN) for
+    the app's displayed "2.10 kW" exactly, twice, ~11 minutes apart. It's exposed as-is as
+    battery_power_kw (covers both charging and regen/braking power flow). Byte 58 (3=not
+    charging, 1=charging) additionally gates a charge_power_kw sensor — same value, zeroed
+    whenever byte 58 says the car isn't charging — for anyone who wants charging-only power
+    without reading the flag themselves; the flag itself stays available as the raw_byte58
+    diagnostic sensor. Bytes 3, 5, 9, 57, 58, 59, 63 and 69 are also exposed as raw, unscaled diagnostic sensors (raw_byteN) for
     ongoing hypothesis testing in HA itself — see the byte-map notes in memory / the
     parent project's tools/recon.py for what each is suspected to mean. Everything else
     decoded here is confirmed; for exploring the rest of the blob, see tools/recon.py in
@@ -254,9 +255,8 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
         d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
     if len(b) >= 64:
         power_kw = round(b[63] * 0.1, 1)
-        is_charging = b[58] == 1
-        d["charge_power_kw"] = power_kw if is_charging else 0.0
-        d["regen_power_kw"] = power_kw if not is_charging else 0.0
+        d["battery_power_kw"] = power_kw
+        d["charge_power_kw"] = power_kw if b[58] == 1 else 0.0
     if len(b) >= 52:
         tp, tt = b[44:48], b[48:52]
         d["tyre_psi"] = [_psi(x) for x in tp]
