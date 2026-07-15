@@ -16,6 +16,7 @@ from homeassistant.const import (
     PERCENTAGE,
     EntityCategory,
     UnitOfElectricPotential,
+    UnitOfEnergy,
     UnitOfLength,
     UnitOfPower,
     UnitOfPressure,
@@ -190,8 +191,29 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
         return values[self._wheel_idx]
 
 
+# Working hypotheses from live testing (see api.py's decode_blob() docstring) — names are
+# for orientation while poking at these bytes, not confirmed enough to become real sensors.
+RAW_BYTE_LABELS: dict[int, str] = {
+    3: "Awake Flag",
+    5: "HV System State",
+    9: "Sunroof Position",
+    57: "Charge Port State",
+    58: "Charging Flag",
+    59: "Charge Counter (unsolved)",
+    63: "Power (raw)",
+    69: "Net Energy Counter",
+}
+
+# (unit, scale) for the raw bytes where testing also suggests a physical quantity, not just
+# a flag/enum — display-only, the raw_byteN value in coordinator.data stays the plain byte.
+RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {
+    9: (PERCENTAGE, 10.0),  # 0-10 raw ramped smoothly like a 0-100% cover position
+    69: (UnitOfEnergy.KILO_WATT_HOUR, 0.1),  # ~0.1 kWh/unit, reference point unconfirmed
+}
+
+
 class CarLinkoRawByteSensor(_CarLinkoEntityBase, SensorEntity):
-    """Raw, unscaled value of a byte whose meaning isn't confirmed yet — for testing."""
+    """Raw value of a byte whose meaning isn't confirmed yet — for testing."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:flask-outline"
@@ -199,11 +221,20 @@ class CarLinkoRawByteSensor(_CarLinkoEntityBase, SensorEntity):
     def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, byte_n: int) -> None:
         super().__init__(coordinator, entry)
         self._byte_n = byte_n
-        self._attr_name = f"Raw Byte {byte_n}"
+        label = RAW_BYTE_LABELS.get(byte_n, f"Raw Byte {byte_n}")
+        self._attr_name = f"{label} (byte {byte_n})"
         self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_raw_byte{byte_n}"
+        self._scale: float | None = None
+        if byte_n in RAW_BYTE_UNITS:
+            unit, self._scale = RAW_BYTE_UNITS[byte_n]
+            self._attr_native_unit_of_measurement = unit
+            self._attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def native_value(self) -> Any:
         if not self.coordinator.data:
             return None
-        return self.coordinator.data.get(f"raw_byte{self._byte_n}")
+        raw = self.coordinator.data.get(f"raw_byte{self._byte_n}")
+        if raw is None or self._scale is None:
+            return raw
+        return round(raw * self._scale, 1)

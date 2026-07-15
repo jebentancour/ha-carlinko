@@ -25,34 +25,29 @@ than one car, you'll be asked to pick one.
 
 ## Entities
 
-| Entity | Status |
-| --- | --- |
-| Battery %, Range, Odometer | confirmed |
-| 12 V battery, Speed, Consumption | confirmed |
-| Tyre pressure / temperature ×4 wheels | confirmed |
-| Doors (driver/passenger/rear ×2) + Trunk (binary_sensor) | confirmed |
-| Charge Power / Regen Power | confirmed |
-| Online (binary_sensor) | derived (no fresh blob this poll) |
+The car reports a single status blob (hex-encoded byte array) over its WebSocket. The
+confirmed byte map was originally taken from the Jaecoo J5 EV, then extended and confirmed
+with new fields on an Omoda E5.
 
-This integration only ships **confirmed** fields — byte offset + formula validated against
-a real car's own dash/app display or a deliberate test (open/close one door or the trunk at
-a time and watch which byte moves), not just internal consistency. The confirmed set was
-originally calibrated on a Jaecoo J5 EV, then independently re-validated bit-for-bit against
-an **Omoda E5** (battery/range/odometer/12V/speed/consumption/tyre PSI+temp all matched the
-app's own numbers exactly); doors + trunk were confirmed the same way on the Omoda E5 (byte
-2 is a 4-bit door mask, byte 4 is the trunk), and power (byte 63 × 0.1) matched the app's
-displayed kW, during a real charge session. That same byte also
-spikes from regen/braking while driving, so it's split into two sensors using byte 58
-(1=charging, else not) — Charge Power is non-zero only while plugged in and charging, Regen
-Power only while driving — see `api.py`'s `decode_blob()` docstring.
+| Entity | Byte(s) | Formula |
+| --- | --- | --- |
+| Battery % | 28 | raw |
+| Range (km) | 29–30 | uint16 |
+| Odometer (km) | 18–20 | uint24 |
+| 12 V battery (V) | 12–13 | uint16 × 0.01 |
+| Speed (km/h) | 14–15 | uint16 ÷ 16 |
+| Consumption (kWh/100 km) | 55 | raw × 0.1 |
+| Battery Power (kW) | 63 | raw × 0.1 |
+| Charge Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 1, else 0 |
+| Tyre pressure ×4 (psi) | 44–47 | raw × 1.373 × 0.145 (0xFF = n/a) |
+| Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40 (0xFF = n/a) |
+| Doors: driver / passenger / rear ×2 | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
+| Trunk | 4 | nonzero = open |
+| Online (binary_sensor) | — | derived: no fresh blob this poll |
 
-There are a handful of other bytes in the blob that visibly change with car state
-(driving/braking/climate/charging) but aren't fully confirmed yet. The most promising ones —
-bytes 3, 5, 9, 57, 58, 59, 63, 69 — are exposed as **diagnostic** entities (`Raw Byte N`,
-grouped under the device's "diagnostic" section, enabled by default), so hypotheses can be
-tested live in HA. Their raw integer value is shown as-is, unscaled — see `api.py`'s
-`decode_blob()` docstring for what each is suspected to mean. Once a field is confirmed it
-graduates into a proper scaled sensor and the raw one can be removed.
+Bytes 3, 5, 9, 57, 58, 59, 69 aren't fully confirmed yet and are exposed as **diagnostic**
+`Raw Byte N` entities (raw, unscaled) so hypotheses can be tested live in HA — see `api.py`'s
+`decode_blob()` docstring. Once confirmed, a field graduates into a proper scaled sensor.
 
 ## Options
 
@@ -65,7 +60,6 @@ reasonable).
 - One WebSocket round-trip per poll (no persistent connection, no adaptive fast/slow
   cadence — simpler and fine for HA's coordinator model, but a driving session generates one
   data point per interval, not a continuous stream).
-- No charging-session detection yet — out of scope for v0.1.
 - Token is kept in memory only (not written to disk); a HA restart re-logs in from the
   stored email/password in the config entry.
 
