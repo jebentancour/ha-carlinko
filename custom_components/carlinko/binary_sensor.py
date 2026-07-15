@@ -25,10 +25,16 @@ class CarLinkoBinarySensorDescription(BinarySensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any] = lambda data: None
 
 
-# Confirmed 2026-07-14 by opening/closing each door and the trunk one at a time and
-# watching which byte moved (byte 2 = 4-bit door mask, byte 4 = trunk) — see
-# api.py's decode_blob() docstring.
+# Confirmed 2026-07-14 by opening/closing each door/window and the trunk one at a time and
+# watching which byte moved (byte 2 = 4-bit door mask, byte 4 = trunk, byte 8 = windows,
+# byte 9 = sunroof) — see api.py's decode_blob() docstring.
 BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
+    CarLinkoBinarySensorDescription(
+        key="lock",
+        translation_key="lock",
+        device_class=BinarySensorDeviceClass.LOCK,
+        value_fn=lambda d: d.get("lock_unlocked"),
+    ),
     CarLinkoBinarySensorDescription(
         key="door_driver",
         translation_key="door_driver",
@@ -54,10 +60,40 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("door_rear_passenger"),
     ),
     CarLinkoBinarySensorDescription(
+        key="window_driver",
+        translation_key="window_driver",
+        device_class=BinarySensorDeviceClass.WINDOW,
+        value_fn=lambda d: d.get("window_driver"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="window_passenger",
+        translation_key="window_passenger",
+        device_class=BinarySensorDeviceClass.WINDOW,
+        value_fn=lambda d: d.get("window_passenger"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="window_rear_driver",
+        translation_key="window_rear_driver",
+        device_class=BinarySensorDeviceClass.WINDOW,
+        value_fn=lambda d: d.get("window_rear_driver"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="window_rear_passenger",
+        translation_key="window_rear_passenger",
+        device_class=BinarySensorDeviceClass.WINDOW,
+        value_fn=lambda d: d.get("window_rear_passenger"),
+    ),
+    CarLinkoBinarySensorDescription(
         key="trunk_open",
         translation_key="trunk_open",
-        device_class=BinarySensorDeviceClass.OPENING,
+        device_class=BinarySensorDeviceClass.DOOR,
         value_fn=lambda d: d.get("trunk_open"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="sunroof_open",
+        translation_key="sunroof_open",
+        device_class=BinarySensorDeviceClass.WINDOW,
+        value_fn=lambda d: d.get("sunroof_open"),
     ),
 )
 

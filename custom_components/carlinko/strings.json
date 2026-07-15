@@ -64,11 +64,17 @@
     },
     "binary_sensor": {
       "online": { "name": "Online" },
-      "door_driver": { "name": "Driver Door" },
-      "door_passenger": { "name": "Passenger Door" },
-      "door_rear_driver": { "name": "Rear Driver Door" },
-      "door_rear_passenger": { "name": "Rear Passenger Door" },
-      "trunk_open": { "name": "Trunk" }
+      "lock": { "name": "Lock" },
+      "door_driver": { "name": "Door Driver" },
+      "door_passenger": { "name": "Door Passenger" },
+      "door_rear_driver": { "name": "Door Rear Driver" },
+      "door_rear_passenger": { "name": "Door Rear Passenger" },
+      "window_driver": { "name": "Window Driver" },
+      "window_passenger": { "name": "Window Passenger" },
+      "window_rear_driver": { "name": "Window Rear Driver" },
+      "window_rear_passenger": { "name": "Window Rear Passenger" },
+      "trunk_open": { "name": "Trunk" },
+      "sunroof_open": { "name": "Sunroof" }
     }
   }
 }

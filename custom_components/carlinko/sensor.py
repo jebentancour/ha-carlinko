@@ -194,22 +194,23 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
 # Working hypotheses from live testing (see api.py's decode_blob() docstring) — names are
 # for orientation while poking at these bytes, not confirmed enough to become real sensors.
 RAW_BYTE_LABELS: dict[int, str] = {
-    3: "Awake Flag",
     5: "HV System State",
-    9: "Sunroof Position",
     57: "Charge Port State",
     58: "Charging Flag",
     59: "Charge Counter (unsolved)",
     63: "Power",
-    69: "Net Energy Counter",
+    68: "Trip Counter?",
+    69: "Net Energy / Trip Counter",
+    70: "Trip Counter?",
+    71: "Trip Counter?",
 }
 
 # (unit, scale) for the raw bytes where testing also suggests a physical quantity, not just
 # a flag/enum — display-only, the raw_byteN value in coordinator.data stays the plain byte.
 RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {
-    9: (PERCENTAGE, 10.0),  # 0-10 raw ramped smoothly like a 0-100% cover position
     63: (UnitOfPower.KILO_WATT, 0.1),  # confirmed against the app's own displayed kW
     69: (UnitOfEnergy.KILO_WATT_HOUR, 0.1),  # ~0.1 kWh/unit, reference point unconfirmed
+    71: (UnitOfLength.KILOMETERS, 1.0),  # suspected trip km — but mirrors range_km's low byte so far
 }
 
 

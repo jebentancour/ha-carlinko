@@ -64,11 +64,17 @@
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
+      "lock": { "name": "Cerradura" },
       "door_driver": { "name": "Puerta Conductor" },
       "door_passenger": { "name": "Puerta Acompañante" },
       "door_rear_driver": { "name": "Puerta Trasera Conductor" },
       "door_rear_passenger": { "name": "Puerta Trasera Acompañante" },
-      "trunk_open": { "name": "Cajuela" }
+      "window_driver": { "name": "Ventana Conductor" },
+      "window_passenger": { "name": "Ventana Acompañante" },
+      "window_rear_driver": { "name": "Ventana Trasera Conductor" },
+      "window_rear_passenger": { "name": "Ventana Trasera Acompañante" },
+      "trunk_open": { "name": "Cajuela" },
+      "sunroof_open": { "name": "Techo Solar" }
     }
   }
 }
