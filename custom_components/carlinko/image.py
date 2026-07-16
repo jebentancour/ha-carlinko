@@ -38,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class CarLinkoImage(ImageEntity):
     _attr_has_entity_name = True
-    _attr_content_type = "image/jpeg"
+    _attr_content_type = "image/png"
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, key: str, conf_key: str) -> None:
         super().__init__(hass)

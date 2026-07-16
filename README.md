@@ -52,8 +52,8 @@ confirmed with new fields on an Omoda E5.
 | Charge Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 1, else 0 |
 | Regen Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 3, else 0 |
 | Diagnostic: Power (byte 63) | 63 | raw × 0.1 kW (same byte as charge/regen, kept for cross-check) |
-| Diagnostic: Trip Energy Used? (bytes 68:69) | 68–69 | uint16, 68<<8\|69, scale unconfirmed |
-| Diagnostic: Trip Range? (bytes 70:71) | 70–71 | uint16, 70<<8\|71, unconfirmed |
+| Diagnostic: Trip Energy Used (bytes 68:69) | 68–69 | uint16, 68<<8\|69, scale unconfirmed |
+| Diagnostic: Trip Range (bytes 70:71) | 70–71 | uint16, 70<<8\|71, unconfirmed |
 
 Byte 5 (ignition) is confirmed enough to be a proper binary sensor; bytes 56, 57, 58, 59 and
 63 aren't (or, for 63, are already covered above but kept here too for byte-level cross-check)

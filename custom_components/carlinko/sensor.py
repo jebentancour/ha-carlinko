@@ -94,7 +94,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
     CarLinkoSensorDescription(
         key="regen_power_kw",
         translation_key="regen_power",
-        icon="mdi:battery-charging-outline",
+        icon="mdi:battery-charging",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         state_class=SensorStateClass.MEASUREMENT,
