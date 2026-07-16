@@ -90,6 +90,12 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("trunk_open"),
     ),
     CarLinkoBinarySensorDescription(
+        key="ignition",
+        translation_key="ignition",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        value_fn=lambda d: d.get("ignition_on"),
+    ),
+    CarLinkoBinarySensorDescription(
         key="sunroof_open",
         translation_key="sunroof_open",
         device_class=BinarySensorDeviceClass.WINDOW,

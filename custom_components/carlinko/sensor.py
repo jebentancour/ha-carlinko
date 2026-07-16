@@ -16,7 +16,6 @@ from homeassistant.const import (
     PERCENTAGE,
     EntityCategory,
     UnitOfElectricPotential,
-    UnitOfEnergy,
     UnitOfLength,
     UnitOfPower,
     UnitOfPressure,
@@ -28,7 +27,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import RAW_TEST_BYTES
+from .api import RAW_TEST_BYTES, RAW_WORD_PAIRS
 from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
@@ -123,6 +122,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             )
         )
     entities += [CarLinkoRawByteSensor(coordinator, entry, n) for n in RAW_TEST_BYTES]
+    entities += [CarLinkoRawWordSensor(coordinator, entry, hi, lo) for hi, lo in RAW_WORD_PAIRS]
     async_add_entities(entities)
 
 
@@ -194,23 +194,24 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
 # Working hypotheses from live testing (see api.py's decode_blob() docstring) — names are
 # for orientation while poking at these bytes, not confirmed enough to become real sensors.
 RAW_BYTE_LABELS: dict[int, str] = {
-    5: "HV System State",
-    57: "Charge Port State",
+    56: "Charge Cable Connected",
+    57: "Charge Port / EVSE State",
     58: "Charging Flag",
-    59: "Charge Counter (unsolved)",
+    59: "Charge Counter",
     63: "Power",
-    68: "Trip Counter?",
-    69: "Net Energy / Trip Counter",
-    70: "Trip Counter?",
-    71: "Trip Counter?",
 }
 
 # (unit, scale) for the raw bytes where testing also suggests a physical quantity, not just
 # a flag/enum — display-only, the raw_byteN value in coordinator.data stays the plain byte.
 RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {
     63: (UnitOfPower.KILO_WATT, 0.1),  # confirmed against the app's own displayed kW
-    69: (UnitOfEnergy.KILO_WATT_HOUR, 0.1),  # ~0.1 kWh/unit, reference point unconfirmed
-    71: (UnitOfLength.KILOMETERS, 1.0),  # suspected trip km — but mirrors range_km's low byte so far
+}
+
+# Same idea as RAW_BYTE_LABELS/RAW_BYTE_UNITS, but for the combined 16-bit raw_word{hi}_{lo}
+# values (see api.py's decode_blob() for the hypothesis behind each pair).
+RAW_WORD_LABELS: dict[tuple[int, int], str] = {
+    (68, 69): "Trip Energy Used",
+    (70, 71): "Trip Range",
 }
 
 
@@ -240,3 +241,23 @@ class CarLinkoRawByteSensor(_CarLinkoEntityBase, SensorEntity):
         if raw is None or self._scale is None:
             return raw
         return round(raw * self._scale, 1)
+
+
+class CarLinkoRawWordSensor(_CarLinkoEntityBase, SensorEntity):
+    """Raw value of a high/low byte pair combined into a 16-bit value — for testing."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:flask-outline"
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, hi: int, lo: int) -> None:
+        super().__init__(coordinator, entry)
+        self._key = f"raw_word{hi}_{lo}"
+        label = RAW_WORD_LABELS.get((hi, lo), f"Raw Word {hi}:{lo}")
+        self._attr_name = f"{label} (bytes {hi}:{lo})"
+        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_{self._key}"
+
+    @property
+    def native_value(self) -> Any:
+        if not self.coordinator.data:
+            return None
+        return self.coordinator.data.get(self._key)

@@ -74,7 +74,8 @@
       "window_rear_driver": { "name": "Ventana Trasera Conductor" },
       "window_rear_passenger": { "name": "Ventana Trasera Acompañante" },
       "trunk_open": { "name": "Cajuela" },
-      "sunroof_open": { "name": "Techo Solar" }
+      "sunroof_open": { "name": "Techo Solar" },
+      "ignition": { "name": "Contacto" }
     },
     "image": {
       "front": { "name": "Frente" },

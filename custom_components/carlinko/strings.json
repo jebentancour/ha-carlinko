@@ -74,7 +74,8 @@
       "window_rear_driver": { "name": "Window Rear Driver" },
       "window_rear_passenger": { "name": "Window Rear Passenger" },
       "trunk_open": { "name": "Trunk" },
-      "sunroof_open": { "name": "Sunroof" }
+      "sunroof_open": { "name": "Sunroof" },
+      "ignition": { "name": "Ignition" }
     },
     "image": {
       "front": { "name": "Front" },
