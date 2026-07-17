@@ -267,14 +267,14 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
     d["raw_byte56"] = b[56]  # unconfirmed: charge cable connected (0=unplugged, 1=plugged in)
     d["raw_byte57"] = b[57]  # unconfirmed: looks like charge port / EVSE handshake state
-    d["raw_byte58"] = b[58]  # confirmed: charging flag (1=charging, 3=not) — gates charge/regen below
+    d["raw_byte58"] = b[58]  # confirmed: charging flag (2=charging, 3=not) — gates charge/regen below
     d["raw_byte59"] = b[59]  # unconfirmed: charge-power-gated counter, still unsolved (not a steady countdown)
     # byte 60: unused, always 0x00 across every capture
     # byte 61: unused, always 0x00 across every capture
     # byte 62: unused, always 0x00 across every capture
     power_kw = round(b[63] * 0.1, 1)
     d["raw_byte63"] = b[63]  # confirmed: power (kW, x0.1) — see charge/regen split below
-    d["charge_power_kw"] = power_kw if b[58] == 1 else 0.0
+    d["charge_power_kw"] = power_kw if b[58] == 2 else 0.0
     d["regen_power_kw"] = power_kw if b[58] == 3 else 0.0
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture

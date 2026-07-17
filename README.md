@@ -49,7 +49,7 @@ confirmed with new fields on an Omoda E5.
 | Diagnostic: Charge Port / EVSE State (byte 57) | 57 | raw |
 | Diagnostic: Charging Flag (byte 58) | 58 | raw |
 | Diagnostic: Charge Counter (byte 59) | 59 | raw |
-| Charge Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 1, else 0 |
+| Charge Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 2, else 0 |
 | Regen Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 3, else 0 |
 | Diagnostic: Power (byte 63) | 63 | raw × 0.1 kW (same byte as charge/regen, kept for cross-check) |
 | Diagnostic: Trip Energy Used (bytes 68:69) | 68–69 | uint16, 68<<8\|69, scale unconfirmed |
