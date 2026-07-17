@@ -54,28 +54,54 @@
   "entity": {
     "sensor": {
       "battery": { "name": "Battery" },
-      "range": { "name": "Range" },
+      "battery_range": { "name": "Battery Range" },
       "odometer": { "name": "Odometer" },
       "volt12": { "name": "12V Battery" },
       "speed": { "name": "Speed" },
       "consumption": { "name": "Consumption" },
+      "power": { "name": "Power" },
       "charge_power": { "name": "Charge Power" },
-      "regen_power": { "name": "Regen Power" }
+      "regen_power": { "name": "Regen Power" },
+      "charging_status": {
+        "name": "Charging Status",
+        "state": {
+          "idle": "Idle",
+          "charging": "Charging",
+          "charge_complete": "Charge Complete",
+          "charge_canceled": "Charge Canceled",
+          "hot_charging": "Hot (Thermal Limited)",
+          "stop_charging": "Stopping"
+        }
+      },
+      "charging_connector": {
+        "name": "Charging Connector",
+        "state": {
+          "disconnected": "Disconnected",
+          "ac_slow": "AC (Slow)",
+          "connected_idle": "Connected, Not Charging",
+          "dc_fast": "DC (Fast)"
+        }
+      },
+      "charging_remaining": { "name": "Charging Time Remaining" },
+      "wltp_range": { "name": "WLTP Range" },
+      "fuel_range": { "name": "Fuel Range" }
     },
     "binary_sensor": {
       "online": { "name": "Online" },
       "lock": { "name": "Lock" },
-      "door_driver": { "name": "Door Driver" },
-      "door_passenger": { "name": "Door Passenger" },
-      "door_rear_driver": { "name": "Door Rear Driver" },
-      "door_rear_passenger": { "name": "Door Rear Passenger" },
-      "window_driver": { "name": "Window Driver" },
-      "window_passenger": { "name": "Window Passenger" },
-      "window_rear_driver": { "name": "Window Rear Driver" },
-      "window_rear_passenger": { "name": "Window Rear Passenger" },
+      "door_front_left": { "name": "Door Front Left" },
+      "door_front_right": { "name": "Door Front Right" },
+      "door_rear_left": { "name": "Door Rear Left" },
+      "door_rear_right": { "name": "Door Rear Right" },
+      "window_front_left": { "name": "Window Front Left" },
+      "window_front_right": { "name": "Window Front Right" },
+      "window_rear_left": { "name": "Window Rear Left" },
+      "window_rear_right": { "name": "Window Rear Right" },
       "trunk_open": { "name": "Trunk" },
       "sunroof_open": { "name": "Sunroof" },
-      "ignition": { "name": "Ignition" }
+      "ignition": { "name": "Ignition" },
+      "ac_on": { "name": "Climate Control" },
+      "charging": { "name": "Charging" }
     },
     "image": {
       "front": { "name": "Front" },

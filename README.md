@@ -25,44 +25,35 @@ than one car, you'll be asked to pick one.
 
 ## Entities
 
-The car reports a single status blob (hex-encoded byte array) via a plain signed REST GET.
-The confirmed byte map was originally taken from the Jaecoo J5 EV, then extended and
-confirmed with new fields on an Omoda E5.
+The car reports a single status blob (hex-encoded byte array) via a signed endpoint,
+`GET /user/vehicle/state/{id}`. The confirmed byte map was originally taken from the Jaecoo
+J5 EV, then extended and confirmed with new fields on an Omoda E5.
 
 | Entity | Byte(s) | Formula |
 | --- | --- | --- |
-| Doors: driver / passenger / rear ×2 | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
+| Doors: front left / front right / rear left / rear right | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
 | Lock | 3 | nonzero = unlocked |
 | Trunk | 4 | nonzero = open |
 | Ignition | 5 | nonzero = on |
-| Windows: driver / passenger / rear ×2 | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | any bit set = open |
+| Windows: front left / front right / rear left / rear right | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | any bit set = open |
 | Sunroof | 9 | nonzero = open |
 | 12 V battery (V) | 12–13 | uint16 × 0.01 |
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Odometer (km) | 18–20 | uint24 |
+| AC / climate on | 23 | nonzero = on |
 | Battery % | 28 | raw |
-| Range (km) | 29–30 | uint16 |
+| Battery Range (km) | 29–30 | uint16 |
 | Tyre pressure ×4 (psi) | 44–47 | raw × 1.373 × 0.145 (0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40 (0xFF = n/a) |
 | Consumption (kWh/100 km) | 55 | raw × 0.1 |
-| Diagnostic: Charge Cable Connected (byte 56) | 56 | raw (0=unplugged, 1=plugged in) |
-| Diagnostic: Charge Port / EVSE State (byte 57) | 57 | raw |
-| Diagnostic: Charging Flag (byte 58) | 58 | raw |
-| Diagnostic: Charge Counter (byte 59) | 59 | raw |
-| Charge Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 2, else 0 |
-| Regen Power (kW) | 63, gated by byte 58 | raw × 0.1 if byte 58 == 3, else 0 |
-| Diagnostic: Power (byte 63) | 63 | raw × 0.1 kW (same byte as charge/regen, kept for cross-check) |
-| Diagnostic: Trip Energy Used (bytes 68:69) | 68–69 | uint16, 68<<8\|69, scale unconfirmed |
-| Diagnostic: Trip Range (bytes 70:71) | 70–71 | uint16, 70<<8\|71, unconfirmed |
-
-Byte 5 (ignition) is confirmed enough to be a proper binary sensor; bytes 56, 57, 58, 59 and
-63 aren't (or, for 63, are already covered above but kept here too for byte-level cross-check)
-— they're exposed as **diagnostic** entities with a working-hypothesis name instead of a
-generic `Raw Byte N`. Byte 63 also gets a display unit (kW) since testing suggests an actual
-physical quantity — see `RAW_BYTE_LABELS`/`RAW_BYTE_UNITS` in `sensor.py`. Bytes 68:69 and
-70:71 are combined into two 16-bit diagnostic values instead (see `RAW_WORD_LABELS` /
-`RAW_WORD_PAIRS`) since the working hypothesis treats each pair as one field, not two.
-Once a byte (or pair) is confirmed it graduates into a proper scaled sensor.
+| Charging Connector | 56 | enum: 0=disconnected, 1=AC(slow), 2=connected/idle, 16=DC(fast) |
+| Charging Status / Charging (binary) | 57 | enum: 0=idle, 1=charging, 2=complete, 3=canceled, 4=hot, 5=stopping — `charging` = (57 != idle) |
+| Charging Time Remaining (min) | 58–59 | uint16, 58<<8\|59 (0x3FF = n/a) |
+| Power (kW) | 62–63 | (62<<8\|63) × 0.1 |
+| Charge Power (kW) | 62–63, gated by byte 57 | Power if charging, else 0 |
+| Regen Power (kW) | 62–63, gated by byte 57 | Power if not charging, else 0 |
+| WLTP Range (km) | 68–69 | uint16 |
+| Fuel Range (km) | 70–71 | uint16, mirrors Battery Range on this EV — expect to diverge on a PHEV |
 
 **Online** (`binary_sensor`) isn't part of the status blob — it comes from a separate
 endpoint, `GET /user/vehicle/isOnline/{id}`, polled once per cycle alongside `state`. When

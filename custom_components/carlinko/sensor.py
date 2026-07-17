@@ -21,13 +21,14 @@ from homeassistant.const import (
     UnitOfPressure,
     UnitOfSpeed,
     UnitOfTemperature,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import RAW_TEST_BYTES, RAW_WORD_PAIRS
+from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES, RAW_TEST_BYTES, RAW_WORD_PAIRS
 from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
@@ -49,13 +50,13 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("battery_pct"),
     ),
     CarLinkoSensorDescription(
-        key="range_km",
-        translation_key="range",
+        key="battery_range_km",
+        translation_key="battery_range",
         icon="mdi:map-marker-distance",
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda d: d.get("range_km"),
+        value_fn=lambda d: d.get("battery_range_km"),
     ),
     CarLinkoSensorDescription(
         key="odometer_km",
@@ -92,6 +93,15 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("consumption_kwh_100km"),
     ),
     CarLinkoSensorDescription(
+        key="power_kw",
+        translation_key="power",
+        icon="mdi:flash",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("power_kw"),
+    ),
+    CarLinkoSensorDescription(
         key="regen_power_kw",
         translation_key="regen_power",
         icon="mdi:battery-charging",
@@ -108,6 +118,49 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("charge_power_kw"),
+    ),
+    CarLinkoSensorDescription(
+        key="charging_status",
+        translation_key="charging_status",
+        icon="mdi:ev-station",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(CHARGING_STATUSES.values()),
+        value_fn=lambda d: d.get("charging_status"),
+    ),
+    CarLinkoSensorDescription(
+        key="charging_connector",
+        translation_key="charging_connector",
+        icon="mdi:ev-plug-type2",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(CHARGING_CONNECTOR_STATES.values()),
+        value_fn=lambda d: d.get("charging_connector"),
+    ),
+    CarLinkoSensorDescription(
+        key="charging_remaining_min",
+        translation_key="charging_remaining",
+        icon="mdi:timer-outline",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("charging_remaining_min"),
+    ),
+    CarLinkoSensorDescription(
+        key="wltp_range_km",
+        translation_key="wltp_range",
+        icon="mdi:map-marker-distance",
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("wltp_range_km"),
+    ),
+    CarLinkoSensorDescription(
+        key="fuel_range_km",
+        translation_key="fuel_range",
+        icon="mdi:gas-station",
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("fuel_range_km"),
     ),
 )
 
@@ -193,26 +246,17 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
 
 # Working hypotheses from live testing (see api.py's decode_blob() docstring) — names are
 # for orientation while poking at these bytes, not confirmed enough to become real sensors.
-RAW_BYTE_LABELS: dict[int, str] = {
-    56: "Charge Cable Connected",
-    57: "Charge Port / EVSE State",
-    58: "Charging Flag",
-    59: "Charge Counter",
-    63: "Power",
-}
+# (Bytes 56, 57, 58, 59 and 63 graduated to proper sensors above — see decode_blob().)
+RAW_BYTE_LABELS: dict[int, str] = {}
 
 # (unit, scale) for the raw bytes where testing also suggests a physical quantity, not just
 # a flag/enum — display-only, the raw_byteN value in coordinator.data stays the plain byte.
-RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {
-    63: (UnitOfPower.KILO_WATT, 0.1),  # confirmed against the app's own displayed kW
-}
+RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {}
 
 # Same idea as RAW_BYTE_LABELS/RAW_BYTE_UNITS, but for the combined 16-bit raw_word{hi}_{lo}
 # values (see api.py's decode_blob() for the hypothesis behind each pair).
-RAW_WORD_LABELS: dict[tuple[int, int], str] = {
-    (68, 69): "Trip Energy Used",
-    (70, 71): "Trip Range",
-}
+# (Bytes 68:69 and 70:71 graduated to proper sensors above — see decode_blob().)
+RAW_WORD_LABELS: dict[tuple[int, int], str] = {}
 
 
 class CarLinkoRawByteSensor(_CarLinkoEntityBase, SensorEntity):

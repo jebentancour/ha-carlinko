@@ -54,28 +54,54 @@
   "entity": {
     "sensor": {
       "battery": { "name": "Batería" },
-      "range": { "name": "Autonomía" },
+      "battery_range": { "name": "Autonomía de Batería" },
       "odometer": { "name": "Odómetro" },
       "volt12": { "name": "Batería 12V" },
       "speed": { "name": "Velocidad" },
       "consumption": { "name": "Consumo" },
+      "power": { "name": "Potencia" },
       "charge_power": { "name": "Potencia de Carga" },
-      "regen_power": { "name": "Potencia de Regeneración" }
+      "regen_power": { "name": "Potencia de Regeneración" },
+      "charging_status": {
+        "name": "Estado de Carga",
+        "state": {
+          "idle": "Inactivo",
+          "charging": "Cargando",
+          "charge_complete": "Carga Completa",
+          "charge_canceled": "Carga Cancelada",
+          "hot_charging": "Caliente (Limitado por Temperatura)",
+          "stop_charging": "Deteniendo"
+        }
+      },
+      "charging_connector": {
+        "name": "Conector de Carga",
+        "state": {
+          "disconnected": "Desconectado",
+          "ac_slow": "CA (Lenta)",
+          "connected_idle": "Conectado, Sin Cargar",
+          "dc_fast": "CC (Rápida)"
+        }
+      },
+      "charging_remaining": { "name": "Tiempo Restante de Carga" },
+      "wltp_range": { "name": "Autonomía WLTP" },
+      "fuel_range": { "name": "Autonomía de Combustible" }
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
       "lock": { "name": "Cerradura" },
-      "door_driver": { "name": "Puerta Conductor" },
-      "door_passenger": { "name": "Puerta Acompañante" },
-      "door_rear_driver": { "name": "Puerta Trasera Conductor" },
-      "door_rear_passenger": { "name": "Puerta Trasera Acompañante" },
-      "window_driver": { "name": "Ventana Conductor" },
-      "window_passenger": { "name": "Ventana Acompañante" },
-      "window_rear_driver": { "name": "Ventana Trasera Conductor" },
-      "window_rear_passenger": { "name": "Ventana Trasera Acompañante" },
+      "door_front_left": { "name": "Puerta Delantera Izquierda" },
+      "door_front_right": { "name": "Puerta Delantera Derecha" },
+      "door_rear_left": { "name": "Puerta Trasera Izquierda" },
+      "door_rear_right": { "name": "Puerta Trasera Derecha" },
+      "window_front_left": { "name": "Ventana Delantera Izquierda" },
+      "window_front_right": { "name": "Ventana Delantera Derecha" },
+      "window_rear_left": { "name": "Ventana Trasera Izquierda" },
+      "window_rear_right": { "name": "Ventana Trasera Derecha" },
       "trunk_open": { "name": "Cajuela" },
       "sunroof_open": { "name": "Techo Solar" },
-      "ignition": { "name": "Contacto" }
+      "ignition": { "name": "Contacto" },
+      "ac_on": { "name": "Climatización" },
+      "charging": { "name": "Cargando" }
     },
     "image": {
       "front": { "name": "Frente" },

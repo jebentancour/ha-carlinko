@@ -185,11 +185,31 @@ class CarLinkoClient:
 
 # Suspect/unconfirmed bytes surfaced as raw diagnostic sensors so hypothesis testing can
 # happen live in HA instead of only in the parent project's docs/api-map.md notes.
-RAW_TEST_BYTES: tuple[int, ...] = (56, 57, 58, 59, 63)
+RAW_TEST_BYTES: tuple[int, ...] = ()
 
 # High/low byte pairs combined into a single 16-bit diagnostic value each, exposed as
 # raw_word{hi}_{lo} — see decode_blob() for the hypothesis behind each pair.
-RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ((68, 69), (70, 71))
+RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
+
+# byte 56: charging-connector/mode enum, confirmed against the vendor app's own readings.
+CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 2: "connected_idle", 16: "dc_fast"}
+
+# byte 57: charging status enum, confirmed against the vendor app's own readings AND two live
+# charging sessions — the reliable `charging` boolean is `byte57 != idle` (any in-progress,
+# completed, canceled, hot-limited, or stopping state), not byte 58 (which is just the high
+# byte of the remaining-time word at bytes 58:59, see below).
+CHARGING_STATUSES: dict[int, str] = {
+    0: "idle",
+    1: "charging",
+    2: "charge_complete",
+    3: "charge_canceled",
+    4: "hot_charging",
+    5: "stop_charging",
+}
+
+# bytes 58:59 combined form a 16-bit "charging remaining time (minutes)" field; this sentinel
+# (byte58==3, byte59==255) means N/A / not charging.
+CHARGING_REMAINING_SENTINEL = 0x3FF
 
 
 def _psi(x: int) -> float | None:
@@ -214,20 +234,20 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     # byte 0: unused, always 0x77 across every capture
     # byte 1: unused, always 0x00 across every capture
     doors = b[2]
-    d["door_driver"] = bool(doors & 0x01)
-    d["door_passenger"] = bool(doors & 0x02)
-    d["door_rear_driver"] = bool(doors & 0x04)
-    d["door_rear_passenger"] = bool(doors & 0x08)
+    d["door_front_left"] = bool(doors & 0x01)
+    d["door_front_right"] = bool(doors & 0x02)
+    d["door_rear_left"] = bool(doors & 0x04)
+    d["door_rear_right"] = bool(doors & 0x08)
     d["lock_unlocked"] = bool(b[3])
     d["trunk_open"] = bool(b[4])
     d["ignition_on"] = bool(b[5])
     # byte 6: unused, always 0x00 across every capture
     # byte 7: unused, always 0x00 across every capture
     windows = b[8]
-    d["window_driver"] = bool((windows >> 6) & 0b11)
-    d["window_passenger"] = bool((windows >> 4) & 0b11)
-    d["window_rear_driver"] = bool((windows >> 2) & 0b11)
-    d["window_rear_passenger"] = bool(windows & 0b11)
+    d["window_front_left"] = bool((windows >> 6) & 0b11)
+    d["window_front_right"] = bool((windows >> 4) & 0b11)
+    d["window_rear_left"] = bool((windows >> 2) & 0b11)
+    d["window_rear_right"] = bool(windows & 0b11)
     d["sunroof_open"] = bool(b[9])
     # byte 10: unused, always 0xFF across every capture
     # byte 11: unused, always 0x7F across every capture
@@ -238,13 +258,13 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     d["odometer_km"] = int.from_bytes(b[18:21], "big")
     # byte 21: unused, always 0x00 across every capture
     # byte 22: unused, always 0x01 across every capture
-    # byte 23: unused, varies (0/1)
+    d["ac_on"] = bool(b[23])
     # byte 24: unused, varies — identical to byte 31 in every capture
     # byte 25: unused, always 0x02 across every capture
     # byte 26: unused, always 0x00 across every capture
     # byte 27: unused, always 0x00 across every capture
     d["battery_pct"] = b[28]
-    d["range_km"] = int.from_bytes(b[29:31], "big")
+    d["battery_range_km"] = int.from_bytes(b[29:31], "big")
     # byte 31: unused, varies — identical to byte 24 in every capture
     # byte 32: unused, always 0x00 across every capture
     # byte 33: unused, always 0x00 across every capture
@@ -265,25 +285,24 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     # byte 53: unused, always 0x00 across every capture
     # byte 54: unused, always 0x00 across every capture
     d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
-    d["raw_byte56"] = b[56]  # unconfirmed: charge cable connected (0=unplugged, 1=plugged in)
-    d["raw_byte57"] = b[57]  # unconfirmed: looks like charge port / EVSE handshake state
-    d["raw_byte58"] = b[58]  # confirmed: charging flag (2=charging, 3=not) — gates charge/regen below
-    d["raw_byte59"] = b[59]  # unconfirmed: charge-power-gated counter, still unsolved (not a steady countdown)
+    d["charging_connector"] = CHARGING_CONNECTOR_STATES.get(b[56], "disconnected")
+    d["charging_status"] = CHARGING_STATUSES.get(b[57], "idle")
+    charging = d["charging_status"] != "idle"
+    d["charging"] = charging
+    charging_remaining_raw = (b[58] << 8) | b[59]
+    is_remaining_na = charging_remaining_raw == CHARGING_REMAINING_SENTINEL
+    d["charging_remaining_min"] = None if is_remaining_na else charging_remaining_raw
     # byte 60: unused, always 0x00 across every capture
     # byte 61: unused, always 0x00 across every capture
-    # byte 62: unused, always 0x00 across every capture
-    power_kw = round(b[63] * 0.1, 1)
-    d["raw_byte63"] = b[63]  # confirmed: power (kW, x0.1) — see charge/regen split below
-    d["charge_power_kw"] = power_kw if b[58] == 2 else 0.0
-    d["regen_power_kw"] = power_kw if b[58] == 3 else 0.0
+    power_kw = round(((b[62] << 8) | b[63]) * 0.1, 1)
+    d["power_kw"] = power_kw
+    d["charge_power_kw"] = power_kw if charging else 0.0
+    d["regen_power_kw"] = power_kw if not charging else 0.0
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture
     # byte 66: unused, always 0x00 across every capture
     # byte 67: unused, always 0xFF across every capture
-    d["raw_word68_69"] = int.from_bytes(b[68:70], "big")
-    # unconfirmed: trip energy used — decreases monotonically while driving,
-    # holds steady when parked, ticks up briefly on hard regen
-    d["raw_word70_71"] = int.from_bytes(b[70:72], "big")
-    # unconfirmed: possible trip range — mirrors range exactly in every sample so far
+    d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
+    d["fuel_range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture
     return d
