@@ -84,7 +84,24 @@
       },
       "charging_remaining": { "name": "Charging Time Remaining" },
       "wltp_range": { "name": "WLTP Range" },
-      "fuel_range": { "name": "Fuel Range" }
+      "fuel_range": { "name": "Fuel Range" },
+      "ac_temp": { "name": "Climate Target Temperature" },
+      "seat_heat_left": {
+        "name": "Seat Heating Left",
+        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
+      },
+      "seat_heat_right": {
+        "name": "Seat Heating Right",
+        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
+      },
+      "seat_vent_left": {
+        "name": "Seat Ventilation Left",
+        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
+      },
+      "seat_vent_right": {
+        "name": "Seat Ventilation Right",
+        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
+      }
     },
     "binary_sensor": {
       "online": { "name": "Online" },
@@ -101,7 +118,8 @@
       "sunroof_open": { "name": "Sunroof" },
       "ignition": { "name": "Ignition" },
       "ac_on": { "name": "Climate Control" },
-      "charging": { "name": "Charging" }
+      "charging": { "name": "Charging" },
+      "defrost_front": { "name": "Front Defroster" }
     },
     "image": {
       "front": { "name": "Front" },

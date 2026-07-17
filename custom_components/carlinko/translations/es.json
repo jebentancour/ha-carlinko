@@ -84,7 +84,24 @@
       },
       "charging_remaining": { "name": "Tiempo Restante de Carga" },
       "wltp_range": { "name": "Autonomía WLTP" },
-      "fuel_range": { "name": "Autonomía de Combustible" }
+      "fuel_range": { "name": "Autonomía de Combustible" },
+      "ac_temp": { "name": "Temperatura Objetivo de Climatización" },
+      "seat_heat_left": {
+        "name": "Calefacción Asiento Izquierdo",
+        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
+      },
+      "seat_heat_right": {
+        "name": "Calefacción Asiento Derecho",
+        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
+      },
+      "seat_vent_left": {
+        "name": "Ventilación Asiento Izquierdo",
+        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
+      },
+      "seat_vent_right": {
+        "name": "Ventilación Asiento Derecho",
+        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
+      }
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
@@ -101,7 +118,8 @@
       "sunroof_open": { "name": "Techo Solar" },
       "ignition": { "name": "Contacto" },
       "ac_on": { "name": "Climatización" },
-      "charging": { "name": "Cargando" }
+      "charging": { "name": "Cargando" },
+      "defrost_front": { "name": "Desempañador Delantero" }
     },
     "image": {
       "front": { "name": "Frente" },

@@ -41,8 +41,12 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Odometer (km) | 18–20 | uint24 |
 | AC / climate on | 23 | nonzero = on |
+| Climate Target Temperature (°C) | 24 | raw |
 | Battery % | 28 | raw |
 | Battery Range (km) | 29–30 | uint16 |
+| Seat Heating Left / Right | 32, 33 | enum: 0=off, 1=low, 2=medium, 3=high |
+| Seat Ventilation Left / Right | 37, 38 | enum: 0=off, 1=low, 2=medium, 3=high |
+| Front Defroster | 42 | nonzero = on |
 | Tyre pressure ×4 (psi) | 44–47 | raw × 1.373 × 0.145 (0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40 (0xFF = n/a) |
 | Consumption (kWh/100 km) | 55 | raw × 0.1 |

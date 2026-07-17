@@ -211,6 +211,9 @@ CHARGING_STATUSES: dict[int, str] = {
 # (byte58==3, byte59==255) means N/A / not charging.
 CHARGING_REMAINING_SENTINEL = 0x3FF
 
+# bytes 32/33 (heated seats) and 37/38 (ventilated seats): 0=off, 1-3=fan/heat level.
+SEAT_LEVELS: dict[int, str] = {0: "off", 1: "low", 2: "medium", 3: "high"}
+
 
 def _psi(x: int) -> float | None:
     return None if x == 0xFF else round(x * 1.373 * 0.145, 1)
@@ -259,24 +262,24 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     # byte 21: unused, always 0x00 across every capture
     # byte 22: unused, always 0x01 across every capture
     d["ac_on"] = bool(b[23])
-    # byte 24: unused, varies — identical to byte 31 in every capture
+    d["ac_temp_c"] = b[24]
     # byte 25: unused, always 0x02 across every capture
-    # byte 26: unused, always 0x00 across every capture
+    # byte 26: unused, varies (0/1)
     # byte 27: unused, always 0x00 across every capture
     d["battery_pct"] = b[28]
     d["battery_range_km"] = int.from_bytes(b[29:31], "big")
-    # byte 31: unused, varies — identical to byte 24 in every capture
-    # byte 32: unused, always 0x00 across every capture
-    # byte 33: unused, always 0x00 across every capture
+    # byte 31: unused, varies — identical to byte 24 (ac_temp_c) in every capture
+    d["seat_heat_left"] = SEAT_LEVELS.get(b[32], "off")
+    d["seat_heat_right"] = SEAT_LEVELS.get(b[33], "off")
     # byte 34: unused, always 0x00 across every capture
     # byte 35: unused, always 0x00 across every capture
     # byte 36: unused, always 0x00 across every capture
-    # byte 37: unused, always 0x00 across every capture
-    # byte 38: unused, always 0x00 across every capture
+    d["seat_vent_left"] = SEAT_LEVELS.get(b[37], "off")
+    d["seat_vent_right"] = SEAT_LEVELS.get(b[38], "off")
     # byte 39: unused, always 0x00 across every capture
     # byte 40: unused, always 0x00 across every capture
     # byte 41: unused, always 0x00 across every capture
-    # byte 42: unused, always 0x00 across every capture
+    d["defrost_front"] = bool(b[42])
     # byte 43: unused, always 0x00 across every capture
     tp, tt = b[44:48], b[48:52]
     d["tyre_psi"] = [_psi(x) for x in tp]
@@ -301,7 +304,7 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture
     # byte 66: unused, always 0x00 across every capture
-    # byte 67: unused, always 0xFF across every capture
+    # byte 67: unused, varies (0x00/0xFF)
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["fuel_range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture
