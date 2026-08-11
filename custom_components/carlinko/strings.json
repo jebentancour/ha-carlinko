@@ -85,6 +85,12 @@
       "charging_remaining": { "name": "Charging Time Remaining" },
       "wltp_range": { "name": "WLTP Range" },
       "fuel_range": { "name": "Fuel Range" },
+      "fuel_level": { "name": "Fuel Level" },
+      "fuel_consumption": { "name": "Fuel Consumption" },
+      "powertrain": {
+        "name": "Powertrain",
+        "state": { "bev": "Electric (BEV)", "phev": "Plug-in Hybrid (PHEV)" }
+      },
       "ac_temp": { "name": "Climate Target Temperature" },
       "seat_heat_left": {
         "name": "Seat Heating Left",
@@ -119,7 +125,23 @@
       "ignition": { "name": "Ignition" },
       "ac_on": { "name": "Climate Control" },
       "charging": { "name": "Charging" },
-      "defrost_front": { "name": "Front Defroster" }
+      "defrost_front": { "name": "Front Defroster" },
+      "has_engine": { "name": "Combustion Engine" },
+      "control_lock": { "name": "Control: Lock" },
+      "control_windows_open": { "name": "Control: Windows Open" },
+      "control_windows_close": { "name": "Control: Windows Close" },
+      "control_windows_vent": { "name": "Control: Windows Vent" },
+      "control_sunroof": { "name": "Control: Sunroof" },
+      "control_sunroof_tilt": { "name": "Control: Sunroof Tilt" },
+      "control_liftgate": { "name": "Control: Liftgate" },
+      "control_trunk": { "name": "Control: Trunk" },
+      "control_find": { "name": "Control: Find Car" },
+      "control_charging_management": { "name": "Control: Charging Management" },
+      "control_ac_switch": { "name": "Control: A/C" },
+      "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
+      "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
+      "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
+      "control_ac_defog": { "name": "Control: A/C Defog" }
     },
     "image": {
       "front": { "name": "Front" },

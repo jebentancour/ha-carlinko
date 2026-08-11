@@ -163,6 +163,31 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("fuel_range_km"),
     ),
     CarLinkoSensorDescription(
+        key="fuel_pct",
+        translation_key="fuel_level",
+        icon="mdi:gas-station",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("fuel_pct"),
+    ),
+    CarLinkoSensorDescription(
+        key="fuel_l_100",
+        translation_key="fuel_consumption",
+        icon="mdi:gas-station",
+        native_unit_of_measurement="L/100km",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("fuel_l_100"),
+    ),
+    CarLinkoSensorDescription(
+        key="powertrain",
+        translation_key="powertrain",
+        icon="mdi:car-electric-outline",
+        device_class=SensorDeviceClass.ENUM,
+        options=["bev", "phev"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("powertrain"),
+    ),
+    CarLinkoSensorDescription(
         key="ac_temp_c",
         translation_key="ac_temp",
         icon="mdi:thermostat",
@@ -285,18 +310,8 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
         return values[self._wheel_idx]
 
 
-# Working hypotheses from live testing (see api.py's decode_blob() docstring) — names are
-# for orientation while poking at these bytes, not confirmed enough to become real sensors.
-# (Bytes 56, 57, 58, 59 and 63 graduated to proper sensors above — see decode_blob().)
 RAW_BYTE_LABELS: dict[int, str] = {}
-
-# (unit, scale) for the raw bytes where testing also suggests a physical quantity, not just
-# a flag/enum — display-only, the raw_byteN value in coordinator.data stays the plain byte.
 RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {}
-
-# Same idea as RAW_BYTE_LABELS/RAW_BYTE_UNITS, but for the combined 16-bit raw_word{hi}_{lo}
-# values (see api.py's decode_blob() for the hypothesis behind each pair).
-# (Bytes 68:69 and 70:71 graduated to proper sensors above — see decode_blob().)
 RAW_WORD_LABELS: dict[tuple[int, int], str] = {}
 
 

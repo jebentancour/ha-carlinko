@@ -11,6 +11,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -25,9 +26,6 @@ class CarLinkoBinarySensorDescription(BinarySensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any] = lambda data: None
 
 
-# Confirmed 2026-07-14 by opening/closing each door/window and the trunk one at a time and
-# watching which byte moved (byte 2 = 4-bit door mask, byte 4 = trunk, byte 8 = windows,
-# byte 9 = sunroof) — see api.py's decode_blob() docstring.
 BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
     CarLinkoBinarySensorDescription(
         key="lock",
@@ -120,6 +118,122 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.RUNNING,
         value_fn=lambda d: d.get("defrost_front"),
     ),
+    CarLinkoBinarySensorDescription(
+        key="has_engine",
+        translation_key="has_engine",
+        icon="mdi:engine",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("has_engine"),
+    ),
+)
+
+
+CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
+    CarLinkoBinarySensorDescription(
+        key="control_lock",
+        translation_key="control_lock",
+        icon="mdi:lock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_lock"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_windows_open",
+        translation_key="control_windows_open",
+        icon="mdi:arrow-expand-vertical",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_windows_open"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_windows_close",
+        translation_key="control_windows_close",
+        icon="mdi:arrow-collapse-vertical",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_windows_close"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_windows_vent",
+        translation_key="control_windows_vent",
+        icon="mdi:window-open-variant",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_windows_vent"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_sunroof",
+        translation_key="control_sunroof",
+        icon="mdi:car-convertible",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_sunroof"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_sunroof_tilt",
+        translation_key="control_sunroof_tilt",
+        icon="mdi:car-convertible",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_sunroof_tilt"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_liftgate",
+        translation_key="control_liftgate",
+        icon="mdi:car-back",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_liftgate"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_trunk",
+        translation_key="control_trunk",
+        icon="mdi:car-back",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_trunk"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_find",
+        translation_key="control_find",
+        icon="mdi:map-marker",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_find"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_charging_management",
+        translation_key="control_charging_management",
+        icon="mdi:ev-station",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_charging_management"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_switch",
+        translation_key="control_ac_switch",
+        icon="mdi:air-conditioner",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_switch"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_set_temperature",
+        translation_key="control_ac_set_temperature",
+        icon="mdi:thermostat",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_set_temperature"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_rapid_cool",
+        translation_key="control_ac_rapid_cool",
+        icon="mdi:snowflake",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_rapid_cool"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_rapid_heat",
+        translation_key="control_ac_rapid_heat",
+        icon="mdi:fire",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_rapid_heat"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_defog",
+        translation_key="control_ac_defog",
+        icon="mdi:car-defrost-front",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_defog"),
+    ),
 )
 
 
@@ -127,6 +241,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[BinarySensorEntity] = [CarLinkoOnlineSensor(coordinator, entry)]
     entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in BINARY_SENSORS]
+    entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in CONTROL_CAPABILITY_SENSORS]
     async_add_entities(entities)
 
 

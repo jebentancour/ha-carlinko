@@ -85,6 +85,12 @@
       "charging_remaining": { "name": "Tiempo Restante de Carga" },
       "wltp_range": { "name": "Autonomía WLTP" },
       "fuel_range": { "name": "Autonomía de Combustible" },
+      "fuel_level": { "name": "Nivel de Combustible" },
+      "fuel_consumption": { "name": "Consumo de Combustible" },
+      "powertrain": {
+        "name": "Motorización",
+        "state": { "bev": "Eléctrico (BEV)", "phev": "Híbrido Enchufable (PHEV)" }
+      },
       "ac_temp": { "name": "Temperatura Objetivo de Climatización" },
       "seat_heat_left": {
         "name": "Calefacción Asiento Izquierdo",
@@ -119,7 +125,23 @@
       "ignition": { "name": "Contacto" },
       "ac_on": { "name": "Climatización" },
       "charging": { "name": "Cargando" },
-      "defrost_front": { "name": "Desempañador Delantero" }
+      "defrost_front": { "name": "Desempañador Delantero" },
+      "has_engine": { "name": "Motor de Combustión" },
+      "control_lock": { "name": "Control: Cerradura" },
+      "control_windows_open": { "name": "Control: Abrir Ventanas" },
+      "control_windows_close": { "name": "Control: Cerrar Ventanas" },
+      "control_windows_vent": { "name": "Control: Ventilar Ventanas" },
+      "control_sunroof": { "name": "Control: Techo Solar" },
+      "control_sunroof_tilt": { "name": "Control: Inclinar Techo Solar" },
+      "control_liftgate": { "name": "Control: Puerta Trasera" },
+      "control_trunk": { "name": "Control: Cajuela" },
+      "control_find": { "name": "Control: Buscar Auto" },
+      "control_charging_management": { "name": "Control: Gestión de Carga" },
+      "control_ac_switch": { "name": "Control: Climatización" },
+      "control_ac_set_temperature": { "name": "Control: Temperatura de Climatización" },
+      "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
+      "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
+      "control_ac_defog": { "name": "Control: Desempañado" }
     },
     "image": {
       "front": { "name": "Frente" },

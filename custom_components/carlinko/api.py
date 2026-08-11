@@ -1,18 +1,15 @@
 """Async CarLinko client: login (HMAC request signing) + REST telemetry polling.
 
-Ported from tools/auth.py in the parent j5-ev-dashboard project (requests, sync) to
-aiohttp (async, for Home Assistant's event loop). Telemetry reads use plain signed GETs
-(`/user/vehicle/isOnline/{id}`, `/user/vehicle/state/{id}`) rather than the realtime
-WebSocket — confirmed to return the identical status blob, see docs/api-map.md in the
-parent project. The WebSocket is only needed for remote control, which this integration
-doesn't implement.
+Telemetry reads use plain signed GETs (`/user/vehicle/isOnline/{id}`, `/user/vehicle/state/{id}`).
 """
 from __future__ import annotations
 
 import base64
+import dataclasses
 import hashlib
 import hmac
 import json
+import re
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -66,6 +63,105 @@ class VehicleInfo:
     img_top: str
 
 
+DEFAULT_TPMS_SCALE = 1.373
+DEFAULT_TIRE_INVALID: frozenset[int] = frozenset({0xFF})
+DEFAULT_CHARGING_REMAINING_INVALID: frozenset[int] = frozenset({0x3FE, 0x3FF, 0x7FE, 0x7FF})
+
+
+@dataclass(frozen=True)
+class ControlCapabilities:
+    """What this car can be told to do, straight from vehicleControlConfig."""
+
+    lock: bool = False
+    windows_open: bool = False
+    windows_close: bool = False
+    windows_vent: bool = False
+    sunroof: bool = False
+    sunroof_tilt: bool = False
+    liftgate: bool = False
+    trunk: bool = False
+    find: bool = False
+    charging_management: bool = False
+    ac_switch: bool = False
+    ac_set_temperature: bool = False
+    ac_rapid_cool: bool = False
+    ac_rapid_heat: bool = False
+    ac_defog: bool = False
+
+
+@dataclass(frozen=True)
+class VehicleControlConfig:
+    """Per-model constants CarLinko publishes on `/user/vehicle` -> vehicleControlConfig."""
+
+    tpms_scale: float = DEFAULT_TPMS_SCALE
+    tire_pressure_invalid: frozenset[int] = DEFAULT_TIRE_INVALID
+    tire_temp_invalid: frozenset[int] = DEFAULT_TIRE_INVALID
+    charging_remaining_invalid: frozenset[int] = DEFAULT_CHARGING_REMAINING_INVALID
+    is_phev: bool = False
+    has_engine: bool = False
+    capabilities: ControlCapabilities = ControlCapabilities()
+
+
+def _hex_set(values: Any) -> frozenset[int] | None:
+    if not isinstance(values, list) or not values:
+        return None
+    try:
+        return frozenset(int(str(v), 16) for v in values)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
+    cfg = raw
+    if isinstance(cfg, str):
+        try:
+            cfg = json.loads(cfg or "{}")
+        except json.JSONDecodeError:
+            cfg = {}
+    if not isinstance(cfg, dict):
+        cfg = {}
+
+    formula = str(cfg.get("appKpaFormula") or cfg.get("webTirePressureFormula") or "")
+    m = re.search(r"data\s*\*\s*([0-9]*\.?[0-9]+)", formula)
+    tpms_scale = float(m.group(1)) if m else DEFAULT_TPMS_SCALE
+
+    tire_pressure_invalid = _hex_set(cfg.get("tirePressureInvalid")) or DEFAULT_TIRE_INVALID
+    tire_temp_invalid = _hex_set(cfg.get("tireTempInvalid")) or DEFAULT_TIRE_INVALID
+    charging_remaining_invalid = _hex_set(cfg.get("chargingTimeInvalidValue")) or DEFAULT_CHARGING_REMAINING_INVALID
+
+    is_phev = bool(cfg.get("fuelConsumption")) and bool(cfg.get("powerConsumption"))
+    has_engine = bool(cfg.get("Engine"))
+
+    ac = cfg.get("A/C") or {}
+    capabilities = ControlCapabilities(
+        lock=bool(cfg.get("Lock")),
+        windows_open=bool(cfg.get("WindowsOpen")),
+        windows_close=bool(cfg.get("WindowsClose")),
+        windows_vent=bool(cfg.get("WindowsVent")),
+        sunroof=bool(cfg.get("Sunroof")),
+        sunroof_tilt=bool(cfg.get("SunroofTilting")),
+        liftgate=bool(cfg.get("PowerLiftgate")),
+        trunk=bool(cfg.get("Trunk")),
+        find=bool(cfg.get("Search")),
+        charging_management=bool(cfg.get("ChargingManagement")),
+        ac_switch=bool(ac.get("Switch")),
+        ac_set_temperature=bool(ac.get("SetTemperature")),
+        ac_rapid_cool=bool(ac.get("RapidCool")),
+        ac_rapid_heat=bool(ac.get("RapidHeat")),
+        ac_defog=bool(ac.get("Defogging")),
+    )
+
+    return VehicleControlConfig(
+        tpms_scale=tpms_scale,
+        tire_pressure_invalid=tire_pressure_invalid,
+        tire_temp_invalid=tire_temp_invalid,
+        charging_remaining_invalid=charging_remaining_invalid,
+        is_phev=is_phev,
+        has_engine=has_engine,
+        capabilities=capabilities,
+    )
+
+
 class CarLinkoClient:
     """Talks to a single CarLinko account's REST API."""
 
@@ -75,6 +171,7 @@ class CarLinkoClient:
         self._password = password
         self._region = region
         self.token: str | None = None
+        self._control_config: VehicleControlConfig | None = None
 
     @property
     def api_base(self) -> str:
@@ -168,8 +265,23 @@ class CarLinkoClient:
             )
         return vehicles
 
+    async def get_vehicle_control_config(self, vehicle_id: str) -> VehicleControlConfig:
+        """Fetch + cache vehicleControlConfig for this vehicle.
+
+        It's a per-model constant CarLinko won't change under us, so one fetch per client
+        lifetime (i.e. per HA config entry, since the client lives on the coordinator) is enough.
+        """
+        if self._control_config is not None:
+            return self._control_config
+        data = await self._signed_get("/user/vehicle")
+        raw = data.get("data")
+        items = raw if isinstance(raw, list) else ([raw] if raw else [])
+        vehicle = next((v for v in items if str(v.get("vehicleId")) == str(vehicle_id)), None)
+        self._control_config = _parse_vehicle_control_config((vehicle or {}).get("vehicleControlConfig"))
+        return self._control_config
+
     async def poll_telemetry(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Poll the vehicle status blob via plain signed GETs (no WebSocket needed for reads).
+        """Poll the vehicle status blob via plain signed GETs.
 
         Returns None if the car is reported offline.
         """
@@ -180,24 +292,14 @@ class CarLinkoClient:
         blob = state.get("data")
         if not isinstance(blob, str):
             return None
-        return decode_blob(blob)
+        control_config = await self.get_vehicle_control_config(vehicle_id)
+        return decode_blob(blob, control_config)
 
-
-# Suspect/unconfirmed bytes surfaced as raw diagnostic sensors so hypothesis testing can
-# happen live in HA instead of only in the parent project's docs/api-map.md notes.
 RAW_TEST_BYTES: tuple[int, ...] = ()
-
-# High/low byte pairs combined into a single 16-bit diagnostic value each, exposed as
-# raw_word{hi}_{lo} — see decode_blob() for the hypothesis behind each pair.
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
 
-# byte 56: charging-connector/mode enum, confirmed against the vendor app's own readings.
 CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 2: "connected_idle", 16: "dc_fast"}
 
-# byte 57: charging status enum, confirmed against the vendor app's own readings AND two live
-# charging sessions — the reliable `charging` boolean is `byte57 != idle` (any in-progress,
-# completed, canceled, hot-limited, or stopping state), not byte 58 (which is just the high
-# byte of the remaining-time word at bytes 58:59, see below).
 CHARGING_STATUSES: dict[int, str] = {
     0: "idle",
     1: "charging",
@@ -207,28 +309,23 @@ CHARGING_STATUSES: dict[int, str] = {
     5: "stop_charging",
 }
 
-# bytes 58:59 combined form a 16-bit "charging remaining time (minutes)" field; this sentinel
-# (byte58==3, byte59==255) means N/A / not charging.
-CHARGING_REMAINING_SENTINEL = 0x3FF
-
-# bytes 32/33 (heated seats) and 37/38 (ventilated seats): 0=off, 1-3=fan/heat level.
 SEAT_LEVELS: dict[int, str] = {0: "off", 1: "low", 2: "medium", 3: "high"}
 
 
-def _psi(x: int) -> float | None:
-    return None if x == 0xFF else round(x * 1.373 * 0.145, 1)
+def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
+    """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`."""
+    cfg = control_config or VehicleControlConfig()
 
+    def _psi(x: int) -> float | None:
+        return None if x in cfg.tire_pressure_invalid else round(x * cfg.tpms_scale * 0.145, 1)
 
-def _tyre_temp(x: int) -> int | None:
-    # Confirmed against the app's own display: it truncates, not rounds (16.6 -> 16).
-    return None if x == 0xFF else int(x * 0.65 - 40)
+    def _tyre_temp(x: int) -> int | None:
+        # Confirmed against the app's own display: it truncates, not rounds (16.6 -> 16).
+        return None if x in cfg.tire_temp_invalid else int(x * 0.65 - 40)
 
+    def _charging_remaining(x: int) -> int | None:
+        return None if x in cfg.charging_remaining_invalid else x
 
-def decode_blob(hexstr: str) -> dict[str, Any]:
-    """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`.
-
-    Byte map calibrated on a Jaecoo J5 EV and an Omoda E5.
-    """
     b = bytes.fromhex(hexstr)
     d: dict[str, Any] = {"raw": hexstr}
     if len(b) < 73:  # confirmed length across every capture
@@ -259,7 +356,7 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     # byte 16: unused, always 0x00 across every capture
     # byte 17: unused, always 0x00 across every capture
     d["odometer_km"] = int.from_bytes(b[18:21], "big")
-    # byte 21: unused, always 0x00 across every capture
+    d["fuel_pct"] = b[21]
     # byte 22: unused, always 0x01 across every capture
     d["ac_on"] = bool(b[23])
     d["ac_temp_c"] = b[24]
@@ -285,16 +382,14 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     d["tyre_psi"] = [_psi(x) for x in tp]
     d["tyre_temp_c"] = [_tyre_temp(x) for x in tt]
     # byte 52: unused, always 0x00 across every capture
-    # byte 53: unused, always 0x00 across every capture
-    # byte 54: unused, always 0x00 across every capture
+    d["fuel_l_100"] = round(b[53] * 0.1, 1)
+    # byte 54: unknown meaning — reads 20 on every confirmed PHEV frame, 0 on every BEV frame
     d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
     d["charging_connector"] = CHARGING_CONNECTOR_STATES.get(b[56], "disconnected")
     d["charging_status"] = CHARGING_STATUSES.get(b[57], "idle")
     charging = d["charging_status"] != "idle"
     d["charging"] = charging
-    charging_remaining_raw = (b[58] << 8) | b[59]
-    is_remaining_na = charging_remaining_raw == CHARGING_REMAINING_SENTINEL
-    d["charging_remaining_min"] = None if is_remaining_na else charging_remaining_raw
+    d["charging_remaining_min"] = _charging_remaining((b[58] << 8) | b[59])
     # byte 60: unused, always 0x00 across every capture
     # byte 61: unused, always 0x00 across every capture
     power_kw = round(((b[62] << 8) | b[63]) * 0.1, 1)
@@ -308,4 +403,12 @@ def decode_blob(hexstr: str) -> dict[str, Any]:
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["fuel_range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture
+
+    # Powertrain + control capabilities: not telemetry bytes, but vehicleControlConfig facts
+    # about this car, refreshed on the same poll so they live alongside the blob in one place.
+    d["powertrain"] = "phev" if cfg.is_phev else "bev"
+    d["has_engine"] = cfg.has_engine
+    for name, value in dataclasses.asdict(cfg.capabilities).items():
+        d[f"control_{name}"] = value
+
     return d
