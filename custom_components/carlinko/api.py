@@ -401,7 +401,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # byte 66: unused, always 0x00 across every capture
     # byte 67: unused, varies (0x00/0xFF)
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
-    d["fuel_range_km"] = int.from_bytes(b[70:72], "big")
+    d["range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture
 
     # Powertrain + control capabilities: not telemetry bytes, but vehicleControlConfig facts

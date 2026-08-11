@@ -47,22 +47,37 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | Seat Heating Left / Right | 32, 33 | enum: 0=off, 1=low, 2=medium, 3=high |
 | Seat Ventilation Left / Right | 37, 38 | enum: 0=off, 1=low, 2=medium, 3=high |
 | Front Defroster | 42 | nonzero = on |
-| Tyre pressure ×4 (psi) | 44–47 | raw × 1.373 × 0.145 (0xFF = n/a) |
-| Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40 (0xFF = n/a) |
+| Tyre pressure ×4 (psi) | 44–47 | raw × scale × 0.145, scale/invalid sentinel from `vehicleControlConfig` (default: 1.373, 0xFF = n/a) |
+| Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40, invalid sentinel from `vehicleControlConfig` (default: 0xFF = n/a) |
+| Fuel Level % *(PHEV only)* | 21 | raw — always 0 on a BEV |
+| Fuel Consumption (L/100 km) *(PHEV only)* | 53 | raw × 0.1 — always 0 on a BEV |
 | Consumption (kWh/100 km) | 55 | raw × 0.1 |
 | Charging Connector | 56 | enum: 0=disconnected, 1=AC(slow), 2=connected/idle, 16=DC(fast) |
 | Charging Status / Charging (binary) | 57 | enum: 0=idle, 1=charging, 2=complete, 3=canceled, 4=hot, 5=stopping — `charging` = (57 != idle) |
-| Charging Time Remaining (min) | 58–59 | uint16, 58<<8\|59 (0x3FF = n/a) |
+| Charging Time Remaining (min) | 58–59 | uint16, 58<<8\|59, invalid sentinel(s) from `vehicleControlConfig` (default: 0x3FE/0x3FF/0x7FE/0x7FF = n/a) |
 | Power (kW) | 62–63 | (62<<8\|63) × 0.1 |
 | Charge Power (kW) | 62–63, gated by byte 57 | Power if charging, else 0 |
 | Regen Power (kW) | 62–63, gated by byte 57 | Power if not charging, else 0 |
 | WLTP Range (km) | 68–69 | uint16 |
-| Fuel Range (km) | 70–71 | uint16, mirrors Battery Range on this EV — expect to diverge on a PHEV |
+| Range (km) | 70–71 | uint16 |
 
 **Online** (`binary_sensor`) isn't part of the status blob — it comes from a separate
 endpoint, `GET /user/vehicle/isOnline/{id}`, polled once per cycle alongside `state`. When
 it reports offline, the coordinator skips the blob fetch and keeps the last known values
 for every other entity instead of clearing them.
+
+### Powertrain & capabilities
+
+The account endpoint `GET /user/vehicle` also publishes per-model constants and feature
+flags in `vehicleControlConfig` — fetched once and cached for the life of the config entry
+(it's not part of the polled status blob). This drives the tyre-pressure scale/invalid
+sentinels and charging-time invalid sentinels above, plus these diagnostic entities:
+
+| Entity | Source | Meaning |
+| --- | --- | --- |
+| Powertrain | `fuelConsumption` + `powerConsumption` | `phev` if both true, else `bev` |
+| Combustion Engine | `Engine` | whether the car has one (false on every BEV) |
+| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Trunk / Find Car / Charging Management / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Trunk`, `Search`, `ChargingManagement`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
 
 ## Options
 

@@ -84,7 +84,7 @@
       },
       "charging_remaining": { "name": "Charging Time Remaining" },
       "wltp_range": { "name": "WLTP Range" },
-      "fuel_range": { "name": "Fuel Range" },
+      "range": { "name": "Range" },
       "fuel_level": { "name": "Fuel Level" },
       "fuel_consumption": { "name": "Fuel Consumption" },
       "powertrain": {
