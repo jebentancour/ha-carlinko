@@ -40,6 +40,7 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | 12 V battery (V) | 12–13 | uint16 × 0.01 |
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Odometer (km) | 18–20 | uint24 |
+| Fuel Level % *(PHEV only)* | 21 | raw — always 0 on a BEV |
 | AC / climate on | 23 | nonzero = on |
 | Climate Target Temperature (°C) | 24 | raw |
 | Battery % | 28 | raw |
@@ -49,7 +50,6 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | Front Defroster | 42 | nonzero = on |
 | Tyre pressure ×4 (psi) | 44–47 | raw × scale × 0.145, scale/invalid sentinel from `vehicleControlConfig` (default: 1.373, 0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40, invalid sentinel from `vehicleControlConfig` (default: 0xFF = n/a) |
-| Fuel Level % *(PHEV only)* | 21 | raw — always 0 on a BEV |
 | Fuel Consumption (L/100 km) *(PHEV only)* | 53 | raw × 0.1 — always 0 on a BEV |
 | Consumption (kWh/100 km) | 55 | raw × 0.1 |
 | Charging Connector | 56 | enum: 0=disconnected, 1=AC(slow), 2=connected/idle, 16=DC(fast) |
