@@ -234,6 +234,244 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("control_ac_defog"),
     ),
+    CarLinkoBinarySensorDescription(
+        key="control_scheduled_charging",
+        translation_key="control_scheduled_charging",
+        icon="mdi:calendar-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_scheduled_charging"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_scheduled_travel",
+        translation_key="control_scheduled_travel",
+        icon="mdi:calendar-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_scheduled_travel"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_steering_wheel_heater",
+        translation_key="control_steering_wheel_heater",
+        icon="mdi:steering",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_steering_wheel_heater"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_front_windshield_heater",
+        translation_key="control_front_windshield_heater",
+        icon="mdi:car-defrost-front",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_front_windshield_heater"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_charging_power",
+        translation_key="control_charging_power",
+        icon="mdi:ev-station",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_charging_power"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_air_purification",
+        translation_key="control_ac_air_purification",
+        icon="mdi:air-filter",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_air_purification"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_driver_vent",
+        translation_key="control_ac_driver_vent",
+        icon="mdi:car-seat-cooler",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_driver_vent"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_assistant_vent",
+        translation_key="control_ac_assistant_vent",
+        icon="mdi:car-seat-cooler",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_assistant_vent"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_driver_heater",
+        translation_key="control_ac_driver_heater",
+        icon="mdi:car-seat-heater",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_driver_heater"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_assistant_heater",
+        translation_key="control_ac_assistant_heater",
+        icon="mdi:car-seat-heater",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_assistant_heater"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_rear_heater",
+        translation_key="control_ac_rear_heater",
+        icon="mdi:car-seat-heater",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_rear_heater"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_high_low_gear",
+        translation_key="control_ac_high_low_gear",
+        icon="mdi:fan",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_high_low_gear"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="control_ac_set_duration",
+        translation_key="control_ac_set_duration",
+        icon="mdi:timer-cog-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("control_ac_set_duration"),
+    ),
+)
+
+
+# From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip/charge
+# schedules, geofence and per-event notification prefs. All diagnostic; keys share a prefix per
+# section (trip_schedule_/geofence_/charge_schedule_/notify_) so they group together in the UI.
+NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
+    CarLinkoBinarySensorDescription(
+        key="trip_schedule_enabled",
+        translation_key="trip_schedule_enabled",
+        icon="mdi:calendar-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("trip_schedule_enabled"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="geofence_gps_enabled",
+        translation_key="geofence_gps_enabled",
+        icon="mdi:crosshairs-gps",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("geofence_gps_enabled"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="geofence_notify_enabled",
+        translation_key="geofence_notify_enabled",
+        icon="mdi:map-marker-radius",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("geofence_notify_enabled"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="geofence_enter_alert",
+        translation_key="geofence_enter_alert",
+        icon="mdi:map-marker-check",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("geofence_enter_alert"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="geofence_exit_alert",
+        translation_key="geofence_exit_alert",
+        icon="mdi:map-marker-remove",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("geofence_exit_alert"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="charge_schedule_enabled",
+        translation_key="charge_schedule_enabled",
+        icon="mdi:calendar-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("charge_schedule_enabled"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_remote_startup",
+        translation_key="notify_remote_startup",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_remote_startup"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_shutdown",
+        translation_key="notify_shutdown",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_shutdown"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_locked",
+        translation_key="notify_locked",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_locked"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_unlocked",
+        translation_key="notify_unlocked",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_unlocked"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_trunk_opened",
+        translation_key="notify_trunk_opened",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_trunk_opened"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_low_voltage",
+        translation_key="notify_low_voltage",
+        icon="mdi:battery-alert",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_low_voltage"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_shaken",
+        translation_key="notify_shaken",
+        icon="mdi:vibrate",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_shaken"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_illegal_opened",
+        translation_key="notify_illegal_opened",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_illegal_opened"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_illegal_startup",
+        translation_key="notify_illegal_startup",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_illegal_startup"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_forget_to_lock",
+        translation_key="notify_forget_to_lock",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_forget_to_lock"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_vehicle_immobilizer",
+        translation_key="notify_vehicle_immobilizer",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_vehicle_immobilizer"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_vehicle_anomaly",
+        translation_key="notify_vehicle_anomaly",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_vehicle_anomaly"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_battery_anomaly",
+        translation_key="notify_battery_anomaly",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_battery_anomaly"),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="notify_charge_idle",
+        translation_key="notify_charge_idle",
+        icon="mdi:ev-station",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("notify_charge_idle"),
+    ),
 )
 
 
@@ -242,6 +480,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities: list[BinarySensorEntity] = [CarLinkoOnlineSensor(coordinator, entry)]
     entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in BINARY_SENSORS]
     entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in CONTROL_CAPABILITY_SENSORS]
+    entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in NOTICE_CONFIG_BINARY_SENSORS]
     async_add_entities(entities)
 
 

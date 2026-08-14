@@ -16,7 +16,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import APP_LOGIN_BODY, SIGN_KEY, USER_AGENT
+from .const import APP_LOGIN_BODY, DEFAULT_NOTICE_CONFIG_INTERVAL, SIGN_KEY, USER_AGENT
 
 
 class CarLinkoAuthError(Exception):
@@ -82,11 +82,24 @@ class ControlCapabilities:
     trunk: bool = False
     find: bool = False
     charging_management: bool = False
+    scheduled_charging: bool = False
+    scheduled_travel: bool = False
+    steering_wheel_heater: bool = False
+    front_windshield_heater: bool = False
+    charging_power: bool = False
     ac_switch: bool = False
     ac_set_temperature: bool = False
     ac_rapid_cool: bool = False
     ac_rapid_heat: bool = False
     ac_defog: bool = False
+    ac_air_purification: bool = False
+    ac_driver_vent: bool = False
+    ac_assistant_vent: bool = False
+    ac_driver_heater: bool = False
+    ac_assistant_heater: bool = False
+    ac_rear_heater: bool = False
+    ac_high_low_gear: bool = False
+    ac_set_duration: bool = False
 
 
 @dataclass(frozen=True)
@@ -99,6 +112,11 @@ class VehicleControlConfig:
     charging_remaining_invalid: frozenset[int] = DEFAULT_CHARGING_REMAINING_INVALID
     is_phev: bool = False
     has_engine: bool = False
+    trunk_type: int | None = None
+    charging_cycle: int | None = None
+    ac_temp_min: float | None = None
+    ac_temp_max: float | None = None
+    ac_temp_step: float | None = None
     capabilities: ControlCapabilities = ControlCapabilities()
 
 
@@ -144,11 +162,24 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         trunk=bool(cfg.get("Trunk")),
         find=bool(cfg.get("Search")),
         charging_management=bool(cfg.get("ChargingManagement")),
+        scheduled_charging=bool(cfg.get("ScheduledCharging")),
+        scheduled_travel=bool(cfg.get("ScheduledTravel")),
+        steering_wheel_heater=bool(cfg.get("SteeringWheelHeater")),
+        front_windshield_heater=bool(cfg.get("FrontWindshieldHeater")),
+        charging_power=bool(cfg.get("chargingPower")),
         ac_switch=bool(ac.get("Switch")),
         ac_set_temperature=bool(ac.get("SetTemperature")),
         ac_rapid_cool=bool(ac.get("RapidCool")),
         ac_rapid_heat=bool(ac.get("RapidHeat")),
         ac_defog=bool(ac.get("Defogging")),
+        ac_air_purification=bool(ac.get("AirPurification")),
+        ac_driver_vent=bool(ac.get("DriverVent")),
+        ac_assistant_vent=bool(ac.get("AssistantVent")),
+        ac_driver_heater=bool(ac.get("DriverHeater")),
+        ac_assistant_heater=bool(ac.get("AssistantHeater")),
+        ac_rear_heater=bool(ac.get("RearHeater")),
+        ac_high_low_gear=bool(ac.get("HighLowGear")),
+        ac_set_duration=bool(ac.get("SetDuration")),
     )
 
     return VehicleControlConfig(
@@ -158,20 +189,41 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         charging_remaining_invalid=charging_remaining_invalid,
         is_phev=is_phev,
         has_engine=has_engine,
+        trunk_type=cfg.get("TrunkType"),
+        charging_cycle=cfg.get("chargingCycle"),
+        ac_temp_min=ac.get("SetTemperatureMin"),
+        ac_temp_max=ac.get("SetTemperatureMax"),
+        ac_temp_step=ac.get("TemperatureStepValue"),
         capabilities=capabilities,
     )
 
 
 class CarLinkoClient:
-    """Talks to a single CarLinko account's REST API."""
+    """Talks to a single CarLinko account's REST API.
 
-    def __init__(self, session: aiohttp.ClientSession, email: str, password: str, region: str) -> None:
+    Endpoints are polled on different cadences depending on how often each one actually
+    changes, fastest first: `isOnline` / `state` (telemetry, every poll) > `terminalNoticeConfig`
+    (schedules/geofence/notifications, cached with a TTL — see `_get_notice_config`) >
+    `vehicleControlConfig` (per-model constants, fetched once and cached forever).
+    """
+
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        email: str,
+        password: str,
+        region: str,
+        notice_config_interval: int = DEFAULT_NOTICE_CONFIG_INTERVAL,
+    ) -> None:
         self._session = session
         self._email = email
         self._password = password
         self._region = region
+        self._notice_config_ttl = notice_config_interval
         self.token: str | None = None
         self._control_config: VehicleControlConfig | None = None
+        self._notice_config: dict[str, Any] | None = None
+        self._notice_config_fetched_monotonic: float | None = None
 
     @property
     def api_base(self) -> str:
@@ -241,6 +293,8 @@ class CarLinkoClient:
             return await self._signed_get(path, _retried=True)
         return data
 
+    # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
+
     async def get_vehicles(self) -> list[VehicleInfo]:
         """List vehicles on this account (used by config_flow to auto-detect the car)."""
         data = await self._signed_get("/user/vehicle")
@@ -280,20 +334,66 @@ class CarLinkoClient:
         self._control_config = _parse_vehicle_control_config((vehicle or {}).get("vehicleControlConfig"))
         return self._control_config
 
-    async def poll_telemetry(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Poll the vehicle status blob via plain signed GETs.
+    # ---- /user/vehicle/isOnline/{id} ----
 
-        Returns None if the car is reported offline.
-        """
+    async def _fetch_online(self, vehicle_id: str) -> bool:
         online = await self._signed_get(f"/user/vehicle/isOnline/{vehicle_id}")
-        if not online.get("data"):
-            return None
+        return bool(online.get("data"))
+
+    # ---- /user/vehicle/state/{id} — telemetry blob ----
+
+    async def _fetch_state_blob(self, vehicle_id: str) -> str | None:
         state = await self._signed_get(f"/user/vehicle/state/{vehicle_id}")
         blob = state.get("data")
-        if not isinstance(blob, str):
+        return blob if isinstance(blob, str) else None
+
+    # ---- /user/device/manage/terminalNoticeConfig/{id} — schedules/geofence/notifications ----
+
+    async def _get_notice_config(self, vehicle_id: str) -> dict[str, Any]:
+        """Return the decoded notice config, refetching only once `self._notice_config_ttl`
+        seconds have elapsed since the last successful fetch (user-configurable, see options flow).
+
+        A failed refetch keeps serving the last known-good value instead of failing the whole
+        poll, since this data changes far less often than the telemetry blob it's merged with.
+        """
+        now = time.monotonic()
+        fresh = (
+            self._notice_config is not None
+            and self._notice_config_fetched_monotonic is not None
+            and now - self._notice_config_fetched_monotonic < self._notice_config_ttl
+        )
+        if fresh:
+            return self._notice_config
+
+        try:
+            notice = await self._signed_get(f"/user/device/manage/terminalNoticeConfig/{vehicle_id}")
+        except (CarLinkoAuthError, CarLinkoConnectionError):
+            if self._notice_config is not None:
+                return self._notice_config
+            raise
+
+        self._notice_config = decode_notice_config(notice.get("data"))
+        self._notice_config_fetched_monotonic = now
+        return self._notice_config
+
+    # ---- combined poll, one update cycle ----
+
+    async def poll_telemetry(self, vehicle_id: str) -> dict[str, Any] | None:
+        """Poll one update cycle's worth of vehicle state.
+
+        Merges the telemetry blob (fetched fresh every call) with the slower-changing
+        vehicleControlConfig (cached forever) and notice config (cached with a TTL) described
+        above. Returns None if the car is reported offline.
+        """
+        if not await self._fetch_online(vehicle_id):
+            return None
+        blob = await self._fetch_state_blob(vehicle_id)
+        if blob is None:
             return None
         control_config = await self.get_vehicle_control_config(vehicle_id)
-        return decode_blob(blob, control_config)
+        data = decode_blob(blob, control_config)
+        data.update(await self._get_notice_config(vehicle_id))
+        return data
 
 RAW_TEST_BYTES: tuple[int, ...] = ()
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
@@ -408,7 +508,106 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # about this car, refreshed on the same poll so they live alongside the blob in one place.
     d["powertrain"] = "phev" if cfg.is_phev else "bev"
     d["has_engine"] = cfg.has_engine
+    d["trunk_type"] = cfg.trunk_type
+    d["charging_cycle"] = cfg.charging_cycle
+    d["ac_temp_min"] = cfg.ac_temp_min
+    d["ac_temp_max"] = cfg.ac_temp_max
+    d["ac_temp_step"] = cfg.ac_temp_step
     for name, value in dataclasses.asdict(cfg.capabilities).items():
         d[f"control_{name}"] = value
+
+    return d
+
+
+# Notice-config field order confirmed live 2026-08-14: marking Thursday-only in the app's
+# trip-schedule screen produced week=[false,false,false,true,false,false,false] (index 3).
+WEEKDAY_LABELS: tuple[str, ...] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+# Individual push-notification toggles that live in the same notice-config resource as the
+# trip/charge schedules and geofence settings below — (source key, decoded key).
+NOTIFY_FIELDS: tuple[tuple[str, str], ...] = (
+    ("remoteStartup", "notify_remote_startup"),
+    ("shutdown", "notify_shutdown"),
+    ("locked", "notify_locked"),
+    ("unlocked", "notify_unlocked"),
+    ("trunkOpened", "notify_trunk_opened"),
+    ("lowVoltage", "notify_low_voltage"),
+    ("shaken", "notify_shaken"),
+    ("illegalOpened", "notify_illegal_opened"),
+    ("illegalStartup", "notify_illegal_startup"),
+    ("forgetToLock", "notify_forget_to_lock"),
+    ("vehicleImmobilizer", "notify_vehicle_immobilizer"),
+    ("enableVehicleAnomalyWarning", "notify_vehicle_anomaly"),
+    ("enableBatteryAnomalyWarning", "notify_battery_anomaly"),
+    ("chargeIdle", "notify_charge_idle"),
+)
+
+
+def _parse_json_field(raw: Any) -> dict[str, Any]:
+    """`extra`/`batterySchedule` are JSON *strings* nested inside the outer JSON response."""
+    if not isinstance(raw, str):
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _format_hhmm(hour: Any, minute: Any) -> str | None:
+    try:
+        return f"{int(hour):02d}:{int(minute):02d}"
+    except (TypeError, ValueError):
+        return None
+
+
+def _format_week_days(week: Any) -> str | None:
+    if not isinstance(week, list) or len(week) != 7:
+        return None
+    days = [bool(x) for x in week]
+    if not any(days):
+        return "none"
+    if all(days):
+        return "all"
+    return ",".join(label for label, on in zip(WEEKDAY_LABELS, days) if on)
+
+
+def decode_notice_config(raw: Any) -> dict[str, Any]:
+    """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule, charge
+    schedule, geofence and per-event push-notification preferences.
+
+    A separate REST config resource, not part of the telemetry blob (confirmed 2026-08-14:
+    toggling these in the app never moves a byte in `decode_blob`'s output).
+    """
+    cfg = raw if isinstance(raw, dict) else {}
+    d: dict[str, Any] = {}
+
+    # Viaje programado (scheduled trip / pre-conditioning). `startupAppointment` confirmed
+    # live as the real enable flag (not just a notification toggle despite sitting among
+    # them): toggling it in the app flips only this field, nothing else. "One-time" vs
+    # "recurring" has no dedicated flag — the app infers it from whether any `week` day is set.
+    trip = _parse_json_field(cfg.get("extra"))
+    d["trip_schedule_enabled"] = bool(cfg.get("startupAppointment"))
+    d["trip_schedule_time"] = _format_hhmm(trip.get("hour"), trip.get("minute"))
+    d["trip_schedule_days"] = _format_week_days(trip.get("week"))
+
+    # Geocerca. Field names are a literal translation of 电子围栏 ("electronic fence") — "rail"
+    # here means geofence, confirmed against the app's own geofence-list debug strings.
+    d["geofence_gps_enabled"] = bool(cfg.get("enableGps"))
+    d["geofence_notify_enabled"] = bool(cfg.get("enableLocationRail"))
+    d["geofence_enter_alert"] = bool(cfg.get("enterRail"))
+    d["geofence_exit_alert"] = bool(cfg.get("exitRail"))
+
+    # Carga programada.
+    charge = _parse_json_field(cfg.get("batterySchedule"))
+    d["charge_target_soc"] = cfg.get("targetSoc")
+    d["charge_schedule_enabled"] = bool(charge.get("enabled"))
+    d["charge_schedule_time"] = _format_hhmm(charge.get("hour"), charge.get("minute"))
+    d["charge_schedule_duration_h"] = charge.get("duration")
+    d["charge_schedule_days"] = _format_week_days(charge.get("week"))
+
+    # Notificaciones — individual push-alert toggles, not vehicle state.
+    for src_key, dest_key in NOTIFY_FIELDS:
+        d[dest_key] = bool(cfg.get(src_key))
 
     return d

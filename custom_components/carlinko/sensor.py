@@ -228,6 +228,96 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         options=list(SEAT_LEVELS.values()),
         value_fn=lambda d: d.get("seat_vent_right"),
     ),
+    # From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip and
+    # charge schedules, both diagnostic. Booleans for these live in binary_sensor.py instead.
+    CarLinkoSensorDescription(
+        key="trip_schedule_time",
+        translation_key="trip_schedule_time",
+        icon="mdi:clock-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("trip_schedule_time"),
+    ),
+    CarLinkoSensorDescription(
+        key="trip_schedule_days",
+        translation_key="trip_schedule_days",
+        icon="mdi:calendar-week",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("trip_schedule_days"),
+    ),
+    CarLinkoSensorDescription(
+        key="charge_target_soc",
+        translation_key="charge_target_soc",
+        icon="mdi:battery-charging-high",
+        device_class=SensorDeviceClass.BATTERY,
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("charge_target_soc"),
+    ),
+    CarLinkoSensorDescription(
+        key="charge_schedule_time",
+        translation_key="charge_schedule_time",
+        icon="mdi:clock-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("charge_schedule_time"),
+    ),
+    CarLinkoSensorDescription(
+        key="charge_schedule_duration_h",
+        translation_key="charge_schedule_duration",
+        icon="mdi:timer-outline",
+        native_unit_of_measurement=UnitOfTime.HOURS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("charge_schedule_duration_h"),
+    ),
+    CarLinkoSensorDescription(
+        key="charge_schedule_days",
+        translation_key="charge_schedule_days",
+        icon="mdi:calendar-week",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("charge_schedule_days"),
+    ),
+    # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
+    # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
+    CarLinkoSensorDescription(
+        key="trunk_type",
+        translation_key="trunk_type",
+        icon="mdi:car-back",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("trunk_type"),
+    ),
+    CarLinkoSensorDescription(
+        key="charging_cycle",
+        translation_key="charging_cycle",
+        icon="mdi:refresh",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("charging_cycle"),
+    ),
+    CarLinkoSensorDescription(
+        key="ac_temp_min",
+        translation_key="ac_temp_min",
+        icon="mdi:thermometer-low",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("ac_temp_min"),
+    ),
+    CarLinkoSensorDescription(
+        key="ac_temp_max",
+        translation_key="ac_temp_max",
+        icon="mdi:thermometer-high",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("ac_temp_max"),
+    ),
+    CarLinkoSensorDescription(
+        key="ac_temp_step",
+        translation_key="ac_temp_step",
+        icon="mdi:thermometer-lines",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("ac_temp_step"),
+    ),
 )
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:

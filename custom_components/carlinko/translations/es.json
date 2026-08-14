@@ -46,7 +46,8 @@
     "step": {
       "init": {
         "data": {
-          "scan_interval": "Intervalo de consulta (segundos)"
+          "scan_interval": "Intervalo de consulta (segundos)",
+          "notice_config_interval": "Intervalo de actualización de horarios/geocerca/notificaciones (segundos)"
         }
       }
     }
@@ -107,7 +108,18 @@
       "seat_vent_right": {
         "name": "Ventilación Asiento Derecho",
         "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
-      }
+      },
+      "trip_schedule_time": { "name": "Viaje Programado: Hora" },
+      "trip_schedule_days": { "name": "Viaje Programado: Días" },
+      "charge_target_soc": { "name": "Límite de Carga (SoC)" },
+      "charge_schedule_time": { "name": "Carga Programada: Hora" },
+      "charge_schedule_duration": { "name": "Carga Programada: Duración" },
+      "charge_schedule_days": { "name": "Carga Programada: Días" },
+      "trunk_type": { "name": "Tipo de Cajuela" },
+      "charging_cycle": { "name": "Ciclo de Carga" },
+      "ac_temp_min": { "name": "Temperatura Mínima de Climatización" },
+      "ac_temp_max": { "name": "Temperatura Máxima de Climatización" },
+      "ac_temp_step": { "name": "Paso de Temperatura de Climatización" }
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
@@ -141,7 +153,40 @@
       "control_ac_set_temperature": { "name": "Control: Temperatura de Climatización" },
       "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
       "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
-      "control_ac_defog": { "name": "Control: Desempañado" }
+      "control_ac_defog": { "name": "Control: Desempañado" },
+      "trip_schedule_enabled": { "name": "Viaje Programado: Activo" },
+      "geofence_gps_enabled": { "name": "Geocerca: GPS Activo" },
+      "geofence_notify_enabled": { "name": "Geocerca: Notificaciones Activas" },
+      "geofence_enter_alert": { "name": "Geocerca: Aviso al Entrar" },
+      "geofence_exit_alert": { "name": "Geocerca: Aviso al Salir" },
+      "charge_schedule_enabled": { "name": "Carga Programada: Activa" },
+      "notify_remote_startup": { "name": "Aviso: Arranque Remoto" },
+      "notify_shutdown": { "name": "Aviso: Apagado" },
+      "notify_locked": { "name": "Aviso: Bloqueo" },
+      "notify_unlocked": { "name": "Aviso: Desbloqueo" },
+      "notify_trunk_opened": { "name": "Aviso: Cajuela Abierta" },
+      "notify_low_voltage": { "name": "Aviso: Batería 12V Baja" },
+      "notify_shaken": { "name": "Aviso: Vehículo Sacudido" },
+      "notify_illegal_opened": { "name": "Aviso: Apertura No Autorizada" },
+      "notify_illegal_startup": { "name": "Aviso: Arranque No Autorizado" },
+      "notify_forget_to_lock": { "name": "Aviso: Olvido de Bloqueo" },
+      "notify_vehicle_immobilizer": { "name": "Aviso: Inmovilizador" },
+      "notify_vehicle_anomaly": { "name": "Aviso: Anomalía del Vehículo" },
+      "notify_battery_anomaly": { "name": "Aviso: Anomalía de Batería" },
+      "notify_charge_idle": { "name": "Aviso: Carga Inactiva" },
+      "control_scheduled_charging": { "name": "Control: Soporta Carga Programada" },
+      "control_scheduled_travel": { "name": "Control: Soporta Viaje Programado" },
+      "control_steering_wheel_heater": { "name": "Control: Calefacción de Volante" },
+      "control_front_windshield_heater": { "name": "Control: Calefacción de Parabrisas" },
+      "control_charging_power": { "name": "Control: Potencia de Carga" },
+      "control_ac_air_purification": { "name": "Control: Purificación de Aire" },
+      "control_ac_driver_vent": { "name": "Control: Ventilación Asiento Conductor" },
+      "control_ac_assistant_vent": { "name": "Control: Ventilación Asiento Acompañante" },
+      "control_ac_driver_heater": { "name": "Control: Calefacción Asiento Conductor" },
+      "control_ac_assistant_heater": { "name": "Control: Calefacción Asiento Acompañante" },
+      "control_ac_rear_heater": { "name": "Control: Calefacción Asientos Traseros" },
+      "control_ac_high_low_gear": { "name": "Control: Ventilador Alta/Baja" },
+      "control_ac_set_duration": { "name": "Control: Duración de Pre-acondicionamiento" }
     },
     "image": {
       "front": { "name": "Frente" },

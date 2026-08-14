@@ -28,6 +28,12 @@ CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 120
 MIN_SCAN_INTERVAL = 30
 
+# How often the notice config (schedules/geofence/notifications, see api.CarLinkoClient) is
+# refetched — it changes far less often than telemetry, so it's polled on its own, slower cadence.
+CONF_NOTICE_CONFIG_INTERVAL = "notice_config_interval"
+DEFAULT_NOTICE_CONFIG_INTERVAL = 300
+MIN_NOTICE_CONFIG_INTERVAL = 60
+
 # App-global request-signing key (same string in every CarLinko install; see
 # tools/auth.py in the parent project for provenance).
 SIGN_KEY = b"mYj3fzMpn77bir66"

@@ -77,19 +77,46 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | --- | --- | --- |
 | Powertrain | `fuelConsumption` + `powerConsumption` | `phev` if both true, else `bev` |
 | Combustion Engine | `Engine` | whether the car has one (false on every BEV) |
-| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Trunk / Find Car / Charging Management / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Trunk`, `Search`, `ChargingManagement`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
+| Trunk Type | `TrunkType` | raw model constant |
+| Charging Cycle | `chargingCycle` | raw model constant |
+| Climate Min/Max Temperature (°C), Climate Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
+| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Trunk / Find Car / Charging Management / Scheduled Charging Supported / Scheduled Trip Supported / Steering Wheel Heater / Front Windshield Heater / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / A/C Air Purification / Driver\|Passenger Seat Ventilation / Driver\|Passenger\|Rear Seat Heater / A/C Fan High/Low Gear / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Trunk`, `Search`, `ChargingManagement`, `ScheduledCharging`, `ScheduledTravel`, `SteeringWheelHeater`, `FrontWindshieldHeater`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/AirPurification/DriverVent/AssistantVent/DriverHeater/AssistantHeater/RearHeater/HighLowGear/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
+
+### Schedules, geofence & notifications
+
+A separate account endpoint, `GET /user/device/manage/terminalNoticeConfig/{id}`, publishes
+the trip/charge schedules, geofence and per-event push-notification preferences the official
+app lets you configure. It's not part of the polled status blob (toggling these in the app
+never moves a byte in it) and changes far less often than telemetry, so it's cached and
+refetched on its own cadence rather than on every poll (default 5 minutes, configurable — see
+[Options](#options)).
+
+| Entity | Source | Meaning |
+| --- | --- | --- |
+| Trip Schedule: Enabled / Time / Days | `startupAppointment`, `extra` (JSON: `hour`/`minute`/`week`) | scheduled trip / pre-conditioning start |
+| Charge Target SoC, Charge Schedule: Enabled / Time / Duration / Days | `targetSoc`, `batterySchedule` (JSON: `enabled`/`hour`/`minute`/`duration`/`week`) | scheduled charging window |
+| Geofence: GPS Enabled / Notifications Enabled / Enter Alert / Exit Alert | `enableGps`, `enableLocationRail`, `enterRail`, `exitRail` | geofence config and alerts |
+| Notify: Remote Startup / Shutdown / Locked / Unlocked / Trunk Opened / Low 12V Battery / Vehicle Shaken / Unauthorized Opening / Unauthorized Startup / Forgot to Lock / Immobilizer / Vehicle Anomaly / Battery Anomaly / Charge Idle | one bool per event type | whether that push notification is enabled in the app — not vehicle state |
 
 ## Options
 
-Settings → Devices & services → CarLinko → Configure lets you change the poll interval
-(default 120 s, minimum 30 s — CarLinko's REST API has no documented rate limit, but stay
-reasonable).
+Settings → Devices & services → CarLinko → Configure lets you change:
+
+- **Poll interval** (default 120 s, minimum 30 s) — how often the telemetry blob (`isOnline` +
+  `state`) is fetched.
+- **Schedules/geofence/notifications refresh interval** (default 300 s, minimum 60 s) — how
+  often `terminalNoticeConfig` (see [above](#schedules-geofence--notifications)) is refetched.
+  It changes only when you edit those settings in the app, so it doesn't need to be as fresh
+  as telemetry.
+
+CarLinko's REST API has no documented rate limit, but stay reasonable.
 
 ## Known limitations
 
-- Two signed REST GETs per poll (`isOnline` + `state`, no persistent connection, no adaptive
-  fast/slow cadence — simpler and fine for HA's coordinator model, but a driving session
-  generates one data point per interval, not a continuous stream).
+- Two signed REST GETs every poll (`isOnline` + `state`), plus `terminalNoticeConfig` on its
+  own, slower cache (see [Options](#options)) — no persistent connection, no adaptive fast/slow
+  cadence for telemetry itself — simpler and fine for HA's coordinator model, but a driving
+  session generates one data point per interval, not a continuous stream.
 - Token is kept in memory only (not written to disk); a HA restart re-logs in from the
   stored email/password in the config entry.
 

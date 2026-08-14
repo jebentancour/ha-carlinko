@@ -14,6 +14,7 @@ from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig,
 from .api import CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError, VehicleInfo
 from .const import (
     CONF_DEVICE_SN,
+    CONF_NOTICE_CONFIG_INTERVAL,
     CONF_REGION,
     CONF_SCAN_INTERVAL,
     CONF_VEHICLE_BRAND,
@@ -23,9 +24,11 @@ from .const import (
     CONF_VEHICLE_IMG_TOP,
     CONF_VEHICLE_MODEL,
     CONF_VEHICLE_PLATE,
+    DEFAULT_NOTICE_CONFIG_INTERVAL,
     DEFAULT_REGION,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    MIN_NOTICE_CONFIG_INTERVAL,
     MIN_SCAN_INTERVAL,
     REGIONS,
 )
@@ -127,12 +130,16 @@ class CarLinkoOptionsFlow(OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
-        current = self._entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        current_scan = self._entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        current_notice = self._entry.options.get(CONF_NOTICE_CONFIG_INTERVAL, DEFAULT_NOTICE_CONFIG_INTERVAL)
         schema = vol.Schema(
             {
-                vol.Required(CONF_SCAN_INTERVAL, default=current): vol.All(
+                vol.Required(CONF_SCAN_INTERVAL, default=current_scan): vol.All(
                     vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL)
-                )
+                ),
+                vol.Required(CONF_NOTICE_CONFIG_INTERVAL, default=current_notice): vol.All(
+                    vol.Coerce(int), vol.Range(min=MIN_NOTICE_CONFIG_INTERVAL)
+                ),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

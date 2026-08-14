@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import CarLinkoClient
-from .const import CONF_REGION, DOMAIN
+from .const import CONF_NOTICE_CONFIG_INTERVAL, CONF_REGION, DEFAULT_NOTICE_CONFIG_INTERVAL, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.IMAGE]
@@ -15,7 +15,14 @@ PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.IMAGE]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     session = async_get_clientsession(hass)
-    client = CarLinkoClient(session, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD], entry.data[CONF_REGION])
+    notice_config_interval = entry.options.get(CONF_NOTICE_CONFIG_INTERVAL, DEFAULT_NOTICE_CONFIG_INTERVAL)
+    client = CarLinkoClient(
+        session,
+        entry.data[CONF_EMAIL],
+        entry.data[CONF_PASSWORD],
+        entry.data[CONF_REGION],
+        notice_config_interval=notice_config_interval,
+    )
 
     coordinator = CarLinkoCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
