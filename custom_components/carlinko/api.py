@@ -342,10 +342,20 @@ class CarLinkoClient:
 
     # ---- /user/vehicle/state/{id} — telemetry blob ----
 
-    async def _fetch_state_blob(self, vehicle_id: str) -> str | None:
+    async def _get_state(self, vehicle_id: str) -> dict[str, Any] | None:
+        """Fetch + decode the telemetry blob, merged with the vehicleControlConfig facts
+        (powertrain, capabilities) needed to interpret some of its bytes and describe this car.
+
+        Returns None if the car didn't report a blob this poll.
+        """
         state = await self._signed_get(f"/user/vehicle/state/{vehicle_id}")
         blob = state.get("data")
-        return blob if isinstance(blob, str) else None
+        if not isinstance(blob, str):
+            return None
+        control_config = await self.get_vehicle_control_config(vehicle_id)
+        data = decode_blob(blob, control_config)
+        data.update(decode_control_config(control_config))
+        return data
 
     # ---- /user/device/manage/terminalNoticeConfig/{id} — schedules/geofence/notifications ----
 
@@ -379,19 +389,16 @@ class CarLinkoClient:
     # ---- combined poll, one update cycle ----
 
     async def poll_telemetry(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Poll one update cycle's worth of vehicle state.
+        """Poll one update cycle's worth of vehicle state: online flag, telemetry (+ per-model
+        config) and notice config, each fetched and decoded by its own section above.
 
-        Merges the telemetry blob (fetched fresh every call) with the slower-changing
-        vehicleControlConfig (cached forever) and notice config (cached with a TTL) described
-        above. Returns None if the car is reported offline.
+        Returns None if the car is reported offline.
         """
         if not await self._fetch_online(vehicle_id):
             return None
-        blob = await self._fetch_state_blob(vehicle_id)
-        if blob is None:
+        data = await self._get_state(vehicle_id)
+        if data is None:
             return None
-        control_config = await self.get_vehicle_control_config(vehicle_id)
-        data = decode_blob(blob, control_config)
         data.update(await self._get_notice_config(vehicle_id))
         return data
 
@@ -504,18 +511,25 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture
 
-    # Powertrain + control capabilities: not telemetry bytes, but vehicleControlConfig facts
-    # about this car, refreshed on the same poll so they live alongside the blob in one place.
-    d["powertrain"] = "phev" if cfg.is_phev else "bev"
-    d["has_engine"] = cfg.has_engine
-    d["trunk_type"] = cfg.trunk_type
-    d["charging_cycle"] = cfg.charging_cycle
-    d["ac_temp_min"] = cfg.ac_temp_min
-    d["ac_temp_max"] = cfg.ac_temp_max
-    d["ac_temp_step"] = cfg.ac_temp_step
+    return d
+
+
+def decode_control_config(control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
+    """Expose `vehicleControlConfig` as flat entity data: powertrain, per-model constants and
+    remote-control capability flags. Not telemetry — none of this comes from the status blob.
+    """
+    cfg = control_config or VehicleControlConfig()
+    d: dict[str, Any] = {
+        "powertrain": "phev" if cfg.is_phev else "bev",
+        "has_engine": cfg.has_engine,
+        "trunk_type": cfg.trunk_type,
+        "charging_cycle": cfg.charging_cycle,
+        "ac_temp_min": cfg.ac_temp_min,
+        "ac_temp_max": cfg.ac_temp_max,
+        "ac_temp_step": cfg.ac_temp_step,
+    }
     for name, value in dataclasses.asdict(cfg.capabilities).items():
         d[f"control_{name}"] = value
-
     return d
 
 
