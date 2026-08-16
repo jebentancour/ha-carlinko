@@ -245,16 +245,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("trip_schedule_days"),
     ),
     CarLinkoSensorDescription(
-        key="charge_target_soc",
-        translation_key="charge_target_soc",
-        icon="mdi:battery-charging-high",
-        device_class=SensorDeviceClass.BATTERY,
-        native_unit_of_measurement=PERCENTAGE,
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("charge_target_soc"),
-    ),
-    CarLinkoSensorDescription(
         key="charge_schedule_time",
         translation_key="charge_schedule_time",
         icon="mdi:clock-outline",

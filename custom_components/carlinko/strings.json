@@ -111,7 +111,6 @@
       },
       "trip_schedule_time": { "name": "Trip Schedule: Time" },
       "trip_schedule_days": { "name": "Trip Schedule: Days" },
-      "charge_target_soc": { "name": "Charge Target SoC" },
       "charge_schedule_time": { "name": "Charge Schedule: Time" },
       "charge_schedule_duration": { "name": "Charge Schedule: Duration" },
       "charge_schedule_days": { "name": "Charge Schedule: Days" },

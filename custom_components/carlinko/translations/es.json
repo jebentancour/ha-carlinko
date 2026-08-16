@@ -111,7 +111,6 @@
       },
       "trip_schedule_time": { "name": "Viaje Programado: Hora" },
       "trip_schedule_days": { "name": "Viaje Programado: Días" },
-      "charge_target_soc": { "name": "Límite de Carga (SoC)" },
       "charge_schedule_time": { "name": "Carga Programada: Hora" },
       "charge_schedule_duration": { "name": "Carga Programada: Duración" },
       "charge_schedule_days": { "name": "Carga Programada: Días" },

@@ -614,7 +614,6 @@ def decode_notice_config(raw: Any) -> dict[str, Any]:
 
     # Carga programada.
     charge = _parse_json_field(cfg.get("batterySchedule"))
-    d["charge_target_soc"] = cfg.get("targetSoc")
     d["charge_schedule_enabled"] = bool(charge.get("enabled"))
     d["charge_schedule_time"] = _format_hhmm(charge.get("hour"), charge.get("minute"))
     d["charge_schedule_duration_h"] = charge.get("duration")
