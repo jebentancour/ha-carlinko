@@ -412,14 +412,14 @@ NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
     CarLinkoBinarySensorDescription(
         key="notify_low_voltage",
         translation_key="notify_low_voltage",
-        icon="mdi:battery-alert",
+        icon="mdi:bell-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("notify_low_voltage"),
     ),
     CarLinkoBinarySensorDescription(
         key="notify_shaken",
         translation_key="notify_shaken",
-        icon="mdi:vibrate",
+        icon="mdi:bell-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("notify_shaken"),
     ),
@@ -468,7 +468,7 @@ NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
     CarLinkoBinarySensorDescription(
         key="notify_charge_idle",
         translation_key="notify_charge_idle",
-        icon="mdi:ev-station",
+        icon="mdi:bell-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("notify_charge_idle"),
     ),
