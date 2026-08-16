@@ -114,7 +114,7 @@
       "charge_schedule_time": { "name": "Charge Schedule: Time" },
       "charge_schedule_duration": { "name": "Charge Schedule: Duration" },
       "charge_schedule_days": { "name": "Charge Schedule: Days" },
-      "trunk_type": { "name": "Trunk Type" },
+      "trunk_type": { "name": "Control: Trunk Type" },
       "charging_cycle": { "name": "Charging Cycle" },
       "ac_temp_min": { "name": "Climate Min Temperature" },
       "ac_temp_max": { "name": "Climate Max Temperature" },

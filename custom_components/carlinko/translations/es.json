@@ -114,7 +114,7 @@
       "charge_schedule_time": { "name": "Carga Programada: Hora" },
       "charge_schedule_duration": { "name": "Carga Programada: Duración" },
       "charge_schedule_days": { "name": "Carga Programada: Días" },
-      "trunk_type": { "name": "Tipo de Cajuela" },
+      "trunk_type": { "name": "Control: Tipo de Cajuela" },
       "charging_cycle": { "name": "Ciclo de Carga" },
       "ac_temp_min": { "name": "Temperatura Mínima de Climatización" },
       "ac_temp_max": { "name": "Temperatura Máxima de Climatización" },
