@@ -39,6 +39,7 @@ TYRE_LABELS = ("Front Left", "Front Right", "Rear Left", "Rear Right")
 class CarLinkoSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any] = lambda data: None
     extra_state_attributes_fn: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None
+    enabled_if: Callable[[dict[str, Any]], bool] | None = None
 
 
 SENSORS: tuple[CarLinkoSensorDescription, ...] = (
@@ -92,6 +93,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement="kWh/100km",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("consumption_kwh_100km"),
+        enabled_if=lambda d: bool(d.get("has_power_consumption")),
     ),
     CarLinkoSensorDescription(
         key="power_kw",
@@ -170,6 +172,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("fuel_pct"),
+        enabled_if=lambda d: bool(d.get("has_engine")),
     ),
     CarLinkoSensorDescription(
         key="fuel_l_100",
@@ -178,6 +181,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement="L/100km",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("fuel_l_100"),
+        enabled_if=lambda d: bool(d.get("has_fuel_consumption")),
     ),
     CarLinkoSensorDescription(
         key="powertrain",
@@ -312,7 +316,10 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[SensorEntity] = [CarLinkoSensor(coordinator, entry, desc) for desc in SENSORS]
+    data = coordinator.data or {}
+    entities: list[SensorEntity] = [
+        CarLinkoSensor(coordinator, entry, desc) for desc in SENSORS if desc.enabled_if is None or desc.enabled_if(data)
+    ]
     for wheel_idx, label in enumerate(TYRE_LABELS):
         entities.append(CarLinkoTyreSensor(coordinator, entry, wheel_idx, label, "tyre_psi", UnitOfPressure.PSI, SensorDeviceClass.PRESSURE))
         entities.append(

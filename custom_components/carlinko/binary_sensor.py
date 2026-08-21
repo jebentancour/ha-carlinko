@@ -118,13 +118,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.RUNNING,
         value_fn=lambda d: d.get("defrost_front"),
     ),
-    CarLinkoBinarySensorDescription(
-        key="has_engine",
-        translation_key="has_engine",
-        icon="mdi:engine",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("has_engine"),
-    ),
 )
 
 

@@ -141,7 +141,6 @@
       "ac_on": { "name": "Climate Control" },
       "charging": { "name": "Charging" },
       "defrost_front": { "name": "Front Defroster" },
-      "has_engine": { "name": "Combustion Engine" },
       "control_lock": { "name": "Control: Lock" },
       "control_windows_open": { "name": "Control: Windows Open" },
       "control_windows_close": { "name": "Control: Windows Close" },

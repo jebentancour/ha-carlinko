@@ -29,6 +29,10 @@ The car reports a single status blob (hex-encoded byte array) via a signed endpo
 `GET /user/vehicle/state/{id}`. The confirmed byte map was originally taken from the Jaecoo
 J5 EV, then extended and confirmed with new fields on an Omoda E5.
 
+Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles whose
+`vehicleControlConfig` reports the matching flag (`Engine`, `fuelConsumption`,
+`powerConsumption` respectively) — a pure BEV won't get entities that would always read 0.
+
 | Entity | Byte(s) | Formula |
 | --- | --- | --- |
 | Doors: front left / front right / rear left / rear right | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
@@ -40,7 +44,7 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | 12 V battery (V) | 12–13 | uint16 × 0.01 |
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Odometer (km) | 18–20 | uint24 |
-| Fuel Level % *(PHEV only)* | 21 | raw — always 0 on a BEV |
+| Fuel Level % *(only if `Engine` is set)* | 21 | raw |
 | AC / climate on | 23 | nonzero = on |
 | Climate Target Temperature (°C) | 24 | raw |
 | Battery Level % | 28 | raw |
@@ -50,8 +54,8 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | Front Defroster | 42 | nonzero = on |
 | Tyre pressure ×4 (psi) | 44–47 | raw × scale × 0.145, scale/invalid sentinel from `vehicleControlConfig` (default: 1.373, 0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40, invalid sentinel from `vehicleControlConfig` (default: 0xFF = n/a) |
-| Fuel Consumption (L/100 km) *(PHEV only)* | 53 | raw × 0.1 — always 0 on a BEV |
-| Power Consumption (kWh/100 km) | 55 | raw × 0.1 |
+| Fuel Consumption (L/100 km) *(only if `fuelConsumption` is set)* | 53 | raw × 0.1 |
+| Power Consumption (kWh/100 km) *(only if `powerConsumption` is set)* | 55 | raw × 0.1 |
 | Charging Connector | 56 | enum: 0=disconnected, 1=AC(slow), 16=DC(fast), else=disconnected |
 | Charging Status / Charging (binary) | 57 | enum: 0=idle, 1=charging, 2=complete, 3=canceled, 4=hot, 5=stopping — `charging` = (57 != idle) |
 | Charging Time Remaining (min) | 58–59 | uint16, 58<<8\|59, invalid sentinel(s) from `vehicleControlConfig` (default: 0x3FE/0x3FF/0x7FE/0x7FF = n/a) |
@@ -76,7 +80,6 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Powertrain | `fuelConsumption` + `powerConsumption` | `phev` if both true, else `bev` |
-| Combustion Engine | `Engine` | whether the car has one (false on every BEV) |
 | Control: Trunk Type | `TrunkType` | raw model constant |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
 | Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Trunk / Find Car / Charging Management / Scheduled Charging Supported / Scheduled Trip Supported / Steering Wheel Heater / Front Windshield Heater / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / A/C Air Purification / Driver\|Passenger Seat Ventilation / Driver\|Passenger\|Rear Seat Heater / A/C Fan High/Low Gear / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Trunk`, `Search`, `ChargingManagement`, `ScheduledCharging`, `ScheduledTravel`, `SteeringWheelHeater`, `FrontWindshieldHeater`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/AirPurification/DriverVent/AssistantVent/DriverHeater/AssistantHeater/RearHeater/HighLowGear/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |

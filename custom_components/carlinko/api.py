@@ -112,6 +112,8 @@ class VehicleControlConfig:
     charging_remaining_invalid: frozenset[int] = DEFAULT_CHARGING_REMAINING_INVALID
     is_phev: bool = False
     has_engine: bool = False
+    has_fuel_consumption: bool = False
+    has_power_consumption: bool = False
     trunk_type: int | None = None
     ac_temp_min: float | None = None
     ac_temp_max: float | None = None
@@ -146,7 +148,9 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
     tire_temp_invalid = _hex_set(cfg.get("tireTempInvalid")) or DEFAULT_TIRE_INVALID
     charging_remaining_invalid = _hex_set(cfg.get("chargingTimeInvalidValue")) or DEFAULT_CHARGING_REMAINING_INVALID
 
-    is_phev = bool(cfg.get("fuelConsumption")) and bool(cfg.get("powerConsumption"))
+    has_fuel_consumption = bool(cfg.get("fuelConsumption"))
+    has_power_consumption = bool(cfg.get("powerConsumption"))
+    is_phev = has_fuel_consumption and has_power_consumption
     has_engine = bool(cfg.get("Engine"))
 
     ac = cfg.get("A/C") or {}
@@ -188,6 +192,8 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         charging_remaining_invalid=charging_remaining_invalid,
         is_phev=is_phev,
         has_engine=has_engine,
+        has_fuel_consumption=has_fuel_consumption,
+        has_power_consumption=has_power_consumption,
         trunk_type=cfg.get("TrunkType"),
         ac_temp_min=ac.get("SetTemperatureMin"),
         ac_temp_max=ac.get("SetTemperatureMax"),
@@ -520,6 +526,8 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
     d: dict[str, Any] = {
         "powertrain": "phev" if cfg.is_phev else "bev",
         "has_engine": cfg.has_engine,
+        "has_fuel_consumption": cfg.has_fuel_consumption,
+        "has_power_consumption": cfg.has_power_consumption,
         "trunk_type": cfg.trunk_type,
         "ac_temp_min": cfg.ac_temp_min,
         "ac_temp_max": cfg.ac_temp_max,

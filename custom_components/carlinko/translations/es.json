@@ -141,7 +141,6 @@
       "ac_on": { "name": "Climatización" },
       "charging": { "name": "Cargando" },
       "defrost_front": { "name": "Desempañador Delantero" },
-      "has_engine": { "name": "Motor de Combustión" },
       "control_lock": { "name": "Control: Cerradura" },
       "control_windows_open": { "name": "Control: Abrir Ventanas" },
       "control_windows_close": { "name": "Control: Cerrar Ventanas" },
