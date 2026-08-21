@@ -405,7 +405,7 @@ class CarLinkoClient:
 RAW_TEST_BYTES: tuple[int, ...] = ()
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
 
-CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 2: "connected_idle", 16: "dc_fast"}
+CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 16: "dc_fast"}
 
 CHARGING_STATUSES: dict[int, str] = {
     0: "idle",

@@ -79,7 +79,6 @@
         "state": {
           "disconnected": "Disconnected",
           "ac_slow": "AC (Slow)",
-          "connected_idle": "Connected, Not Charging",
           "dc_fast": "DC (Fast)"
         }
       },

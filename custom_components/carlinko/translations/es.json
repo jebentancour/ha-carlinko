@@ -79,7 +79,6 @@
         "state": {
           "disconnected": "Desconectado",
           "ac_slow": "CA (Lenta)",
-          "connected_idle": "Conectado, Sin Cargar",
           "dc_fast": "CC (Rápida)"
         }
       },
