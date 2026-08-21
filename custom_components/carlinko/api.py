@@ -207,7 +207,7 @@ class CarLinkoClient:
 
     Endpoints are polled on different cadences depending on how often each one actually
     changes, fastest first: `isOnline` / `state` (telemetry, every poll) > `terminalNoticeConfig`
-    (schedules/geofence/notifications, cached with a TTL — see `_get_notice_config`) >
+    (schedules/notifications, cached with a TTL — see `_get_notice_config`) >
     `vehicleControlConfig` (per-model constants, fetched once and cached forever).
     """
 
@@ -361,7 +361,7 @@ class CarLinkoClient:
         data.update(decode_control_config(control_config))
         return data
 
-    # ---- /user/device/manage/terminalNoticeConfig/{id} — schedules/geofence/notifications ----
+    # ---- /user/device/manage/terminalNoticeConfig/{id} — schedules/notifications ----
 
     async def _get_notice_config(self, vehicle_id: str) -> dict[str, Any]:
         """Return the decoded notice config, refetching only once `self._notice_config_ttl`
@@ -543,7 +543,7 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
 WEEKDAY_LABELS: tuple[str, ...] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 # Individual push-notification toggles that live in the same notice-config resource as the
-# trip/charge schedules and geofence settings below — (source key, decoded key).
+# trip/charge schedules below — (source key, decoded key).
 NOTIFY_FIELDS: tuple[tuple[str, str], ...] = (
     ("remoteStartup", "notify_remote_startup"),
     ("shutdown", "notify_shutdown"),
@@ -598,7 +598,7 @@ def _format_week_days(week: Any) -> tuple[str | None, list[str] | None]:
 
 def decode_notice_config(raw: Any) -> dict[str, Any]:
     """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule, charge
-    schedule, geofence and per-event push-notification preferences.
+    schedule and per-event push-notification preferences.
 
     A separate REST config resource, not part of the telemetry blob (confirmed 2026-08-14:
     toggling these in the app never moves a byte in `decode_blob`'s output).
@@ -614,13 +614,6 @@ def decode_notice_config(raw: Any) -> dict[str, Any]:
     d["trip_schedule_enabled"] = bool(cfg.get("startupAppointment"))
     d["trip_schedule_time"] = _format_hhmm(trip.get("hour"), trip.get("minute"))
     d["trip_schedule_days"], d["trip_schedule_active_days"] = _format_week_days(trip.get("week"))
-
-    # Geocerca. Field names are a literal translation of 电子围栏 ("electronic fence") — "rail"
-    # here means geofence, confirmed against the app's own geofence-list debug strings.
-    d["geofence_gps_enabled"] = bool(cfg.get("enableGps"))
-    d["geofence_notify_enabled"] = bool(cfg.get("enableLocationRail"))
-    d["geofence_enter_alert"] = bool(cfg.get("enterRail"))
-    d["geofence_exit_alert"] = bool(cfg.get("exitRail"))
 
     # Carga programada.
     charge = _parse_json_field(cfg.get("batterySchedule"))

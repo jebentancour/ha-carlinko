@@ -322,8 +322,8 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 
 
 # From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip/charge
-# schedules, geofence and per-event notification prefs. All diagnostic; keys share a prefix per
-# section (trip_schedule_/geofence_/charge_schedule_/notify_) so they group together in the UI.
+# schedules and per-event notification prefs. All diagnostic; keys share a prefix per
+# section (trip_schedule_/charge_schedule_/notify_) so they group together in the UI.
 NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
     CarLinkoBinarySensorDescription(
         key="trip_schedule_enabled",
@@ -331,34 +331,6 @@ NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:calendar-clock",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("trip_schedule_enabled"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="geofence_gps_enabled",
-        translation_key="geofence_gps_enabled",
-        icon="mdi:crosshairs-gps",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("geofence_gps_enabled"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="geofence_notify_enabled",
-        translation_key="geofence_notify_enabled",
-        icon="mdi:map-marker-radius",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("geofence_notify_enabled"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="geofence_enter_alert",
-        translation_key="geofence_enter_alert",
-        icon="mdi:map-marker-check",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("geofence_enter_alert"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="geofence_exit_alert",
-        translation_key="geofence_exit_alert",
-        icon="mdi:map-marker-remove",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("geofence_exit_alert"),
     ),
     CarLinkoBinarySensorDescription(
         key="charge_schedule_enabled",

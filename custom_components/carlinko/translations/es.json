@@ -47,7 +47,7 @@
       "init": {
         "data": {
           "scan_interval": "Intervalo de consulta (segundos)",
-          "notice_config_interval": "Intervalo de actualización de horarios/geocerca/notificaciones (segundos)"
+          "notice_config_interval": "Intervalo de actualización de horarios/notificaciones (segundos)"
         }
       }
     }
@@ -157,10 +157,6 @@
       "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
       "control_ac_defog": { "name": "Control: Desempañado" },
       "trip_schedule_enabled": { "name": "Viaje Programado: Activo" },
-      "geofence_gps_enabled": { "name": "Geocerca: GPS Activo" },
-      "geofence_notify_enabled": { "name": "Geocerca: Notificaciones Activas" },
-      "geofence_enter_alert": { "name": "Geocerca: Aviso al Entrar" },
-      "geofence_exit_alert": { "name": "Geocerca: Aviso al Salir" },
       "charge_schedule_enabled": { "name": "Carga Programada: Activa" },
       "notify_remote_startup": { "name": "Aviso: Arranque Remoto" },
       "notify_shutdown": { "name": "Aviso: Apagado" },

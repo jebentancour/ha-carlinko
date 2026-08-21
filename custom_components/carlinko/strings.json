@@ -47,7 +47,7 @@
       "init": {
         "data": {
           "scan_interval": "Poll interval (seconds)",
-          "notice_config_interval": "Schedules/geofence/notifications refresh interval (seconds)"
+          "notice_config_interval": "Schedules/notifications refresh interval (seconds)"
         }
       }
     }
@@ -157,10 +157,6 @@
       "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
       "control_ac_defog": { "name": "Control: A/C Defog" },
       "trip_schedule_enabled": { "name": "Trip Schedule: Enabled" },
-      "geofence_gps_enabled": { "name": "Geofence: GPS Enabled" },
-      "geofence_notify_enabled": { "name": "Geofence: Notifications Enabled" },
-      "geofence_enter_alert": { "name": "Geofence: Enter Alert" },
-      "geofence_exit_alert": { "name": "Geofence: Exit Alert" },
       "charge_schedule_enabled": { "name": "Charge Schedule: Enabled" },
       "notify_remote_startup": { "name": "Notify: Remote Startup" },
       "notify_shutdown": { "name": "Notify: Shutdown" },
