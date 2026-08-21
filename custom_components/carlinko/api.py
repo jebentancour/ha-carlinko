@@ -113,7 +113,6 @@ class VehicleControlConfig:
     is_phev: bool = False
     has_engine: bool = False
     trunk_type: int | None = None
-    charging_cycle: int | None = None
     ac_temp_min: float | None = None
     ac_temp_max: float | None = None
     ac_temp_step: float | None = None
@@ -190,7 +189,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         is_phev=is_phev,
         has_engine=has_engine,
         trunk_type=cfg.get("TrunkType"),
-        charging_cycle=cfg.get("chargingCycle"),
         ac_temp_min=ac.get("SetTemperatureMin"),
         ac_temp_max=ac.get("SetTemperatureMax"),
         ac_temp_step=ac.get("TemperatureStepValue"),
@@ -523,7 +521,6 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
         "powertrain": "phev" if cfg.is_phev else "bev",
         "has_engine": cfg.has_engine,
         "trunk_type": cfg.trunk_type,
-        "charging_cycle": cfg.charging_cycle,
         "ac_temp_min": cfg.ac_temp_min,
         "ac_temp_max": cfg.ac_temp_max,
         "ac_temp_step": cfg.ac_temp_step,

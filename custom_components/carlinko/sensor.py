@@ -276,13 +276,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("trunk_type"),
     ),
     CarLinkoSensorDescription(
-        key="charging_cycle",
-        translation_key="charging_cycle",
-        icon="mdi:refresh",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("charging_cycle"),
-    ),
-    CarLinkoSensorDescription(
         key="ac_temp_min",
         translation_key="ac_temp_min",
         icon="mdi:thermometer-low",
