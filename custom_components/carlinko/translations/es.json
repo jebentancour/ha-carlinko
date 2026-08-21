@@ -54,12 +54,12 @@
   },
   "entity": {
     "sensor": {
-      "battery": { "name": "Batería" },
+      "battery": { "name": "Nivel de Batería" },
       "battery_range": { "name": "Autonomía de Batería" },
       "odometer": { "name": "Odómetro" },
       "volt12": { "name": "Batería 12V" },
       "speed": { "name": "Velocidad" },
-      "consumption": { "name": "Consumo" },
+      "consumption": { "name": "Consumo de Energía" },
       "power": { "name": "Potencia" },
       "charge_power": { "name": "Potencia de Carga" },
       "regen_power": { "name": "Potencia de Regeneración" },

@@ -54,12 +54,12 @@
   },
   "entity": {
     "sensor": {
-      "battery": { "name": "Battery" },
+      "battery": { "name": "Battery Level" },
       "battery_range": { "name": "Battery Range" },
       "odometer": { "name": "Odometer" },
       "volt12": { "name": "12V Battery" },
       "speed": { "name": "Speed" },
-      "consumption": { "name": "Consumption" },
+      "consumption": { "name": "Power Consumption" },
       "power": { "name": "Power" },
       "charge_power": { "name": "Charge Power" },
       "regen_power": { "name": "Regen Power" },

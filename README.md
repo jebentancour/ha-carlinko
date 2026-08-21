@@ -43,7 +43,7 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | Fuel Level % *(PHEV only)* | 21 | raw — always 0 on a BEV |
 | AC / climate on | 23 | nonzero = on |
 | Climate Target Temperature (°C) | 24 | raw |
-| Battery % | 28 | raw |
+| Battery Level % | 28 | raw |
 | Battery Range (km) | 29–30 | uint16 |
 | Seat Heating Left / Right | 32, 33 | enum: 0=off, 1=low, 2=medium, 3=high |
 | Seat Ventilation Left / Right | 37, 38 | enum: 0=off, 1=low, 2=medium, 3=high |
@@ -51,8 +51,8 @@ J5 EV, then extended and confirmed with new fields on an Omoda E5.
 | Tyre pressure ×4 (psi) | 44–47 | raw × scale × 0.145, scale/invalid sentinel from `vehicleControlConfig` (default: 1.373, 0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40, invalid sentinel from `vehicleControlConfig` (default: 0xFF = n/a) |
 | Fuel Consumption (L/100 km) *(PHEV only)* | 53 | raw × 0.1 — always 0 on a BEV |
-| Consumption (kWh/100 km) | 55 | raw × 0.1 |
-| Charging Connector | 56 | enum: 0=disconnected, 1=AC(slow), 2=connected/idle, 16=DC(fast) |
+| Power Consumption (kWh/100 km) | 55 | raw × 0.1 |
+| Charging Connector | 56 | enum: 0=disconnected, 1=AC(slow), 16=DC(fast), else=disconnected |
 | Charging Status / Charging (binary) | 57 | enum: 0=idle, 1=charging, 2=complete, 3=canceled, 4=hot, 5=stopping — `charging` = (57 != idle) |
 | Charging Time Remaining (min) | 58–59 | uint16, 58<<8\|59, invalid sentinel(s) from `vehicleControlConfig` (default: 0x3FE/0x3FF/0x7FE/0x7FF = n/a) |
 | Power (kW) | 62–63 | (62<<8\|63) × 0.1 |
