@@ -109,10 +109,16 @@
         "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
       },
       "trip_schedule_time": { "name": "Viaje Programado: Hora" },
-      "trip_schedule_days": { "name": "Viaje Programado: Días" },
+      "trip_schedule_days": {
+        "name": "Viaje Programado: Días",
+        "state": { "none": "Ninguno", "all": "Todos los días", "custom": "Personalizado" }
+      },
       "charge_schedule_time": { "name": "Carga Programada: Hora" },
       "charge_schedule_duration": { "name": "Carga Programada: Duración" },
-      "charge_schedule_days": { "name": "Carga Programada: Días" },
+      "charge_schedule_days": {
+        "name": "Carga Programada: Días",
+        "state": { "none": "Ninguno", "all": "Todos los días", "custom": "Personalizado" }
+      },
       "trunk_type": { "name": "Control: Tipo de Cajuela" },
       "ac_temp_min": { "name": "Control: Temperatura Mínima de Climatización" },
       "ac_temp_max": { "name": "Control: Temperatura Máxima de Climatización" },

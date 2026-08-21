@@ -572,15 +572,20 @@ def _format_hhmm(hour: Any, minute: Any) -> str | None:
         return None
 
 
-def _format_week_days(week: Any) -> str | None:
+def _format_week_days(week: Any) -> tuple[str | None, list[str] | None]:
+    """Return a fixed, translatable state (none/all/custom) plus the active day labels
+    (only set for "custom") as a separate attribute — the day combination itself is open-ended
+    (2**7 possibilities) and can't be represented as a translatable HA enum state.
+    """
     if not isinstance(week, list) or len(week) != 7:
-        return None
+        return None, None
     days = [bool(x) for x in week]
     if not any(days):
-        return "none"
+        return "none", None
     if all(days):
-        return "all"
-    return ",".join(label for label, on in zip(WEEKDAY_LABELS, days) if on)
+        return "all", None
+    active = [label for label, on in zip(WEEKDAY_LABELS, days) if on]
+    return "custom", active
 
 
 def decode_notice_config(raw: Any) -> dict[str, Any]:
@@ -600,7 +605,7 @@ def decode_notice_config(raw: Any) -> dict[str, Any]:
     trip = _parse_json_field(cfg.get("extra"))
     d["trip_schedule_enabled"] = bool(cfg.get("startupAppointment"))
     d["trip_schedule_time"] = _format_hhmm(trip.get("hour"), trip.get("minute"))
-    d["trip_schedule_days"] = _format_week_days(trip.get("week"))
+    d["trip_schedule_days"], d["trip_schedule_active_days"] = _format_week_days(trip.get("week"))
 
     # Geocerca. Field names are a literal translation of 电子围栏 ("electronic fence") — "rail"
     # here means geofence, confirmed against the app's own geofence-list debug strings.
@@ -614,7 +619,7 @@ def decode_notice_config(raw: Any) -> dict[str, Any]:
     d["charge_schedule_enabled"] = bool(charge.get("enabled"))
     d["charge_schedule_time"] = _format_hhmm(charge.get("hour"), charge.get("minute"))
     d["charge_schedule_duration_h"] = charge.get("duration")
-    d["charge_schedule_days"] = _format_week_days(charge.get("week"))
+    d["charge_schedule_days"], d["charge_schedule_active_days"] = _format_week_days(charge.get("week"))
 
     # Notificaciones — individual push-alert toggles, not vehicle state.
     for src_key, dest_key in NOTIFY_FIELDS:

@@ -38,6 +38,7 @@ TYRE_LABELS = ("Front Left", "Front Right", "Rear Left", "Rear Right")
 @dataclass(frozen=True, kw_only=True)
 class CarLinkoSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any] = lambda data: None
+    extra_state_attributes_fn: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None
 
 
 SENSORS: tuple[CarLinkoSensorDescription, ...] = (
@@ -241,8 +242,11 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         key="trip_schedule_days",
         translation_key="trip_schedule_days",
         icon="mdi:calendar-week",
+        device_class=SensorDeviceClass.ENUM,
+        options=["none", "all", "custom"],
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("trip_schedule_days"),
+        extra_state_attributes_fn=lambda d: {"days": d["trip_schedule_active_days"]} if d.get("trip_schedule_active_days") else None,
     ),
     CarLinkoSensorDescription(
         key="charge_schedule_time",
@@ -263,8 +267,11 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         key="charge_schedule_days",
         translation_key="charge_schedule_days",
         icon="mdi:calendar-week",
+        device_class=SensorDeviceClass.ENUM,
+        options=["none", "all", "custom"],
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("charge_schedule_days"),
+        extra_state_attributes_fn=lambda d: {"days": d["charge_schedule_active_days"]} if d.get("charge_schedule_active_days") else None,
     ),
     # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
     # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
@@ -349,6 +356,12 @@ class CarLinkoSensor(_CarLinkoEntityBase, SensorEntity):
         if not self.coordinator.data:
             return None
         return self.entity_description.value_fn(self.coordinator.data)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if not self.coordinator.data or self.entity_description.extra_state_attributes_fn is None:
+            return None
+        return self.entity_description.extra_state_attributes_fn(self.coordinator.data)
 
 
 class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):

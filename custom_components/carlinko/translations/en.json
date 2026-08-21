@@ -109,10 +109,16 @@
         "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
       },
       "trip_schedule_time": { "name": "Trip Schedule: Time" },
-      "trip_schedule_days": { "name": "Trip Schedule: Days" },
+      "trip_schedule_days": {
+        "name": "Trip Schedule: Days",
+        "state": { "none": "None", "all": "Every day", "custom": "Custom" }
+      },
       "charge_schedule_time": { "name": "Charge Schedule: Time" },
       "charge_schedule_duration": { "name": "Charge Schedule: Duration" },
-      "charge_schedule_days": { "name": "Charge Schedule: Days" },
+      "charge_schedule_days": {
+        "name": "Charge Schedule: Days",
+        "state": { "none": "None", "all": "Every day", "custom": "Custom" }
+      },
       "trunk_type": { "name": "Control: Trunk Type" },
       "ac_temp_min": { "name": "Control: A/C Min Temperature" },
       "ac_temp_max": { "name": "Control: A/C Max Temperature" },
