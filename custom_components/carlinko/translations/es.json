@@ -154,16 +154,11 @@
       "charge_schedule_enabled": { "name": "Carga Programada: Activa" },
       "control_scheduled_charging": { "name": "Control: Soporta Carga Programada" },
       "control_scheduled_travel": { "name": "Control: Soporta Viaje Programado" },
-      "control_steering_wheel_heater": { "name": "Control: Calefacción de Volante" },
-      "control_front_windshield_heater": { "name": "Control: Calefacción de Parabrisas" },
       "control_charging_power": { "name": "Control: Potencia de Carga" },
-      "control_ac_air_purification": { "name": "Control: Purificación de Aire" },
       "control_ac_driver_vent": { "name": "Control: Ventilación Asiento Conductor" },
       "control_ac_assistant_vent": { "name": "Control: Ventilación Asiento Acompañante" },
       "control_ac_driver_heater": { "name": "Control: Calefacción Asiento Conductor" },
       "control_ac_assistant_heater": { "name": "Control: Calefacción Asiento Acompañante" },
-      "control_ac_rear_heater": { "name": "Control: Calefacción Asientos Traseros" },
-      "control_ac_high_low_gear": { "name": "Control: Ventilador Alta/Baja" },
       "control_ac_set_duration": { "name": "Control: Duración de Pre-acondicionamiento" }
     },
     "image": {

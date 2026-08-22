@@ -154,16 +154,11 @@
       "charge_schedule_enabled": { "name": "Charge Schedule: Enabled" },
       "control_scheduled_charging": { "name": "Control: Scheduled Charging Supported" },
       "control_scheduled_travel": { "name": "Control: Scheduled Trip Supported" },
-      "control_steering_wheel_heater": { "name": "Control: Steering Wheel Heater" },
-      "control_front_windshield_heater": { "name": "Control: Front Windshield Heater" },
       "control_charging_power": { "name": "Control: Charging Power" },
-      "control_ac_air_purification": { "name": "Control: A/C Air Purification" },
       "control_ac_driver_vent": { "name": "Control: Driver Seat Ventilation" },
       "control_ac_assistant_vent": { "name": "Control: Passenger Seat Ventilation" },
       "control_ac_driver_heater": { "name": "Control: Driver Seat Heater" },
       "control_ac_assistant_heater": { "name": "Control: Passenger Seat Heater" },
-      "control_ac_rear_heater": { "name": "Control: Rear Seat Heater" },
-      "control_ac_high_low_gear": { "name": "Control: A/C Fan High/Low Gear" },
       "control_ac_set_duration": { "name": "Control: A/C Pre-condition Duration" }
     },
     "image": {

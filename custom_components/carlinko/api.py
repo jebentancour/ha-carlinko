@@ -83,21 +83,16 @@ class ControlCapabilities:
     charging_management: bool = False
     scheduled_charging: bool = False
     scheduled_travel: bool = False
-    steering_wheel_heater: bool = False
-    front_windshield_heater: bool = False
     charging_power: bool = False
     ac_switch: bool = False
     ac_set_temperature: bool = False
     ac_rapid_cool: bool = False
     ac_rapid_heat: bool = False
     ac_defog: bool = False
-    ac_air_purification: bool = False
     ac_driver_vent: bool = False
     ac_assistant_vent: bool = False
     ac_driver_heater: bool = False
     ac_assistant_heater: bool = False
-    ac_rear_heater: bool = False
-    ac_high_low_gear: bool = False
     ac_set_duration: bool = False
 
 
@@ -162,21 +157,16 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         charging_management=bool(cfg.get("ChargingManagement")),
         scheduled_charging=bool(cfg.get("ScheduledCharging")),
         scheduled_travel=bool(cfg.get("ScheduledTravel")),
-        steering_wheel_heater=bool(cfg.get("SteeringWheelHeater")),
-        front_windshield_heater=bool(cfg.get("FrontWindshieldHeater")),
         charging_power=bool(cfg.get("chargingPower")),
         ac_switch=bool(ac.get("Switch")),
         ac_set_temperature=bool(ac.get("SetTemperature")),
         ac_rapid_cool=bool(ac.get("RapidCool")),
         ac_rapid_heat=bool(ac.get("RapidHeat")),
         ac_defog=bool(ac.get("Defogging")),
-        ac_air_purification=bool(ac.get("AirPurification")),
         ac_driver_vent=bool(ac.get("DriverVent")),
         ac_assistant_vent=bool(ac.get("AssistantVent")),
         ac_driver_heater=bool(ac.get("DriverHeater")),
         ac_assistant_heater=bool(ac.get("AssistantHeater")),
-        ac_rear_heater=bool(ac.get("RearHeater")),
-        ac_high_low_gear=bool(ac.get("HighLowGear")),
         ac_set_duration=bool(ac.get("SetDuration")),
     )
 

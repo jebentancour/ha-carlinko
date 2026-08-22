@@ -235,32 +235,11 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("control_scheduled_travel"),
     ),
     CarLinkoBinarySensorDescription(
-        key="control_steering_wheel_heater",
-        translation_key="control_steering_wheel_heater",
-        icon="mdi:steering",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_steering_wheel_heater"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_front_windshield_heater",
-        translation_key="control_front_windshield_heater",
-        icon="mdi:car-defrost-front",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_front_windshield_heater"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="control_charging_power",
         translation_key="control_charging_power",
         icon="mdi:ev-station",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("control_charging_power"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_ac_air_purification",
-        translation_key="control_ac_air_purification",
-        icon="mdi:air-filter",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_air_purification"),
     ),
     CarLinkoBinarySensorDescription(
         key="control_ac_driver_vent",
@@ -289,20 +268,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:car-seat-heater",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("control_ac_assistant_heater"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_ac_rear_heater",
-        translation_key="control_ac_rear_heater",
-        icon="mdi:car-seat-heater",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_rear_heater"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_ac_high_low_gear",
-        translation_key="control_ac_high_low_gear",
-        icon="mdi:fan",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_high_low_gear"),
     ),
     CarLinkoBinarySensorDescription(
         key="control_ac_set_duration",
