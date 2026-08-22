@@ -551,20 +551,20 @@ def _format_hhmm(hour: Any, minute: Any) -> str | None:
         return None
 
 
-def _format_week_days(week: Any) -> tuple[str | None, list[str] | None]:
-    """Return a fixed, translatable state (none/all/custom) plus the active day labels
-    (only set for "custom") as a separate attribute — the day combination itself is open-ended
-    (2**7 possibilities) and can't be represented as a translatable HA enum state.
+def _format_week_days(week: Any) -> tuple[str | None, dict[str, bool] | None]:
+    """Return a fixed, translatable state (none/all/custom) plus a bool per weekday as a
+    separate attribute — the day combination itself is open-ended (2**7 possibilities) and
+    can't be represented as a translatable HA enum state.
     """
     if not isinstance(week, list) or len(week) != 7:
         return None, None
     days = [bool(x) for x in week]
+    day_flags = {label.lower(): on for label, on in zip(WEEKDAY_LABELS, days)}
     if not any(days):
-        return "none", None
+        return "none", day_flags
     if all(days):
-        return "all", None
-    active = [label for label, on in zip(WEEKDAY_LABELS, days) if on]
-    return "custom", active
+        return "all", day_flags
+    return "custom", day_flags
 
 
 def decode_notice_config(raw: Any) -> dict[str, Any]:

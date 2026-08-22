@@ -241,7 +241,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         options=["none", "all", "custom"],
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("trip_schedule_days"),
-        extra_state_attributes_fn=lambda d: {"days": d["trip_schedule_active_days"]} if d.get("trip_schedule_active_days") else None,
+        extra_state_attributes_fn=lambda d: d.get("trip_schedule_active_days"),
     ),
     CarLinkoSensorDescription(
         key="charge_schedule_time",
@@ -266,7 +266,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         options=["none", "all", "custom"],
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("charge_schedule_days"),
-        extra_state_attributes_fn=lambda d: {"days": d["charge_schedule_active_days"]} if d.get("charge_schedule_active_days") else None,
+        extra_state_attributes_fn=lambda d: d.get("charge_schedule_active_days"),
     ),
     # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
     # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
