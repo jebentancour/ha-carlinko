@@ -542,26 +542,6 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
 # trip-schedule screen produced week=[false,false,false,true,false,false,false] (index 3).
 WEEKDAY_LABELS: tuple[str, ...] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-# Individual push-notification toggles that live in the same notice-config resource as the
-# trip/charge schedules below — (source key, decoded key).
-NOTIFY_FIELDS: tuple[tuple[str, str], ...] = (
-    ("remoteStartup", "notify_remote_startup"),
-    ("shutdown", "notify_shutdown"),
-    ("locked", "notify_locked"),
-    ("unlocked", "notify_unlocked"),
-    ("trunkOpened", "notify_trunk_opened"),
-    ("lowVoltage", "notify_low_voltage"),
-    ("shaken", "notify_shaken"),
-    ("illegalOpened", "notify_illegal_opened"),
-    ("illegalStartup", "notify_illegal_startup"),
-    ("forgetToLock", "notify_forget_to_lock"),
-    ("vehicleImmobilizer", "notify_vehicle_immobilizer"),
-    ("enableVehicleAnomalyWarning", "notify_vehicle_anomaly"),
-    ("enableBatteryAnomalyWarning", "notify_battery_anomaly"),
-    ("chargeIdle", "notify_charge_idle"),
-)
-
-
 def _parse_json_field(raw: Any) -> dict[str, Any]:
     """`extra`/`batterySchedule` are JSON *strings* nested inside the outer JSON response."""
     if not isinstance(raw, str):
@@ -597,8 +577,8 @@ def _format_week_days(week: Any) -> tuple[str | None, list[str] | None]:
 
 
 def decode_notice_config(raw: Any) -> dict[str, Any]:
-    """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule, charge
-    schedule and per-event push-notification preferences.
+    """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule and charge
+    schedule preferences.
 
     A separate REST config resource, not part of the telemetry blob (confirmed 2026-08-14:
     toggling these in the app never moves a byte in `decode_blob`'s output).
@@ -621,9 +601,5 @@ def decode_notice_config(raw: Any) -> dict[str, Any]:
     d["charge_schedule_time"] = _format_hhmm(charge.get("hour"), charge.get("minute"))
     d["charge_schedule_duration_h"] = charge.get("duration")
     d["charge_schedule_days"], d["charge_schedule_active_days"] = _format_week_days(charge.get("week"))
-
-    # Notificaciones — individual push-alert toggles, not vehicle state.
-    for src_key, dest_key in NOTIFY_FIELDS:
-        d[dest_key] = bool(cfg.get(src_key))
 
     return d

@@ -322,8 +322,8 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 
 
 # From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip/charge
-# schedules and per-event notification prefs. All diagnostic; keys share a prefix per
-# section (trip_schedule_/charge_schedule_/notify_) so they group together in the UI.
+# schedules. All diagnostic; keys share a prefix per section (trip_schedule_/charge_schedule_)
+# so they group together in the UI.
 NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
     CarLinkoBinarySensorDescription(
         key="trip_schedule_enabled",
@@ -338,104 +338,6 @@ NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:calendar-clock",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("charge_schedule_enabled"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_remote_startup",
-        translation_key="notify_remote_startup",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_remote_startup"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_shutdown",
-        translation_key="notify_shutdown",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_shutdown"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_locked",
-        translation_key="notify_locked",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_locked"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_unlocked",
-        translation_key="notify_unlocked",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_unlocked"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_trunk_opened",
-        translation_key="notify_trunk_opened",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_trunk_opened"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_low_voltage",
-        translation_key="notify_low_voltage",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_low_voltage"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_shaken",
-        translation_key="notify_shaken",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_shaken"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_illegal_opened",
-        translation_key="notify_illegal_opened",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_illegal_opened"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_illegal_startup",
-        translation_key="notify_illegal_startup",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_illegal_startup"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_forget_to_lock",
-        translation_key="notify_forget_to_lock",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_forget_to_lock"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_vehicle_immobilizer",
-        translation_key="notify_vehicle_immobilizer",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_vehicle_immobilizer"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_vehicle_anomaly",
-        translation_key="notify_vehicle_anomaly",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_vehicle_anomaly"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_battery_anomaly",
-        translation_key="notify_battery_anomaly",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_battery_anomaly"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="notify_charge_idle",
-        translation_key="notify_charge_idle",
-        icon="mdi:bell-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("notify_charge_idle"),
     ),
 )
 

@@ -97,7 +97,6 @@ refetched on its own cadence rather than on every poll (default 5 minutes, confi
 | --- | --- | --- |
 | Trip Schedule: Enabled / Time / Days | `startupAppointment`, `extra` (JSON: `hour`/`minute`/`week`) | scheduled trip / pre-conditioning start |
 | Charge Schedule: Enabled / Time / Duration / Days | `batterySchedule` (JSON: `enabled`/`hour`/`minute`/`duration`/`week`) | scheduled charging window |
-| Notify: Remote Startup / Shutdown / Locked / Unlocked / Trunk Opened / Low 12V Battery / Vehicle Shaken / Unauthorized Opening / Unauthorized Startup / Forgot to Lock / Immobilizer / Vehicle Anomaly / Battery Anomaly / Charge Idle | one bool per event type | whether that push notification is enabled in the app — not vehicle state |
 
 ## Options
 
