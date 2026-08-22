@@ -37,7 +37,7 @@ Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles 
 | --- | --- | --- |
 | Doors: front left / front right / rear left / rear right | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
 | Lock | 3 | nonzero = unlocked |
-| Trunk | 4 | nonzero = open |
+| Liftgate | 4 | nonzero = open |
 | Ignition | 5 | nonzero = on |
 | Windows: front left / front right / rear left / rear right | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | any bit set = open |
 | Sunroof | 9 | nonzero = open |
@@ -80,9 +80,8 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Powertrain | `fuelConsumption` + `powerConsumption` | `phev` if both true, else `bev` |
-| Control: Trunk Type | `TrunkType` | raw model constant |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Trunk / Find Car / Charging Management / Scheduled Charging Supported / Scheduled Trip Supported / Steering Wheel Heater / Front Windshield Heater / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / A/C Air Purification / Driver\|Passenger Seat Ventilation / Driver\|Passenger\|Rear Seat Heater / A/C Fan High/Low Gear / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Trunk`, `Search`, `ChargingManagement`, `ScheduledCharging`, `ScheduledTravel`, `SteeringWheelHeater`, `FrontWindshieldHeater`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/AirPurification/DriverVent/AssistantVent/DriverHeater/AssistantHeater/RearHeater/HighLowGear/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
+| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Find Car / Charging Management / Scheduled Charging Supported / Scheduled Trip Supported / Steering Wheel Heater / Front Windshield Heater / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / A/C Air Purification / Driver\|Passenger Seat Ventilation / Driver\|Passenger\|Rear Seat Heater / A/C Fan High/Low Gear / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Search`, `ChargingManagement`, `ScheduledCharging`, `ScheduledTravel`, `SteeringWheelHeater`, `FrontWindshieldHeater`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/AirPurification/DriverVent/AssistantVent/DriverHeater/AssistantHeater/RearHeater/HighLowGear/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
 
 ### Schedules & notifications
 

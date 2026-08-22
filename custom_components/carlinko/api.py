@@ -79,7 +79,6 @@ class ControlCapabilities:
     sunroof: bool = False
     sunroof_tilt: bool = False
     liftgate: bool = False
-    trunk: bool = False
     find: bool = False
     charging_management: bool = False
     scheduled_charging: bool = False
@@ -114,7 +113,6 @@ class VehicleControlConfig:
     has_engine: bool = False
     has_fuel_consumption: bool = False
     has_power_consumption: bool = False
-    trunk_type: int | None = None
     ac_temp_min: float | None = None
     ac_temp_max: float | None = None
     ac_temp_step: float | None = None
@@ -162,7 +160,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         sunroof=bool(cfg.get("Sunroof")),
         sunroof_tilt=bool(cfg.get("SunroofTilting")),
         liftgate=bool(cfg.get("PowerLiftgate")),
-        trunk=bool(cfg.get("Trunk")),
         find=bool(cfg.get("Search")),
         charging_management=bool(cfg.get("ChargingManagement")),
         scheduled_charging=bool(cfg.get("ScheduledCharging")),
@@ -194,7 +191,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         has_engine=has_engine,
         has_fuel_consumption=has_fuel_consumption,
         has_power_consumption=has_power_consumption,
-        trunk_type=cfg.get("TrunkType"),
         ac_temp_min=ac.get("SetTemperatureMin"),
         ac_temp_max=ac.get("SetTemperatureMax"),
         ac_temp_step=ac.get("TemperatureStepValue"),
@@ -450,7 +446,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["door_rear_left"] = bool(doors & 0x04)
     d["door_rear_right"] = bool(doors & 0x08)
     d["lock_unlocked"] = bool(b[3])
-    d["trunk_open"] = bool(b[4])
+    d["liftgate_open"] = bool(b[4])
     d["ignition_on"] = bool(b[5])
     # byte 6: unused, always 0x00 across every capture
     # byte 7: unused, always 0x00 across every capture
@@ -528,7 +524,6 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
         "has_engine": cfg.has_engine,
         "has_fuel_consumption": cfg.has_fuel_consumption,
         "has_power_consumption": cfg.has_power_consumption,
-        "trunk_type": cfg.trunk_type,
         "ac_temp_min": cfg.ac_temp_min,
         "ac_temp_max": cfg.ac_temp_max,
         "ac_temp_step": cfg.ac_temp_step,

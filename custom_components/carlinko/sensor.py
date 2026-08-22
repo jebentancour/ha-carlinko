@@ -280,13 +280,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
     # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
     # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
     CarLinkoSensorDescription(
-        key="trunk_type",
-        translation_key="trunk_type",
-        icon="mdi:car-back",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("trunk_type"),
-    ),
-    CarLinkoSensorDescription(
         key="ac_temp_min",
         translation_key="ac_temp_min",
         icon="mdi:thermometer-low",

@@ -119,7 +119,6 @@
         "name": "Charge Schedule: Days",
         "state": { "none": "None", "all": "Every day", "custom": "Custom" }
       },
-      "trunk_type": { "name": "Control: Trunk Type" },
       "ac_temp_min": { "name": "Control: A/C Min Temperature" },
       "ac_temp_max": { "name": "Control: A/C Max Temperature" },
       "ac_temp_step": { "name": "Control: A/C Temperature Step" }
@@ -135,7 +134,7 @@
       "window_front_right": { "name": "Window Front Right" },
       "window_rear_left": { "name": "Window Rear Left" },
       "window_rear_right": { "name": "Window Rear Right" },
-      "trunk_open": { "name": "Trunk" },
+      "liftgate_open": { "name": "Liftgate" },
       "sunroof_open": { "name": "Sunroof" },
       "ignition": { "name": "Ignition" },
       "ac_on": { "name": "Climate Control" },
@@ -148,7 +147,6 @@
       "control_sunroof": { "name": "Control: Sunroof" },
       "control_sunroof_tilt": { "name": "Control: Sunroof Tilt" },
       "control_liftgate": { "name": "Control: Liftgate" },
-      "control_trunk": { "name": "Control: Trunk" },
       "control_find": { "name": "Control: Find Car" },
       "control_charging_management": { "name": "Control: Charging Management" },
       "control_ac_switch": { "name": "Control: A/C" },

@@ -119,7 +119,6 @@
         "name": "Carga Programada: Días",
         "state": { "none": "Ninguno", "all": "Todos los días", "custom": "Personalizado" }
       },
-      "trunk_type": { "name": "Control: Tipo de Cajuela" },
       "ac_temp_min": { "name": "Control: Temperatura Mínima de Climatización" },
       "ac_temp_max": { "name": "Control: Temperatura Máxima de Climatización" },
       "ac_temp_step": { "name": "Control: Paso de Temperatura de Climatización" }
@@ -135,7 +134,7 @@
       "window_front_right": { "name": "Ventana Delantera Derecha" },
       "window_rear_left": { "name": "Ventana Trasera Izquierda" },
       "window_rear_right": { "name": "Ventana Trasera Derecha" },
-      "trunk_open": { "name": "Cajuela" },
+      "liftgate_open": { "name": "Puerta Trasera" },
       "sunroof_open": { "name": "Techo Solar" },
       "ignition": { "name": "Contacto" },
       "ac_on": { "name": "Climatización" },
@@ -148,7 +147,6 @@
       "control_sunroof": { "name": "Control: Techo Solar" },
       "control_sunroof_tilt": { "name": "Control: Inclinar Techo Solar" },
       "control_liftgate": { "name": "Control: Puerta Trasera" },
-      "control_trunk": { "name": "Control: Cajuela" },
       "control_find": { "name": "Control: Buscar Auto" },
       "control_charging_management": { "name": "Control: Gestión de Carga" },
       "control_ac_switch": { "name": "Control: Climatización" },
