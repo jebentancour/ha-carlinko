@@ -184,15 +184,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         enabled_if=lambda d: bool(d.get("has_fuel_consumption")),
     ),
     CarLinkoSensorDescription(
-        key="powertrain",
-        translation_key="powertrain",
-        icon="mdi:car-electric-outline",
-        device_class=SensorDeviceClass.ENUM,
-        options=["bev", "phev"],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("powertrain"),
-    ),
-    CarLinkoSensorDescription(
         key="ac_temp_c",
         translation_key="ac_temp",
         icon="mdi:thermostat",

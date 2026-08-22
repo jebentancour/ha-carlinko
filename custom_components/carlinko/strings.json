@@ -87,10 +87,6 @@
       "range": { "name": "Range" },
       "fuel_level": { "name": "Fuel Level" },
       "fuel_consumption": { "name": "Fuel Consumption" },
-      "powertrain": {
-        "name": "Powertrain",
-        "state": { "bev": "Electric (BEV)", "phev": "Plug-in Hybrid (PHEV)" }
-      },
       "ac_temp": { "name": "Climate Target Temperature" },
       "seat_heat_left": {
         "name": "Seat Heating Left",

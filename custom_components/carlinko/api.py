@@ -109,7 +109,6 @@ class VehicleControlConfig:
     tire_pressure_invalid: frozenset[int] = DEFAULT_TIRE_INVALID
     tire_temp_invalid: frozenset[int] = DEFAULT_TIRE_INVALID
     charging_remaining_invalid: frozenset[int] = DEFAULT_CHARGING_REMAINING_INVALID
-    is_phev: bool = False
     has_engine: bool = False
     has_fuel_consumption: bool = False
     has_power_consumption: bool = False
@@ -148,7 +147,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
 
     has_fuel_consumption = bool(cfg.get("fuelConsumption"))
     has_power_consumption = bool(cfg.get("powerConsumption"))
-    is_phev = has_fuel_consumption and has_power_consumption
     has_engine = bool(cfg.get("Engine"))
 
     ac = cfg.get("A/C") or {}
@@ -187,7 +185,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         tire_pressure_invalid=tire_pressure_invalid,
         tire_temp_invalid=tire_temp_invalid,
         charging_remaining_invalid=charging_remaining_invalid,
-        is_phev=is_phev,
         has_engine=has_engine,
         has_fuel_consumption=has_fuel_consumption,
         has_power_consumption=has_power_consumption,
@@ -515,12 +512,11 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
 
 
 def decode_control_config(control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
-    """Expose `vehicleControlConfig` as flat entity data: powertrain, per-model constants and
-    remote-control capability flags. Not telemetry — none of this comes from the status blob.
+    """Expose `vehicleControlConfig` as flat entity data: per-model constants and remote-control
+    capability flags. Not telemetry — none of this comes from the status blob.
     """
     cfg = control_config or VehicleControlConfig()
     d: dict[str, Any] = {
-        "powertrain": "phev" if cfg.is_phev else "bev",
         "has_engine": cfg.has_engine,
         "has_fuel_consumption": cfg.has_fuel_consumption,
         "has_power_consumption": cfg.has_power_consumption,

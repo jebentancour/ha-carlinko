@@ -87,10 +87,6 @@
       "range": { "name": "Autonomía" },
       "fuel_level": { "name": "Nivel de Combustible" },
       "fuel_consumption": { "name": "Consumo de Combustible" },
-      "powertrain": {
-        "name": "Motorización",
-        "state": { "bev": "Eléctrico (BEV)", "phev": "Híbrido Enchufable (PHEV)" }
-      },
       "ac_temp": { "name": "Temperatura Objetivo de Climatización" },
       "seat_heat_left": {
         "name": "Calefacción Asiento Izquierdo",

@@ -79,7 +79,6 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 
 | Entity | Source | Meaning |
 | --- | --- | --- |
-| Powertrain | `fuelConsumption` + `powerConsumption` | `phev` if both true, else `bev` |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
 | Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Find Car / Charging Management / Scheduled Charging Supported / Scheduled Trip Supported / Steering Wheel Heater / Front Windshield Heater / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / A/C Air Purification / Driver\|Passenger Seat Ventilation / Driver\|Passenger\|Rear Seat Heater / A/C Fan High/Low Gear / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Search`, `ChargingManagement`, `ScheduledCharging`, `ScheduledTravel`, `SteeringWheelHeater`, `FrontWindshieldHeater`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/AirPurification/DriverVent/AssistantVent/DriverHeater/AssistantHeater/RearHeater/HighLowGear/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
 
