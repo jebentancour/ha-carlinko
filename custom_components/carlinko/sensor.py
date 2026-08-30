@@ -183,34 +183,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("fuel_l_100"),
         enabled_if=lambda d: bool(d.get("has_fuel_consumption")),
     ),
-    # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
-    # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
-    CarLinkoSensorDescription(
-        key="ac_temp_min",
-        translation_key="ac_temp_min",
-        icon="mdi:thermometer-low",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("ac_temp_min"),
-    ),
-    CarLinkoSensorDescription(
-        key="ac_temp_max",
-        translation_key="ac_temp_max",
-        icon="mdi:thermometer-high",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("ac_temp_max"),
-    ),
-    CarLinkoSensorDescription(
-        key="ac_temp_step",
-        translation_key="ac_temp_step",
-        icon="mdi:thermometer-lines",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("ac_temp_step"),
-    ),
 )
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:

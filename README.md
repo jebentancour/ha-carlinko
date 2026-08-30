@@ -78,34 +78,20 @@ for every other entity instead of clearing them.
 The account endpoint `GET /user/vehicle` also publishes per-model constants and feature
 flags in `vehicleControlConfig` — fetched once and cached for the life of the config entry
 (it's not part of the polled status blob). This drives the tyre-pressure scale/invalid
-sentinels and charging-time invalid sentinels above, plus these diagnostic entities:
+sentinels and charging-time invalid sentinels above. `A/C.SetTemperatureMin/Max` and
+`A/C.TemperatureStepValue` used to back their own `Control: A/C Min/Max Temperature`/
+`Temperature Step` diagnostic sensors; they're now internal-only, feeding `climate.<vehicle>_ac`'s
+`min_temp`/`max_temp`/`target_temperature_step` (see below) without a separate entity of
+their own.
 
-| Entity | Source | Meaning |
-| --- | --- | --- |
-| Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-
-The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
-`Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
-check read the wrong `vehicleControlConfig` key (`chargingPower`, which never existed) instead
-of the real `ChargingManagement` flag — see below, now fixed and used to gate the Stop
-Charging button instead of a diagnostic sensor. `Control: Find Car` (`Search` flag) was
-likewise removed as a diagnostic sensor and now gates the Find Car button below instead.
-`Control: Scheduled Charging Supported` and `Control: Scheduled Trip Supported`
-(`ScheduledCharging`/`ScheduledTravel` flags) were removed as unused — nothing in this
-integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag),
-`Control: Liftgate` (`PowerLiftgate` flag), `Control: Sunroof`/`Control: Sunroof Tilt`
-(`Sunroof`/`SunroofTilting` flags) and `Control: Windows Open`/`Windows Close`/`Windows Vent`
-(`WindowsOpen`/`WindowsClose`/`WindowsVent` flags), `Control: A/C Defog` (`A/C.Defogging`
-flag), `Control: Driver`/`Passenger Seat Ventilation`/`Heater`
-(`A/C.DriverVent`/`AssistantVent`/`DriverHeater`/`AssistantHeater` flags) and
-`Control: A/C Rapid Cool`/`Rapid Heat` (`A/C.RapidCool`/`RapidHeat` flags) and
-`Control: A/C`/`A/C Temperature` (`A/C.Switch`/`SetTemperature` flags) were likewise removed
-as diagnostic sensors and now gate the `lock`/`cover`/`switch`/`fan`/`climate` entities below
-instead of the old read-only `Lock`, `Liftgate`, `Sunroof`, `Window *`, `Front Defroster`,
-`AC / climate on` and `Climate Target Temperature` binary_sensors/sensors and the
-`Seat Heating/Ventilation Left/Right` sensors. `Control: A/C Pre-condition Duration`
-(`A/C.SetDuration` flag) was removed as unused — nothing in this integration reads or writes
-A/C pre-conditioning duration.
+Every other `vehicleControlConfig` capability flag has by now either been folded into gating
+one of the entities in [Controls](#controls) below, or removed outright as unused (the
+trip-schedule entities from `terminalNoticeConfig`; `Control: Charging Power`, which
+originally checked the wrong key — `chargingPower` instead of `ChargingManagement` — and is
+now fixed and used to gate the Stop Charging button instead; `Control: Scheduled Charging/Trip
+Supported`; `Control: A/C Pre-condition Duration`). None of the diagnostic `Control: *`
+binary_sensors remain — `CONTROL_CAPABILITY_SENSORS` in `binary_sensor.py` is intentionally
+empty, kept as a mechanism for any future capability flag that doesn't map to an actuator.
 
 ## Controls
 

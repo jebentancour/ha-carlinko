@@ -85,10 +85,7 @@
       "wltp_range": { "name": "WLTP Range" },
       "range": { "name": "Range" },
       "fuel_level": { "name": "Fuel Level" },
-      "fuel_consumption": { "name": "Fuel Consumption" },
-      "ac_temp_min": { "name": "Control: A/C Min Temperature" },
-      "ac_temp_max": { "name": "Control: A/C Max Temperature" },
-      "ac_temp_step": { "name": "Control: A/C Temperature Step" }
+      "fuel_consumption": { "name": "Fuel Consumption" }
     },
     "binary_sensor": {
       "online": { "name": "Online" },
