@@ -16,7 +16,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import APP_LOGIN_BODY, SIGN_KEY, USER_AGENT
+from .const import APP_LOGIN_BODY, CMD_FIND_CAR, CMD_STOP_CHARGING, SIGN_KEY, USER_AGENT
 
 
 class CarLinkoAuthError(Exception):
@@ -82,6 +82,7 @@ class ControlCapabilities:
     find: bool = False
     scheduled_charging: bool = False
     scheduled_travel: bool = False
+    charging: bool = False
     ac_switch: bool = False
     ac_set_temperature: bool = False
     ac_rapid_cool: bool = False
@@ -154,6 +155,7 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         find=bool(cfg.get("Search")),
         scheduled_charging=bool(cfg.get("ScheduledCharging")),
         scheduled_travel=bool(cfg.get("ScheduledTravel")),
+        charging=bool(cfg.get("ChargingManagement")),
         ac_switch=bool(ac.get("Switch")),
         ac_set_temperature=bool(ac.get("SetTemperature")),
         ac_rapid_cool=bool(ac.get("RapidCool")),
@@ -270,6 +272,49 @@ class CarLinkoClient:
             await self.login()
             return await self._signed_get(path, _retried=True)
         return data
+
+    # ---- /user/vehicle/remoteControl — actuation commands ----
+
+    async def _send_remote_command(self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20) -> None:
+        """POST a remote-control opcode. Raises on rejection.
+
+        This only confirms CarLinko accepted the command for delivery to the car — the
+        actuation result itself comes back over CarLinko's WebSocket, which this integration
+        doesn't hold open, so there's no ack to wait on here.
+        """
+        if not self.token:
+            await self.login()
+        body = {"vehicleId": vehicle_id, "deviceSn": device_sn, "data": opcode, "timeOut": timeout}
+
+        async def _post(token: str) -> dict[str, Any]:
+            headers = _headers_for(body, token=token)
+            headers["content-type"] = "application/json"
+            try:
+                async with self._session.post(
+                    f"{self.api_base}/user/vehicle/remoteControl",
+                    json=body,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=timeout + 8),
+                ) as resp:
+                    text = await resp.text()
+            except aiohttp.ClientError as err:
+                raise CarLinkoConnectionError(str(err)) from err
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError as err:
+                raise CarLinkoConnectionError(f"non-JSON response from remoteControl: {text[:200]!r}") from err
+
+        data = await _post(self.token)
+        if str(data.get("code")) != "0000":
+            data = await _post(await self.login())
+            if str(data.get("code")) != "0000":
+                raise CarLinkoConnectionError(data.get("msg") or f"remoteControl command rejected: {data}")
+
+    async def stop_charging(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_STOP_CHARGING)
+
+    async def find_car(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_FIND_CAR)
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 

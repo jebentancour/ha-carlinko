@@ -32,6 +32,10 @@ MIN_SCAN_INTERVAL = 30
 # tools/auth.py in the parent project for provenance).
 SIGN_KEY = b"mYj3fzMpn77bir66"
 
+# Remote-control opcodes for `POST /user/vehicle/remoteControl`'s `data` field. Confirmed.
+CMD_STOP_CHARGING = "742701"
+CMD_FIND_CAR = "740400"
+
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {
     "method": "PASSWORD",

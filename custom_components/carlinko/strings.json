@@ -131,7 +131,6 @@
       "control_sunroof": { "name": "Control: Sunroof" },
       "control_sunroof_tilt": { "name": "Control: Sunroof Tilt" },
       "control_liftgate": { "name": "Control: Liftgate" },
-      "control_find": { "name": "Control: Find Car" },
       "control_ac_switch": { "name": "Control: A/C" },
       "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
       "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
@@ -149,6 +148,10 @@
       "front": { "name": "Front" },
       "side": { "name": "Side" },
       "top": { "name": "Top" }
+    },
+    "button": {
+      "stop_charging": { "name": "Stop Charging" },
+      "find_car": { "name": "Find Car" }
     }
   }
 }

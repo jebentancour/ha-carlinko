@@ -172,13 +172,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("control_liftgate"),
     ),
     CarLinkoBinarySensorDescription(
-        key="control_find",
-        translation_key="control_find",
-        icon="mdi:map-marker",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_find"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="control_ac_switch",
         translation_key="control_ac_switch",
         icon="mdi:air-conditioner",

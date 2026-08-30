@@ -3,7 +3,8 @@
 A native Home Assistant integration (`custom_components/carlinko`) for cars on the
 **CarLinko** cloud (Jaecoo J5 EV, Omoda E5, and likely other Chery-group EVs).
 
-Read-only by design — no remote control. Use only with your own account and car.
+Mostly read-only — telemetry only, plus a couple of remote-control buttons (Stop Charging,
+Find Car) on cars that support them. Use only with your own account and car.
 
 Reverse-engineered from and originally developed alongside
 [j5-ev-dashboard](https://github.com/GodrezJr2/j5-ev-dashboard), a standalone dashboard for
@@ -80,10 +81,28 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Find Car / Scheduled Charging Supported / Scheduled Trip Supported / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Search`, `ScheduledCharging`, `ScheduledTravel`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
+| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Scheduled Charging Supported / Scheduled Trip Supported / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `ScheduledCharging`, `ScheduledTravel`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
-The trip-schedule and `Control: Charging Power` entities (from `terminalNoticeConfig` and
-`vehicleControlConfig.chargingPower` respectively) were removed as unused.
+The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
+`Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
+check read the wrong `vehicleControlConfig` key (`chargingPower`, which never existed) instead
+of the real `ChargingManagement` flag — see below, now fixed and used to gate the Stop
+Charging button instead of a diagnostic sensor. `Control: Find Car` (`Search` flag) was
+likewise removed as a diagnostic sensor and now gates the Find Car button below instead.
+
+## Controls
+
+`vehicleControlConfig` flags (see above) gate two buttons, each only created on cars that
+report support for the matching flag: **Stop Charging** (`button.<vehicle>_stop_charging`,
+gated by `ChargingManagement`) and **Find Car** (`button.<vehicle>_find_car`, gated by
+`Search`). Pressing either sends the same `POST /user/vehicle/remoteControl` request the
+official app sends (`data: "742701"` / `"740400"` respectively), signed the same way as every
+other request this integration already makes. CarLinko's HTTP response only confirms the
+command was accepted for delivery — the actual result comes back over CarLinko's WebSocket,
+which this integration doesn't hold open, so there's no in-HA confirmation the car actually
+did either thing. Stop Charging triggers a telemetry refresh right after pressing, so
+`charging`/`charging_status` should reflect it within a poll or two; Find Car has no telemetry
+signature to check against (it's a honk/flash), so pressing it is fire-and-forget.
 
 ## Options
 
