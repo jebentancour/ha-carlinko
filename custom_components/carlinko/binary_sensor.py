@@ -82,12 +82,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("ignition_on"),
     ),
     CarLinkoBinarySensorDescription(
-        key="sunroof_open",
-        translation_key="sunroof_open",
-        device_class=BinarySensorDeviceClass.WINDOW,
-        value_fn=lambda d: d.get("sunroof_open"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="ac_on",
         translation_key="ac_on",
         device_class=BinarySensorDeviceClass.RUNNING,
@@ -130,20 +124,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:window-open-variant",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("control_windows_vent"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_sunroof",
-        translation_key="control_sunroof",
-        icon="mdi:car-convertible",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_sunroof"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_sunroof_tilt",
-        translation_key="control_sunroof_tilt",
-        icon="mdi:car-convertible",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_sunroof_tilt"),
     ),
     CarLinkoBinarySensorDescription(
         key="control_ac_switch",

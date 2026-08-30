@@ -23,6 +23,9 @@ from .const import (
     CMD_LIFTGATE_OPEN,
     CMD_LOCK,
     CMD_STOP_CHARGING,
+    CMD_SUNROOF_CLOSE,
+    CMD_SUNROOF_OPEN,
+    CMD_SUNROOF_TILT,
     CMD_UNLOCK,
     SIGN_KEY,
     USER_AGENT,
@@ -333,6 +336,15 @@ class CarLinkoClient:
 
     async def close_liftgate(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_LIFTGATE_CLOSE)
+
+    async def open_sunroof(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_OPEN)
+
+    async def close_sunroof(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_CLOSE)
+
+    async def tilt_sunroof(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_TILT)
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 
