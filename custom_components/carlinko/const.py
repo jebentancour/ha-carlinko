@@ -45,11 +45,10 @@ CMD_SUNROOF_TILT = "740F02"
 CMD_WINDOWS_CLOSE = "740500"
 CMD_WINDOWS_OPEN = "740600"
 CMD_WINDOWS_VENT = "740E00"
-# Not yet fired on a live car — pending runtime confirmation.
 CMD_DEFOG_FRONT_ON = "741201"
 CMD_DEFOG_FRONT_OFF = "741200"
 
-# Same not-yet-fired caveat as above. Level keys match SEAT_LEVELS' values in api.py.
+# Level keys match SEAT_LEVELS' values in api.py.
 CMD_SEAT_HEAT_LEFT: dict[str, str] = {"off": "741500", "low": "741501", "medium": "741502", "high": "741503"}
 CMD_SEAT_HEAT_RIGHT: dict[str, str] = {"off": "741600", "low": "741601", "medium": "741602", "high": "741603"}
 CMD_SEAT_VENT_LEFT: dict[str, str] = {"off": "741A00", "low": "741A01", "medium": "741A02", "high": "741A03"}

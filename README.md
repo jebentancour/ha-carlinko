@@ -143,10 +143,7 @@ did the thing beyond re-polling telemetry right after.
   opcode, same reasoning as Sunroof above). Same telemetry-lag caveat as Lock above.
 - **Front Defroster** (`switch.<vehicle>_defrost_front`, gated by `A/C.Defogging`, opcodes
   `741201`/`741200`) — a `switch` entity, reads byte 42 (same field the old read-only
-  `Front Defroster` binary_sensor used) and calls on/off on demand. Unlike every other opcode
-  above, `741201`/`741200` haven't been fired on a live car yet — they come from a static
-  decode of the app's command table rather than a runtime/log confirmation, so treat this one
-  as slightly less certain than the rest until confirmed.
+  `Front Defroster` binary_sensor used) and calls on/off on demand.
 - **Seat heating/ventilation** (`fan.<vehicle>_seat_{heat,vent}_{left,right}`, gated by
   `A/C.DriverHeater`/`AssistantHeater`/`DriverVent`/`AssistantVent` respectively) — 4 `fan`
   entities (not 1 combined entity with heat/cool preset modes, since heat and vent are
@@ -155,7 +152,7 @@ did the thing beyond re-polling telemetry right after.
   (vent) — same fields the old `Seat Heating/Ventilation Left/Right` sensors used — mapped to
   a 3-speed `percentage` (33/67/100%, `speed_count=3`). Opcodes: seat heat left/right
   `741501-03`/`741601-03` (off `741500`/`741600`), seat vent left/right `741A01-03`/`741B01-03`
-  (off `741A00`/`741B00`). Same not-yet-fired caveat as Front Defroster above.
+  (off `741A00`/`741B00`).
 
 ## Options
 
