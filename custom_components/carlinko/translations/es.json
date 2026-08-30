@@ -109,7 +109,6 @@
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
-      "lock": { "name": "Cerradura" },
       "door_front_left": { "name": "Puerta Delantera Izquierda" },
       "door_front_right": { "name": "Puerta Delantera Derecha" },
       "door_rear_left": { "name": "Puerta Trasera Izquierda" },
@@ -124,7 +123,6 @@
       "ac_on": { "name": "Climatización" },
       "charging": { "name": "Cargando" },
       "defrost_front": { "name": "Desempañador Delantero" },
-      "control_lock": { "name": "Control: Cerradura" },
       "control_windows_open": { "name": "Control: Abrir Ventanas" },
       "control_windows_close": { "name": "Control: Cerrar Ventanas" },
       "control_windows_vent": { "name": "Control: Ventilar Ventanas" },
@@ -150,6 +148,9 @@
     "button": {
       "stop_charging": { "name": "Detener Carga" },
       "find_car": { "name": "Buscar Auto" }
+    },
+    "lock": {
+      "lock": { "name": "Cerradura" }
     }
   }
 }

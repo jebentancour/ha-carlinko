@@ -16,7 +16,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import APP_LOGIN_BODY, CMD_FIND_CAR, CMD_STOP_CHARGING, SIGN_KEY, USER_AGENT
+from .const import APP_LOGIN_BODY, CMD_FIND_CAR, CMD_LOCK, CMD_STOP_CHARGING, CMD_UNLOCK, SIGN_KEY, USER_AGENT
 
 
 class CarLinkoAuthError(Exception):
@@ -311,6 +311,12 @@ class CarLinkoClient:
 
     async def find_car(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_FIND_CAR)
+
+    async def lock(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_LOCK)
+
+    async def unlock(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_UNLOCK)
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 

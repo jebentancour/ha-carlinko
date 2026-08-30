@@ -81,7 +81,7 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
+| Control: Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
 The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
 `Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
@@ -91,21 +91,29 @@ Charging button instead of a diagnostic sensor. `Control: Find Car` (`Search` fl
 likewise removed as a diagnostic sensor and now gates the Find Car button below instead.
 `Control: Scheduled Charging Supported` and `Control: Scheduled Trip Supported`
 (`ScheduledCharging`/`ScheduledTravel` flags) were removed as unused — nothing in this
-integration reads or writes vehicle schedules.
+integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag) was likewise
+removed as a diagnostic sensor and now gates the `lock` entity below instead of the old
+read-only `Lock` binary_sensor.
 
 ## Controls
 
-`vehicleControlConfig` flags (see above) gate two buttons, each only created on cars that
-report support for the matching flag: **Stop Charging** (`button.<vehicle>_stop_charging`,
-gated by `ChargingManagement`) and **Find Car** (`button.<vehicle>_find_car`, gated by
-`Search`). Pressing either sends the same `POST /user/vehicle/remoteControl` request the
-official app sends (`data: "742701"` / `"740400"` respectively), signed the same way as every
+`vehicleControlConfig` flags (see above) gate the entities below, each only created on cars
+that report support for the matching flag. Every command is the same `POST
+/user/vehicle/remoteControl` request the official app sends, signed the same way as every
 other request this integration already makes. CarLinko's HTTP response only confirms the
 command was accepted for delivery — the actual result comes back over CarLinko's WebSocket,
 which this integration doesn't hold open, so there's no in-HA confirmation the car actually
-did either thing. Stop Charging triggers a telemetry refresh right after pressing, so
-`charging`/`charging_status` should reflect it within a poll or two; Find Car has no telemetry
-signature to check against (it's a honk/flash), so pressing it is fire-and-forget.
+did the thing beyond re-polling telemetry right after.
+
+- **Stop Charging** (`button.<vehicle>_stop_charging`, gated by `ChargingManagement`,
+  opcode `742701`) — triggers a telemetry refresh right after pressing, so
+  `charging`/`charging_status` should reflect it within a poll or two.
+- **Find Car** (`button.<vehicle>_find_car`, gated by `Search`, opcode `740400`) — no
+  telemetry signature to check against (it's a honk/flash), so pressing it is fire-and-forget.
+- **Lock** (`lock.<vehicle>_lock`, gated by `Lock`, opcodes `740100`/`740200`) — reads byte 3
+  of the status blob (same field the old read-only `Lock` binary_sensor used) and calls
+  lock/unlock on demand; state updates on the next telemetry poll after a command, so may lag
+  a few seconds behind the car actually (un)locking.
 
 ## Options
 

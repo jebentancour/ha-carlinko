@@ -35,6 +35,8 @@ SIGN_KEY = b"mYj3fzMpn77bir66"
 # Remote-control opcodes for `POST /user/vehicle/remoteControl`'s `data` field. Confirmed.
 CMD_STOP_CHARGING = "742701"
 CMD_FIND_CAR = "740400"
+CMD_LOCK = "740100"
+CMD_UNLOCK = "740200"
 
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {

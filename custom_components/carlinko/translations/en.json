@@ -109,7 +109,6 @@
     },
     "binary_sensor": {
       "online": { "name": "Online" },
-      "lock": { "name": "Lock" },
       "door_front_left": { "name": "Door Front Left" },
       "door_front_right": { "name": "Door Front Right" },
       "door_rear_left": { "name": "Door Rear Left" },
@@ -124,7 +123,6 @@
       "ac_on": { "name": "Climate Control" },
       "charging": { "name": "Charging" },
       "defrost_front": { "name": "Front Defroster" },
-      "control_lock": { "name": "Control: Lock" },
       "control_windows_open": { "name": "Control: Windows Open" },
       "control_windows_close": { "name": "Control: Windows Close" },
       "control_windows_vent": { "name": "Control: Windows Vent" },
@@ -150,6 +148,9 @@
     "button": {
       "stop_charging": { "name": "Stop Charging" },
       "find_car": { "name": "Find Car" }
+    },
+    "lock": {
+      "lock": { "name": "Lock" }
     }
   }
 }
