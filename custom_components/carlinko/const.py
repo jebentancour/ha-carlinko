@@ -63,6 +63,9 @@ CMD_QUICK_COOL_OFF = "742000"
 # step, per VehicleControlConfig.ac_temp_step) — see api.CarLinkoClient.set_ac_temperature().
 CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
 
+CMD_AC_ON = "741001"
+CMD_AC_OFF = "741000"
+
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {
     "method": "PASSWORD",

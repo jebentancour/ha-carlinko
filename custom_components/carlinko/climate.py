@@ -1,12 +1,10 @@
 """Climate entity for the CarLinko integration.
 
-Combines A/C power, target temperature and Quick Heat/Cool into a single entity. Power is
-still read-only — the plain A/C on/off opcode (`741001`/`741000`) hasn't been fired live —
-but target temperature is now writable: the `7411` + payload set-temperature command's
-encoding has been decoded (see `api.CarLinkoClient.set_ac_temperature()`), even though it
-hasn't been fired live yet either. HEAT/COOL/AUTO are actuated via the confirmed Quick
-Heat/Cool opcodes; selecting Off reports what the car is doing but can't be commanded from
-here yet.
+Combines A/C power, target temperature and Quick Heat/Cool into a single entity. Power
+(`741001`/`741000`) and target temperature (`7411` + payload, see
+`api.CarLinkoClient.set_ac_temperature()`) are both writable now, but neither opcode has been
+fired live yet — unlike Quick Heat/Cool, which have. HEAT/COOL are actuated via the confirmed
+Quick Heat/Cool opcodes; AUTO turns the A/C on and cancels whichever quick mode is active.
 """
 from __future__ import annotations
 
@@ -16,7 +14,6 @@ from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -119,13 +116,13 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
         elif hvac_mode == HVACMode.COOL:
             await client.quick_cool_on(vehicle_id, device_sn)
         elif hvac_mode == HVACMode.AUTO:
-            # No dedicated "cancel quick mode" opcode — turning off both is harmless if one
-            # was already off, and gets back to plain A/C without touching the temperature.
+            # Explicit power-on covers the Off -> Auto transition (quick-mode-off alone
+            # wouldn't turn the A/C on); harmless no-op if it was already on. No dedicated
+            # "cancel quick mode" opcode either — turning off both is harmless if one was
+            # already off, and gets back to plain A/C without touching the temperature.
+            await client.ac_power_on(vehicle_id, device_sn)
             await client.quick_heat_off(vehicle_id, device_sn)
             await client.quick_cool_off(vehicle_id, device_sn)
         else:
-            raise HomeAssistantError(
-                "Turning the A/C fully off isn't supported yet — the plain A/C on/off command "
-                "hasn't been confirmed working. Turn it off from the car or the CarLinko app."
-            )
+            await client.ac_power_off(vehicle_id, device_sn)
         await self.coordinator.async_request_refresh()

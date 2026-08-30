@@ -18,6 +18,8 @@ import aiohttp
 
 from .const import (
     APP_LOGIN_BODY,
+    CMD_AC_OFF,
+    CMD_AC_ON,
     CMD_AC_SET_TEMPERATURE_PREFIX,
     CMD_DEFOG_FRONT_OFF,
     CMD_DEFOG_FRONT_ON,
@@ -398,6 +400,12 @@ class CarLinkoClient:
 
     async def quick_cool_off(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_COOL_OFF)
+
+    async def ac_power_on(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_AC_ON)
+
+    async def ac_power_off(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_AC_OFF)
 
     async def set_ac_temperature(self, vehicle_id: str, device_sn: str, target_temp_c: float) -> None:
         """Encode + send an A/C set-temperature command.
