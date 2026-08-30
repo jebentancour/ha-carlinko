@@ -97,8 +97,7 @@
       "door_rear_left": { "name": "Door Rear Left" },
       "door_rear_right": { "name": "Door Rear Right" },
       "ignition": { "name": "Ignition" },
-      "charging": { "name": "Charging" },
-      "control_ac_set_duration": { "name": "Control: A/C Pre-condition Duration" }
+      "charging": { "name": "Charging" }
     },
     "image": {
       "front": { "name": "Front" },

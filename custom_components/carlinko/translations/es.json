@@ -97,8 +97,7 @@
       "door_rear_left": { "name": "Puerta Trasera Izquierda" },
       "door_rear_right": { "name": "Puerta Trasera Derecha" },
       "ignition": { "name": "Contacto" },
-      "charging": { "name": "Cargando" },
-      "control_ac_set_duration": { "name": "Control: Duración de Pre-acondicionamiento" }
+      "charging": { "name": "Cargando" }
     },
     "image": {
       "front": { "name": "Frente" },

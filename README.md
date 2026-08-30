@@ -83,7 +83,6 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: A/C Pre-condition Duration | `A/C.SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
 The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
 `Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
@@ -104,7 +103,9 @@ flag), `Control: Driver`/`Passenger Seat Ventilation`/`Heater`
 as diagnostic sensors and now gate the `lock`/`cover`/`switch`/`fan`/`climate` entities below
 instead of the old read-only `Lock`, `Liftgate`, `Sunroof`, `Window *`, `Front Defroster`,
 `AC / climate on` and `Climate Target Temperature` binary_sensors/sensors and the
-`Seat Heating/Ventilation Left/Right` sensors.
+`Seat Heating/Ventilation Left/Right` sensors. `Control: A/C Pre-condition Duration`
+(`A/C.SetDuration` flag) was removed as unused — nothing in this integration reads or writes
+A/C pre-conditioning duration.
 
 ## Controls
 

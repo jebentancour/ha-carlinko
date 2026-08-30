@@ -119,7 +119,6 @@ class ControlCapabilities:
     ac_assistant_vent: bool = False
     ac_driver_heater: bool = False
     ac_assistant_heater: bool = False
-    ac_set_duration: bool = False
 
 
 @dataclass(frozen=True)
@@ -190,7 +189,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         ac_assistant_vent=bool(ac.get("AssistantVent")),
         ac_driver_heater=bool(ac.get("DriverHeater")),
         ac_assistant_heater=bool(ac.get("AssistantHeater")),
-        ac_set_duration=bool(ac.get("SetDuration")),
     )
 
     return VehicleControlConfig(

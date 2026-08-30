@@ -66,15 +66,7 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 )
 
 
-CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
-    CarLinkoBinarySensorDescription(
-        key="control_ac_set_duration",
-        translation_key="control_ac_set_duration",
-        icon="mdi:timer-cog-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_set_duration"),
-    ),
-)
+CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = ()
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
