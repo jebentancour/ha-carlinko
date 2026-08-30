@@ -109,12 +109,6 @@
         "name": "Trip Schedule: Days",
         "state": { "none": "None", "all": "Every day", "custom": "Custom" }
       },
-      "charge_schedule_time": { "name": "Charge Schedule: Time" },
-      "charge_schedule_duration": { "name": "Charge Schedule: Duration" },
-      "charge_schedule_days": {
-        "name": "Charge Schedule: Days",
-        "state": { "none": "None", "all": "Every day", "custom": "Custom" }
-      },
       "ac_temp_min": { "name": "Control: A/C Min Temperature" },
       "ac_temp_max": { "name": "Control: A/C Max Temperature" },
       "ac_temp_step": { "name": "Control: A/C Temperature Step" }
@@ -144,14 +138,12 @@
       "control_sunroof_tilt": { "name": "Control: Sunroof Tilt" },
       "control_liftgate": { "name": "Control: Liftgate" },
       "control_find": { "name": "Control: Find Car" },
-      "control_charging_management": { "name": "Control: Charging Management" },
       "control_ac_switch": { "name": "Control: A/C" },
       "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
       "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
       "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
       "control_ac_defog": { "name": "Control: A/C Defog" },
       "trip_schedule_enabled": { "name": "Trip Schedule: Enabled" },
-      "charge_schedule_enabled": { "name": "Charge Schedule: Enabled" },
       "control_scheduled_charging": { "name": "Control: Scheduled Charging Supported" },
       "control_scheduled_travel": { "name": "Control: Scheduled Trip Supported" },
       "control_charging_power": { "name": "Control: Charging Power" },

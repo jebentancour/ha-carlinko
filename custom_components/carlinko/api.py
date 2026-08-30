@@ -80,7 +80,6 @@ class ControlCapabilities:
     sunroof_tilt: bool = False
     liftgate: bool = False
     find: bool = False
-    charging_management: bool = False
     scheduled_charging: bool = False
     scheduled_travel: bool = False
     charging_power: bool = False
@@ -154,7 +153,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         sunroof_tilt=bool(cfg.get("SunroofTilting")),
         liftgate=bool(cfg.get("PowerLiftgate")),
         find=bool(cfg.get("Search")),
-        charging_management=bool(cfg.get("ChargingManagement")),
         scheduled_charging=bool(cfg.get("ScheduledCharging")),
         scheduled_travel=bool(cfg.get("ScheduledTravel")),
         charging_power=bool(cfg.get("chargingPower")),
@@ -524,7 +522,7 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
 WEEKDAY_LABELS: tuple[str, ...] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 def _parse_json_field(raw: Any) -> dict[str, Any]:
-    """`extra`/`batterySchedule` are JSON *strings* nested inside the outer JSON response."""
+    """`extra` is a JSON *string* nested inside the outer JSON response."""
     if not isinstance(raw, str):
         return {}
     try:
@@ -558,11 +556,13 @@ def _format_week_days(week: Any) -> tuple[str | None, dict[str, bool] | None]:
 
 
 def decode_notice_config(raw: Any) -> dict[str, Any]:
-    """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule and charge
-    schedule preferences.
+    """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule preferences.
 
     A separate REST config resource, not part of the telemetry blob (confirmed 2026-08-14:
     toggling these in the app never moves a byte in `decode_blob`'s output).
+
+    Charge-schedule fields (`batterySchedule`) were dropped: the feature didn't behave
+    reliably/predictably, so exposing it as sensors wasn't useful.
     """
     cfg = raw if isinstance(raw, dict) else {}
     d: dict[str, Any] = {}
@@ -575,12 +575,5 @@ def decode_notice_config(raw: Any) -> dict[str, Any]:
     d["trip_schedule_enabled"] = bool(cfg.get("startupAppointment"))
     d["trip_schedule_time"] = _format_hhmm(trip.get("hour"), trip.get("minute"))
     d["trip_schedule_days"], d["trip_schedule_active_days"] = _format_week_days(trip.get("week"))
-
-    # Carga programada.
-    charge = _parse_json_field(cfg.get("batterySchedule"))
-    d["charge_schedule_enabled"] = bool(charge.get("enabled"))
-    d["charge_schedule_time"] = _format_hhmm(charge.get("hour"), charge.get("minute"))
-    d["charge_schedule_duration_h"] = charge.get("duration")
-    d["charge_schedule_days"], d["charge_schedule_active_days"] = _format_week_days(charge.get("week"))
 
     return d

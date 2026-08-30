@@ -80,21 +80,23 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Find Car / Charging Management / Scheduled Charging Supported / Scheduled Trip Supported / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Search`, `ChargingManagement`, `ScheduledCharging`, `ScheduledTravel`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
+| Control: Lock / Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / Find Car / Scheduled Charging Supported / Scheduled Trip Supported / Charging Power / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `Lock`, `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `Search`, `ScheduledCharging`, `ScheduledTravel`, `chargingPower`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, this integration is read-only and doesn't send commands |
 
 ### Schedules & notifications
 
 A separate account endpoint, `GET /user/device/manage/terminalNoticeConfig/{id}`, publishes
-the trip/charge schedules and per-event push-notification preferences the official
+the trip schedule and per-event push-notification preferences the official
 app lets you configure. It's not part of the polled status blob (toggling these in the app
 never moves a byte in it) and changes far less often than telemetry, so it's cached and
 refetched on its own cadence rather than on every poll (default 5 minutes, configurable — see
 [Options](#options)).
 
+The charge-schedule entities (`batterySchedule`) were removed: the feature didn't behave
+reliably/predictably, so exposing it as sensors wasn't useful.
+
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Trip Schedule: Enabled / Time / Days | `startupAppointment`, `extra` (JSON: `hour`/`minute`/`week`) | scheduled trip / pre-conditioning start |
-| Charge Schedule: Enabled / Time / Duration / Days | `batterySchedule` (JSON: `enabled`/`hour`/`minute`/`duration`/`week`) | scheduled charging window |
 
 ## Options
 

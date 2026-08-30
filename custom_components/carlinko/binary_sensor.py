@@ -179,13 +179,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("control_find"),
     ),
     CarLinkoBinarySensorDescription(
-        key="control_charging_management",
-        translation_key="control_charging_management",
-        icon="mdi:ev-station",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_charging_management"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="control_ac_switch",
         translation_key="control_ac_switch",
         icon="mdi:air-conditioner",
@@ -279,9 +272,8 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 )
 
 
-# From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip/charge
-# schedules. All diagnostic; keys share a prefix per section (trip_schedule_/charge_schedule_)
-# so they group together in the UI.
+# From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip
+# schedule, diagnostic.
 NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
     CarLinkoBinarySensorDescription(
         key="trip_schedule_enabled",
@@ -289,13 +281,6 @@ NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:calendar-clock",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("trip_schedule_enabled"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="charge_schedule_enabled",
-        translation_key="charge_schedule_enabled",
-        icon="mdi:calendar-clock",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("charge_schedule_enabled"),
     ),
 )
 
