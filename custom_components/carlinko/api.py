@@ -80,8 +80,6 @@ class ControlCapabilities:
     sunroof_tilt: bool = False
     liftgate: bool = False
     find: bool = False
-    scheduled_charging: bool = False
-    scheduled_travel: bool = False
     charging: bool = False
     ac_switch: bool = False
     ac_set_temperature: bool = False
@@ -153,8 +151,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         sunroof_tilt=bool(cfg.get("SunroofTilting")),
         liftgate=bool(cfg.get("PowerLiftgate")),
         find=bool(cfg.get("Search")),
-        scheduled_charging=bool(cfg.get("ScheduledCharging")),
-        scheduled_travel=bool(cfg.get("ScheduledTravel")),
         charging=bool(cfg.get("ChargingManagement")),
         ac_switch=bool(ac.get("Switch")),
         ac_set_temperature=bool(ac.get("SetTemperature")),

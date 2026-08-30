@@ -207,20 +207,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("control_ac_defog"),
     ),
     CarLinkoBinarySensorDescription(
-        key="control_scheduled_charging",
-        translation_key="control_scheduled_charging",
-        icon="mdi:calendar-clock",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_scheduled_charging"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_scheduled_travel",
-        translation_key="control_scheduled_travel",
-        icon="mdi:calendar-clock",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_scheduled_travel"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="control_ac_driver_vent",
         translation_key="control_ac_driver_vent",
         icon="mdi:car-seat-cooler",

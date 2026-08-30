@@ -136,8 +136,6 @@
       "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
       "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
       "control_ac_defog": { "name": "Control: Desempañado" },
-      "control_scheduled_charging": { "name": "Control: Soporta Carga Programada" },
-      "control_scheduled_travel": { "name": "Control: Soporta Viaje Programado" },
       "control_ac_driver_vent": { "name": "Control: Ventilación Asiento Conductor" },
       "control_ac_assistant_vent": { "name": "Control: Ventilación Asiento Acompañante" },
       "control_ac_driver_heater": { "name": "Control: Calefacción Asiento Conductor" },

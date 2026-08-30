@@ -136,8 +136,6 @@
       "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
       "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
       "control_ac_defog": { "name": "Control: A/C Defog" },
-      "control_scheduled_charging": { "name": "Control: Scheduled Charging Supported" },
-      "control_scheduled_travel": { "name": "Control: Scheduled Trip Supported" },
       "control_ac_driver_vent": { "name": "Control: Driver Seat Ventilation" },
       "control_ac_assistant_vent": { "name": "Control: Passenger Seat Ventilation" },
       "control_ac_driver_heater": { "name": "Control: Driver Seat Heater" },
