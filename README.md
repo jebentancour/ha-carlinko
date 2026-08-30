@@ -162,16 +162,21 @@ did the thing beyond re-polling telemetry right after.
 - **A/C** (`climate.<vehicle>_ac`, gated by `A/C.Switch`) — combines A/C power, target
   temperature and Quick Heat/Cool into one `climate` entity, reading bytes 23/24 (same fields
   the old `AC / climate on` binary_sensor and `Climate Target Temperature` sensor used).
-  **Read-only for power and temperature**: neither the plain A/C on/off opcode (`741001`/
-  `741000`) nor the set-temperature opcode (`7411` + payload, encoding still unconfirmed) has
-  been fired live, unlike Quick Heat/Cool. `hvac_mode` reports `off` (A/C off), `heat`/`cool`
-  (A/C on, target pinned to this car's max/min — same inference Quick Heat/Cool used before,
-  see byte 67 note above), or `auto` (A/C on, neither extreme). `HEAT`/`COOL` are only offered
-  if `A/C.RapidHeat`/`RapidCool` are set, and *are* actionable — selecting them calls the
-  confirmed Quick Heat/Cool opcodes (`741F01`/`742001`); selecting `auto` calls both "quick
-  off" opcodes (`741F00`+`742000`, harmless if one was already off) to cancel whichever quick
-  mode is active without touching the temperature; selecting `off` raises a clear error instead
-  of silently failing, since there's no confirmed way to actually turn the A/C off from here.
+  **Power is still read-only** — the plain A/C on/off opcode (`741001`/`741000`) hasn't been
+  fired live. `hvac_mode` reports `off` (A/C off), `heat`/`cool` (A/C on, target pinned to this
+  car's max/min — same inference Quick Heat/Cool used before, see byte 67 note above), or
+  `auto` (A/C on, neither extreme). `HEAT`/`COOL` are only offered if `A/C.RapidHeat`/
+  `RapidCool` are set, and *are* actionable — selecting them calls the confirmed Quick
+  Heat/Cool opcodes (`741F01`/`742001`); selecting `auto` calls both "quick off" opcodes
+  (`741F00`+`742000`, harmless if one was already off) to cancel whichever quick mode is active
+  without touching the temperature; selecting `off` raises a clear error instead of silently
+  failing, since there's no confirmed way to actually turn the A/C off from here.
+  **Target temperature is now writable** (only if `A/C.SetTemperature` is set): the `7411` +
+  2-hex-digit payload command's encoding is decoded — whole-degree (`raw = tempC`) or
+  half-degree (`raw = (tempC × 2) | 0x80`) steps depending on this car's own
+  `A/C.TemperatureStepValue` (`1` on this account = whole-degree, so e.g. 21°C → `741115`) —
+  but hasn't been fired live yet, so treat it as decoded-not-confirmed like the Front Defroster
+  and seat opcodes were before the user tested them.
 
 ## Options
 

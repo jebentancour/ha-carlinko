@@ -18,6 +18,7 @@ import aiohttp
 
 from .const import (
     APP_LOGIN_BODY,
+    CMD_AC_SET_TEMPERATURE_PREFIX,
     CMD_DEFOG_FRONT_OFF,
     CMD_DEFOG_FRONT_ON,
     CMD_FIND_CAR,
@@ -397,6 +398,19 @@ class CarLinkoClient:
 
     async def quick_cool_off(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_COOL_OFF)
+
+    async def set_ac_temperature(self, vehicle_id: str, device_sn: str, target_temp_c: float) -> None:
+        """Encode + send an A/C set-temperature command.
+
+        The payload depends on this car's own temperature step (whole vs. half degree), which
+        `vehicleControlConfig.A/C.TemperatureStepValue` publishes — cached on this client via
+        `get_vehicle_control_config()`, called on every poll, so it's available by the time any
+        entity can call this.
+        """
+        step = self._control_config.ac_temp_step if self._control_config else None
+        raw = int(round(target_temp_c * 2)) | 0x80 if step == 0.5 else int(round(target_temp_c))
+        opcode = f"{CMD_AC_SET_TEMPERATURE_PREFIX}{raw & 0xFF:02x}"
+        await self._send_remote_command(vehicle_id, device_sn, opcode)
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 

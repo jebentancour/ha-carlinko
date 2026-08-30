@@ -59,6 +59,10 @@ CMD_QUICK_HEAT_OFF = "741F00"
 CMD_QUICK_COOL_ON = "742001"
 CMD_QUICK_COOL_OFF = "742000"
 
+# `7411` + a 2-hex-digit payload: raw temp (whole-degree step) or (temp*2)|0x80 (half-degree
+# step, per VehicleControlConfig.ac_temp_step) — see api.CarLinkoClient.set_ac_temperature().
+CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
+
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {
     "method": "PASSWORD",

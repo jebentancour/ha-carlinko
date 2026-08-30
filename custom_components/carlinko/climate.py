@@ -1,17 +1,20 @@
 """Climate entity for the CarLinko integration.
 
-Combines A/C power, target temperature and Quick Heat/Cool into a single entity.
-Read-only for power and temperature — neither the plain A/C on/off opcode (`741001`/
-`741000`) nor the set-temperature opcode (`7411` + payload, encoding still unconfirmed) has
-been tested live, unlike Quick Heat/Cool (`741F01`/`741F00`, `742001`/`742000`), which have.
-Only HEAT/COOL/AUTO are actually actuated (mapped onto Quick Heat/Cool on/off); selecting Off
-reports what the car is doing but can't be commanded from here yet.
+Combines A/C power, target temperature and Quick Heat/Cool into a single entity. Power is
+still read-only — the plain A/C on/off opcode (`741001`/`741000`) hasn't been fired live —
+but target temperature is now writable: the `7411` + payload set-temperature command's
+encoding has been decoded (see `api.CarLinkoClient.set_ac_temperature()`), even though it
+hasn't been fired live yet either. HEAT/COOL/AUTO are actuated via the confirmed Quick
+Heat/Cool opcodes; selecting Off reports what the car is doing but can't be commanded from
+here yet.
 """
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
@@ -37,7 +40,6 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "ac"
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_supported_features = ClimateEntityFeature(0)
 
     def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -50,6 +52,10 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
         if data.get("control_ac_rapid_cool"):
             modes.append(HVACMode.COOL)
         self._attr_hvac_modes = modes
+        features = ClimateEntityFeature(0)
+        if data.get("control_ac_set_temperature"):
+            features |= ClimateEntityFeature.TARGET_TEMPERATURE
+        self._attr_supported_features = features
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -95,6 +101,15 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
     @property
     def target_temperature_step(self) -> float | None:
         return (self.coordinator.data or {}).get("ac_temp_step")
+
+    async def async_set_temperature(self, **kwargs: Any) -> None:
+        temperature = kwargs.get(ATTR_TEMPERATURE)
+        if temperature is None:
+            return
+        await self.coordinator.client.set_ac_temperature(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], temperature
+        )
+        await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         client = self.coordinator.client
