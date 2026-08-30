@@ -224,25 +224,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         options=list(SEAT_LEVELS.values()),
         value_fn=lambda d: d.get("seat_vent_right"),
     ),
-    # From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip
-    # schedule, diagnostic. Boolean for this lives in binary_sensor.py instead.
-    CarLinkoSensorDescription(
-        key="trip_schedule_time",
-        translation_key="trip_schedule_time",
-        icon="mdi:clock-outline",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("trip_schedule_time"),
-    ),
-    CarLinkoSensorDescription(
-        key="trip_schedule_days",
-        translation_key="trip_schedule_days",
-        icon="mdi:calendar-week",
-        device_class=SensorDeviceClass.ENUM,
-        options=["none", "all", "custom"],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("trip_schedule_days"),
-        extra_state_attributes_fn=lambda d: d.get("trip_schedule_active_days"),
-    ),
     # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
     # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
     CarLinkoSensorDescription(

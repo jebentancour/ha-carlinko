@@ -46,8 +46,7 @@
     "step": {
       "init": {
         "data": {
-          "scan_interval": "Intervalo de consulta (segundos)",
-          "notice_config_interval": "Intervalo de actualización de horarios/notificaciones (segundos)"
+          "scan_interval": "Intervalo de consulta (segundos)"
         }
       }
     }
@@ -104,11 +103,6 @@
         "name": "Ventilación Asiento Derecho",
         "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
       },
-      "trip_schedule_time": { "name": "Viaje Programado: Hora" },
-      "trip_schedule_days": {
-        "name": "Viaje Programado: Días",
-        "state": { "none": "Ninguno", "all": "Todos los días", "custom": "Personalizado" }
-      },
       "ac_temp_min": { "name": "Control: Temperatura Mínima de Climatización" },
       "ac_temp_max": { "name": "Control: Temperatura Máxima de Climatización" },
       "ac_temp_step": { "name": "Control: Paso de Temperatura de Climatización" }
@@ -143,10 +137,8 @@
       "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
       "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
       "control_ac_defog": { "name": "Control: Desempañado" },
-      "trip_schedule_enabled": { "name": "Viaje Programado: Activo" },
       "control_scheduled_charging": { "name": "Control: Soporta Carga Programada" },
       "control_scheduled_travel": { "name": "Control: Soporta Viaje Programado" },
-      "control_charging_power": { "name": "Control: Potencia de Carga" },
       "control_ac_driver_vent": { "name": "Control: Ventilación Asiento Conductor" },
       "control_ac_assistant_vent": { "name": "Control: Ventilación Asiento Acompañante" },
       "control_ac_driver_heater": { "name": "Control: Calefacción Asiento Conductor" },

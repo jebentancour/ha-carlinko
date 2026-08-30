@@ -228,13 +228,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("control_scheduled_travel"),
     ),
     CarLinkoBinarySensorDescription(
-        key="control_charging_power",
-        translation_key="control_charging_power",
-        icon="mdi:ev-station",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_charging_power"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="control_ac_driver_vent",
         translation_key="control_ac_driver_vent",
         icon="mdi:car-seat-cooler",
@@ -272,25 +265,11 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 )
 
 
-# From `/user/device/manage/terminalNoticeConfig/{id}` (api.decode_notice_config) — trip
-# schedule, diagnostic.
-NOTICE_CONFIG_BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
-    CarLinkoBinarySensorDescription(
-        key="trip_schedule_enabled",
-        translation_key="trip_schedule_enabled",
-        icon="mdi:calendar-clock",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("trip_schedule_enabled"),
-    ),
-)
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[BinarySensorEntity] = [CarLinkoOnlineSensor(coordinator, entry)]
     entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in BINARY_SENSORS]
     entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in CONTROL_CAPABILITY_SENSORS]
-    entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in NOTICE_CONFIG_BINARY_SENSORS]
     async_add_entities(entities)
 
 

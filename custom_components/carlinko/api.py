@@ -16,7 +16,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import APP_LOGIN_BODY, DEFAULT_NOTICE_CONFIG_INTERVAL, SIGN_KEY, USER_AGENT
+from .const import APP_LOGIN_BODY, SIGN_KEY, USER_AGENT
 
 
 class CarLinkoAuthError(Exception):
@@ -82,7 +82,6 @@ class ControlCapabilities:
     find: bool = False
     scheduled_charging: bool = False
     scheduled_travel: bool = False
-    charging_power: bool = False
     ac_switch: bool = False
     ac_set_temperature: bool = False
     ac_rapid_cool: bool = False
@@ -155,7 +154,6 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         find=bool(cfg.get("Search")),
         scheduled_charging=bool(cfg.get("ScheduledCharging")),
         scheduled_travel=bool(cfg.get("ScheduledTravel")),
-        charging_power=bool(cfg.get("chargingPower")),
         ac_switch=bool(ac.get("Switch")),
         ac_set_temperature=bool(ac.get("SetTemperature")),
         ac_rapid_cool=bool(ac.get("RapidCool")),
@@ -187,8 +185,7 @@ class CarLinkoClient:
     """Talks to a single CarLinko account's REST API.
 
     Endpoints are polled on different cadences depending on how often each one actually
-    changes, fastest first: `isOnline` / `state` (telemetry, every poll) > `terminalNoticeConfig`
-    (schedules/notifications, cached with a TTL — see `_get_notice_config`) >
+    changes, fastest first: `isOnline` / `state` (telemetry, every poll) >
     `vehicleControlConfig` (per-model constants, fetched once and cached forever).
     """
 
@@ -198,17 +195,13 @@ class CarLinkoClient:
         email: str,
         password: str,
         region: str,
-        notice_config_interval: int = DEFAULT_NOTICE_CONFIG_INTERVAL,
     ) -> None:
         self._session = session
         self._email = email
         self._password = password
         self._region = region
-        self._notice_config_ttl = notice_config_interval
         self.token: str | None = None
         self._control_config: VehicleControlConfig | None = None
-        self._notice_config: dict[str, Any] | None = None
-        self._notice_config_fetched_monotonic: float | None = None
 
     @property
     def api_base(self) -> str:
@@ -342,50 +335,17 @@ class CarLinkoClient:
         data.update(decode_control_config(control_config))
         return data
 
-    # ---- /user/device/manage/terminalNoticeConfig/{id} — schedules/notifications ----
-
-    async def _get_notice_config(self, vehicle_id: str) -> dict[str, Any]:
-        """Return the decoded notice config, refetching only once `self._notice_config_ttl`
-        seconds have elapsed since the last successful fetch (user-configurable, see options flow).
-
-        A failed refetch keeps serving the last known-good value instead of failing the whole
-        poll, since this data changes far less often than the telemetry blob it's merged with.
-        """
-        now = time.monotonic()
-        fresh = (
-            self._notice_config is not None
-            and self._notice_config_fetched_monotonic is not None
-            and now - self._notice_config_fetched_monotonic < self._notice_config_ttl
-        )
-        if fresh:
-            return self._notice_config
-
-        try:
-            notice = await self._signed_get(f"/user/device/manage/terminalNoticeConfig/{vehicle_id}")
-        except (CarLinkoAuthError, CarLinkoConnectionError):
-            if self._notice_config is not None:
-                return self._notice_config
-            raise
-
-        self._notice_config = decode_notice_config(notice.get("data"))
-        self._notice_config_fetched_monotonic = now
-        return self._notice_config
-
     # ---- combined poll, one update cycle ----
 
     async def poll_telemetry(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Poll one update cycle's worth of vehicle state: online flag, telemetry (+ per-model
-        config) and notice config, each fetched and decoded by its own section above.
+        """Poll one update cycle's worth of vehicle state: online flag and telemetry (+
+        per-model config), each fetched and decoded by its own section above.
 
         Returns None if the car is reported offline.
         """
         if not await self._fetch_online(vehicle_id):
             return None
-        data = await self._get_state(vehicle_id)
-        if data is None:
-            return None
-        data.update(await self._get_notice_config(vehicle_id))
-        return data
+        return await self._get_state(vehicle_id)
 
 RAW_TEST_BYTES: tuple[int, ...] = ()
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
@@ -514,66 +474,4 @@ def decode_control_config(control_config: VehicleControlConfig | None = None) ->
     }
     for name, value in dataclasses.asdict(cfg.capabilities).items():
         d[f"control_{name}"] = value
-    return d
-
-
-# Notice-config field order confirmed live 2026-08-14: marking Thursday-only in the app's
-# trip-schedule screen produced week=[false,false,false,true,false,false,false] (index 3).
-WEEKDAY_LABELS: tuple[str, ...] = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-
-def _parse_json_field(raw: Any) -> dict[str, Any]:
-    """`extra` is a JSON *string* nested inside the outer JSON response."""
-    if not isinstance(raw, str):
-        return {}
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
-        return {}
-    return parsed if isinstance(parsed, dict) else {}
-
-
-def _format_hhmm(hour: Any, minute: Any) -> str | None:
-    try:
-        return f"{int(hour):02d}:{int(minute):02d}"
-    except (TypeError, ValueError):
-        return None
-
-
-def _format_week_days(week: Any) -> tuple[str | None, dict[str, bool] | None]:
-    """Return a fixed, translatable state (none/all/custom) plus a bool per weekday as a
-    separate attribute — the day combination itself is open-ended (2**7 possibilities) and
-    can't be represented as a translatable HA enum state.
-    """
-    if not isinstance(week, list) or len(week) != 7:
-        return None, None
-    days = [bool(x) for x in week]
-    day_flags = {label.lower(): on for label, on in zip(WEEKDAY_LABELS, days)}
-    if not any(days):
-        return "none", day_flags
-    if all(days):
-        return "all", day_flags
-    return "custom", day_flags
-
-
-def decode_notice_config(raw: Any) -> dict[str, Any]:
-    """Decode `/user/device/manage/terminalNoticeConfig/{id}` — trip schedule preferences.
-
-    A separate REST config resource, not part of the telemetry blob (confirmed 2026-08-14:
-    toggling these in the app never moves a byte in `decode_blob`'s output).
-
-    Charge-schedule fields (`batterySchedule`) were dropped: the feature didn't behave
-    reliably/predictably, so exposing it as sensors wasn't useful.
-    """
-    cfg = raw if isinstance(raw, dict) else {}
-    d: dict[str, Any] = {}
-
-    # Viaje programado (scheduled trip / pre-conditioning). `startupAppointment` confirmed
-    # live as the real enable flag (not just a notification toggle despite sitting among
-    # them): toggling it in the app flips only this field, nothing else. "One-time" vs
-    # "recurring" has no dedicated flag — the app infers it from whether any `week` day is set.
-    trip = _parse_json_field(cfg.get("extra"))
-    d["trip_schedule_enabled"] = bool(cfg.get("startupAppointment"))
-    d["trip_schedule_time"] = _format_hhmm(trip.get("hour"), trip.get("minute"))
-    d["trip_schedule_days"], d["trip_schedule_active_days"] = _format_week_days(trip.get("week"))
-
     return d
