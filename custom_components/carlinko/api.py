@@ -538,9 +538,6 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["lock_unlocked"] = bool(b[3])
     d["raw_byte3"] = b[3]
     d["liftgate_open"] = bool(b[4])
-    # byte 5 is currently treated as a plain bool for ignition_on, but may carry more (e.g. a
-    # >=2 threshold for HV/motor state rather than any-nonzero) — raw byte exposed alongside to
-    # see if intermediate values ever show up.
     d["ignition_on"] = bool(b[5])
     d["raw_byte5"] = b[5]
     # byte 6: unused, always 0x00 across every capture
@@ -563,7 +560,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["ac_on"] = bool(b[23])
     d["ac_temp_c"] = b[24]
     # byte 25: unused, always 0x02 across every capture
-    # byte 26: unused, varies (0/1)
+    # byte 26: unused, varies (0x00/0x01)
     # byte 27: unused, always 0x00 across every capture
     d["battery_pct"] = b[28]
     d["battery_range_km"] = int.from_bytes(b[29:31], "big")
@@ -601,8 +598,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture
     # byte 66: unused, always 0x00 across every capture
-    # byte 67: meaning unconfirmed, varies (0x00/0x02/0xFF) — exposed as a diagnostic sensor
-    # since it's a candidate for reflecting quick-heat/quick-cool state, not yet confirmed.
+    # byte 67: unknown meaning — varies (0x00/0x02/0xFF)
     d["raw_byte67"] = b[67]
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["range_km"] = int.from_bytes(b[70:72], "big")
