@@ -474,7 +474,7 @@ class CarLinkoClient:
             return None
         return await self._get_state(vehicle_id)
 
-RAW_TEST_BYTES: tuple[int, ...] = (67,)
+RAW_TEST_BYTES: tuple[int, ...] = (4, 5, 67)
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
 
 CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 16: "dc_fast"}
@@ -523,7 +523,12 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["door_rear_right"] = bool(doors & 0x08)
     d["lock_unlocked"] = bool(b[3])
     d["liftgate_open"] = bool(b[4])
+    d["raw_byte4"] = b[4]
+    # byte 5 is currently treated as a plain bool for ignition_on, but may carry more (e.g. a
+    # >=2 threshold for HV/motor state rather than any-nonzero) — raw byte exposed alongside to
+    # see if intermediate values ever show up.
     d["ignition_on"] = bool(b[5])
+    d["raw_byte5"] = b[5]
     # byte 6: unused, always 0x00 across every capture
     # byte 7: unused, always 0x00 across every capture
     windows = b[8]
