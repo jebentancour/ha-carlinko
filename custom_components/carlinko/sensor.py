@@ -183,15 +183,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         value_fn=lambda d: d.get("fuel_l_100"),
         enabled_if=lambda d: bool(d.get("has_fuel_consumption")),
     ),
-    CarLinkoSensorDescription(
-        key="ac_temp_c",
-        translation_key="ac_temp",
-        icon="mdi:thermostat",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda d: d.get("ac_temp_c"),
-    ),
     # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
     # aren't simple capability booleans (those are control_* in binary_sensor.py instead).
     CarLinkoSensorDescription(

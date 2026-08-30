@@ -58,12 +58,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("ignition_on"),
     ),
     CarLinkoBinarySensorDescription(
-        key="ac_on",
-        translation_key="ac_on",
-        device_class=BinarySensorDeviceClass.RUNNING,
-        value_fn=lambda d: d.get("ac_on"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="charging",
         translation_key="charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
@@ -73,20 +67,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 
 
 CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
-    CarLinkoBinarySensorDescription(
-        key="control_ac_switch",
-        translation_key="control_ac_switch",
-        icon="mdi:air-conditioner",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_switch"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_ac_set_temperature",
-        translation_key="control_ac_set_temperature",
-        icon="mdi:thermostat",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_set_temperature"),
-    ),
     CarLinkoBinarySensorDescription(
         key="control_ac_set_duration",
         translation_key="control_ac_set_duration",

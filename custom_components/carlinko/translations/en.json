@@ -86,7 +86,6 @@
       "range": { "name": "Range" },
       "fuel_level": { "name": "Fuel Level" },
       "fuel_consumption": { "name": "Fuel Consumption" },
-      "ac_temp": { "name": "Climate Target Temperature" },
       "ac_temp_min": { "name": "Control: A/C Min Temperature" },
       "ac_temp_max": { "name": "Control: A/C Max Temperature" },
       "ac_temp_step": { "name": "Control: A/C Temperature Step" }
@@ -98,10 +97,7 @@
       "door_rear_left": { "name": "Door Rear Left" },
       "door_rear_right": { "name": "Door Rear Right" },
       "ignition": { "name": "Ignition" },
-      "ac_on": { "name": "Climate Control" },
       "charging": { "name": "Charging" },
-      "control_ac_switch": { "name": "Control: A/C" },
-      "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
       "control_ac_set_duration": { "name": "Control: A/C Pre-condition Duration" }
     },
     "image": {
@@ -125,15 +121,16 @@
       "window_rear_right": { "name": "Window Rear Right" }
     },
     "switch": {
-      "defrost_front": { "name": "Front Defroster" },
-      "quick_heat": { "name": "Quick Heat" },
-      "quick_cool": { "name": "Quick Cool" }
+      "defrost_front": { "name": "Front Defroster" }
     },
     "fan": {
       "seat_heat_left": { "name": "Seat Heating Left" },
       "seat_heat_right": { "name": "Seat Heating Right" },
       "seat_vent_left": { "name": "Seat Ventilation Left" },
       "seat_vent_right": { "name": "Seat Ventilation Right" }
+    },
+    "climate": {
+      "ac": { "name": "A/C" }
     }
   }
 }

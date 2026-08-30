@@ -48,8 +48,8 @@ Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles 
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Odometer (km) | 18–20 | uint24 |
 | Fuel Level % *(only if `Engine` is set)* | 21 | raw |
-| AC / climate on | 23 | nonzero = on |
-| Climate Target Temperature (°C) | 24 | raw |
+| AC / climate on (`climate` entity) | 23 | nonzero = on |
+| Climate Target Temperature (°C) (`climate` entity) | 24 | raw |
 | Battery Level % | 28 | raw |
 | Battery Range (km) | 29–30 | uint16 |
 | Seat Heating/Ventilation Left / Right (`fan` entities) | 32, 33 / 37, 38 | enum: 0=off, 1=low, 2=medium, 3=high |
@@ -83,7 +83,7 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: A/C / A/C Temperature / A/C Pre-condition Duration | `A/C.Switch/SetTemperature/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
+| Control: A/C Pre-condition Duration | `A/C.SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
 The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
 `Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
@@ -99,10 +99,12 @@ integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag),
 (`WindowsOpen`/`WindowsClose`/`WindowsVent` flags), `Control: A/C Defog` (`A/C.Defogging`
 flag), `Control: Driver`/`Passenger Seat Ventilation`/`Heater`
 (`A/C.DriverVent`/`AssistantVent`/`DriverHeater`/`AssistantHeater` flags) and
-`Control: A/C Rapid Cool`/`Rapid Heat` (`A/C.RapidCool`/`RapidHeat` flags) were likewise
-removed as diagnostic sensors and now gate the `lock`/`cover`/`switch`/`fan` entities below
-instead of the old read-only `Lock`, `Liftgate`, `Sunroof`, `Window *` and `Front Defroster`
-binary_sensors and the `Seat Heating/Ventilation Left/Right` sensors.
+`Control: A/C Rapid Cool`/`Rapid Heat` (`A/C.RapidCool`/`RapidHeat` flags) and
+`Control: A/C`/`A/C Temperature` (`A/C.Switch`/`SetTemperature` flags) were likewise removed
+as diagnostic sensors and now gate the `lock`/`cover`/`switch`/`fan`/`climate` entities below
+instead of the old read-only `Lock`, `Liftgate`, `Sunroof`, `Window *`, `Front Defroster`,
+`AC / climate on` and `Climate Target Temperature` binary_sensors/sensors and the
+`Seat Heating/Ventilation Left/Right` sensors.
 
 ## Controls
 
@@ -157,13 +159,19 @@ did the thing beyond re-polling telemetry right after.
   a 3-speed `percentage` (33/67/100%, `speed_count=3`). Opcodes: seat heat left/right
   `741501-03`/`741601-03` (off `741500`/`741600`), seat vent left/right `741A01-03`/`741B01-03`
   (off `741A00`/`741B00`).
-- **Quick Heat / Quick Cool** (`switch.<vehicle>_quick_{heat,cool}`, gated by
-  `A/C.RapidHeat`/`RapidCool`, opcodes `741F01`/`741F00` and `742001`/`742000`) — `switch`
-  entities. Neither mode has a confirmed dedicated telemetry bit yet (byte 67 is a candidate,
-  see above, but unconfirmed), so `is_on` is inferred instead: A/C on **and** its target
-  temperature pinned to this car's max (`ac_temp_max`, for Quick Heat) or min (`ac_temp_min`,
-  for Quick Cool) — that's the behavior these modes actually drive. Expect this to be swapped
-  for a direct byte read once byte 67 (or another field) is confirmed to track it.
+- **A/C** (`climate.<vehicle>_ac`, gated by `A/C.Switch`) — combines A/C power, target
+  temperature and Quick Heat/Cool into one `climate` entity, reading bytes 23/24 (same fields
+  the old `AC / climate on` binary_sensor and `Climate Target Temperature` sensor used).
+  **Read-only for power and temperature**: neither the plain A/C on/off opcode (`741001`/
+  `741000`) nor the set-temperature opcode (`7411` + payload, encoding still unconfirmed) has
+  been fired live, unlike Quick Heat/Cool. `hvac_mode` reports `off` (A/C off), `heat`/`cool`
+  (A/C on, target pinned to this car's max/min — same inference Quick Heat/Cool used before,
+  see byte 67 note above), or `auto` (A/C on, neither extreme). `HEAT`/`COOL` are only offered
+  if `A/C.RapidHeat`/`RapidCool` are set, and *are* actionable — selecting them calls the
+  confirmed Quick Heat/Cool opcodes (`741F01`/`742001`); selecting `auto` calls both "quick
+  off" opcodes (`741F00`+`742000`, harmless if one was already off) to cancel whichever quick
+  mode is active without touching the temperature; selecting `off` raises a clear error instead
+  of silently failing, since there's no confirmed way to actually turn the A/C off from here.
 
 ## Options
 
