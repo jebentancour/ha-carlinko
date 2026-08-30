@@ -38,8 +38,8 @@ Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles 
 | --- | --- | --- |
 | Doors: front left / front right / rear left / rear right | 2, bitmask 0x01/0x02/0x04/0x08 | bit set = open |
 | Lock | 3 | nonzero = unlocked |
+| Raw Byte 3 *(diagnostic)* | 3 | raw value alongside the `Lock` bool above, for visibility into any non-0/1 values |
 | Liftgate | 4 | nonzero = open |
-| Raw Byte 4 *(diagnostic)* | 4 | raw value alongside the `Liftgate` bool above, for visibility into any non-0/1 values |
 | Ignition | 5 | nonzero = on |
 | Raw Byte 5 *(diagnostic)* | 5 | raw value alongside the `Ignition` bool above — possible `>=2` HV/motor-state threshold instead of any-nonzero, unconfirmed |
 | Windows: front left / front right / rear left / rear right | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | enum per window: 00=closed, 01=open, 10=vent, 11=open (fallback) |
