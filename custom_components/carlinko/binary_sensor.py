@@ -76,12 +76,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("window_rear_right"),
     ),
     CarLinkoBinarySensorDescription(
-        key="liftgate_open",
-        translation_key="liftgate_open",
-        device_class=BinarySensorDeviceClass.DOOR,
-        value_fn=lambda d: d.get("liftgate_open"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="ignition",
         translation_key="ignition",
         device_class=BinarySensorDeviceClass.RUNNING,
@@ -150,13 +144,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:car-convertible",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("control_sunroof_tilt"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_liftgate",
-        translation_key="control_liftgate",
-        icon="mdi:car-back",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_liftgate"),
     ),
     CarLinkoBinarySensorDescription(
         key="control_ac_switch",

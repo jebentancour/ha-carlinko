@@ -117,7 +117,6 @@
       "window_front_right": { "name": "Window Front Right" },
       "window_rear_left": { "name": "Window Rear Left" },
       "window_rear_right": { "name": "Window Rear Right" },
-      "liftgate_open": { "name": "Liftgate" },
       "sunroof_open": { "name": "Sunroof" },
       "ignition": { "name": "Ignition" },
       "ac_on": { "name": "Climate Control" },
@@ -128,7 +127,6 @@
       "control_windows_vent": { "name": "Control: Windows Vent" },
       "control_sunroof": { "name": "Control: Sunroof" },
       "control_sunroof_tilt": { "name": "Control: Sunroof Tilt" },
-      "control_liftgate": { "name": "Control: Liftgate" },
       "control_ac_switch": { "name": "Control: A/C" },
       "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
       "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
@@ -151,6 +149,9 @@
     },
     "lock": {
       "lock": { "name": "Lock" }
+    },
+    "cover": {
+      "liftgate": { "name": "Liftgate" }
     }
   }
 }

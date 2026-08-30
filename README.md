@@ -81,7 +81,7 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / Liftgate / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `PowerLiftgate`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
+| Control: Windows Open / Windows Close / Windows Vent / Sunroof / Sunroof Tilt / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `WindowsOpen/Close/Vent`, `Sunroof`, `SunroofTilting`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
 The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
 `Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
@@ -91,9 +91,10 @@ Charging button instead of a diagnostic sensor. `Control: Find Car` (`Search` fl
 likewise removed as a diagnostic sensor and now gates the Find Car button below instead.
 `Control: Scheduled Charging Supported` and `Control: Scheduled Trip Supported`
 (`ScheduledCharging`/`ScheduledTravel` flags) were removed as unused — nothing in this
-integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag) was likewise
-removed as a diagnostic sensor and now gates the `lock` entity below instead of the old
-read-only `Lock` binary_sensor.
+integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag) and
+`Control: Liftgate` (`PowerLiftgate` flag) were likewise removed as diagnostic sensors and
+now gate the `lock` and `cover` entities below instead of the old read-only `Lock` and
+`Liftgate` binary_sensors.
 
 ## Controls
 
@@ -114,6 +115,10 @@ did the thing beyond re-polling telemetry right after.
   of the status blob (same field the old read-only `Lock` binary_sensor used) and calls
   lock/unlock on demand; state updates on the next telemetry poll after a command, so may lag
   a few seconds behind the car actually (un)locking.
+- **Liftgate** (`cover.<vehicle>_liftgate`, gated by `PowerLiftgate`, opcodes `740300`/`740A00`)
+  — a `cover` entity (open/close only, no position), reads byte 4 (same field the old
+  read-only `Liftgate` binary_sensor used) and calls open/close on demand; same telemetry-lag
+  caveat as Lock above.
 
 ## Options
 
