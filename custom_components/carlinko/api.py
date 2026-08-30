@@ -438,6 +438,8 @@ CHARGING_STATUSES: dict[int, str] = {
 
 SEAT_LEVELS: dict[int, str] = {0: "off", 1: "low", 2: "medium", 3: "high"}
 
+SUNROOF_STATES: dict[int, str] = {0x00: "closed", 0x08: "open", 0x0B: "tilted"}
+
 
 def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
     """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`."""
@@ -475,7 +477,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["window_front_right"] = bool((windows >> 4) & 0b11)
     d["window_rear_left"] = bool((windows >> 2) & 0b11)
     d["window_rear_right"] = bool(windows & 0b11)
-    d["sunroof_open"] = bool(b[9])
+    d["sunroof_state"] = SUNROOF_STATES.get(b[9], "open" if b[9] else "closed")
     # byte 10: unused, always 0xFF across every capture
     # byte 11: unused, always 0x7F across every capture
     d["volt12"] = round(int.from_bytes(b[12:14], "big") * 0.01, 2)

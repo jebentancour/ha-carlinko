@@ -98,8 +98,17 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
     def is_closed(self) -> bool | None:
         if not self.coordinator.data:
             return None
-        open_ = self.coordinator.data.get("sunroof_open")
-        return None if open_ is None else not open_
+        state = self.coordinator.data.get("sunroof_state")
+        return None if state is None else state == "closed"
+
+    @property
+    def current_cover_tilt_position(self) -> int | None:
+        # No graduated position, just closed/open/tilted — represent the vent state as fully
+        # tilted (100) vs. not (0), same closed/open-only convention as is_closed above.
+        if not self.coordinator.data:
+            return None
+        state = self.coordinator.data.get("sunroof_state")
+        return None if state is None else (100 if state == "tilted" else 0)
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         await self.coordinator.client.open_sunroof(

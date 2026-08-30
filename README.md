@@ -41,7 +41,7 @@ Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles 
 | Liftgate | 4 | nonzero = open |
 | Ignition | 5 | nonzero = on |
 | Windows: front left / front right / rear left / rear right | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | any bit set = open |
-| Sunroof | 9 | nonzero = open |
+| Sunroof | 9 | enum: 0x00=closed, 0x08=open, 0x0B=tilted (vent), else=open |
 | 12 V battery (V) | 12–13 | uint16 × 0.01 |
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
 | Odometer (km) | 18–20 | uint24 |
@@ -121,12 +121,14 @@ did the thing beyond re-polling telemetry right after.
   read-only `Liftgate` binary_sensor used) and calls open/close on demand; same telemetry-lag
   caveat as Lock above.
 - **Sunroof** (`cover.<vehicle>_sunroof`, gated by `Sunroof`, opcodes `740F01`/`740F00`) — a
-  `cover` entity, reads byte 9 (same field the old read-only `Sunroof` binary_sensor used).
-  If the car's config also reports `SunroofTilting`, the entity additionally exposes tilt
-  open/close (opcode `740F02` for vent, `740F00` for closing back down — there's no distinct
-  "leave closed but untilt" opcode, so closing the tilt and closing outright are the same
-  command). Same telemetry-lag caveat as Lock above; the blob has no separate bit for "tilted"
-  vs. "fully open", so `is_closed` only tracks open/closed, not which of the two open states.
+  `cover` entity, reads byte 9's closed/open/tilted enum (see above; same field the old
+  read-only `Sunroof` binary_sensor used, now with the tilted state distinguished from fully
+  open). If the car's config also reports `SunroofTilting`, the entity additionally exposes
+  tilt open/close (opcode `740F02` for vent, `740F00` for closing back down — there's no
+  distinct "leave closed but untilt" opcode, so closing the tilt and closing outright are the
+  same command) and reports the tilted state as `current_cover_tilt_position` (100 when
+  tilted, 0 otherwise — there's no graduated position, just the three states). Same
+  telemetry-lag caveat as Lock above.
 
 ## Options
 
