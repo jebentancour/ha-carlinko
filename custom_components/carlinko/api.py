@@ -18,6 +18,8 @@ import aiohttp
 
 from .const import (
     APP_LOGIN_BODY,
+    CMD_DEFOG_FRONT_OFF,
+    CMD_DEFOG_FRONT_ON,
     CMD_FIND_CAR,
     CMD_LIFTGATE_CLOSE,
     CMD_LIFTGATE_OPEN,
@@ -357,6 +359,12 @@ class CarLinkoClient:
 
     async def vent_windows(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_VENT)
+
+    async def defrost_on(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_FRONT_ON)
+
+    async def defrost_off(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_FRONT_OFF)
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 

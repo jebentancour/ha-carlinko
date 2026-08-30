@@ -45,6 +45,9 @@ CMD_SUNROOF_TILT = "740F02"
 CMD_WINDOWS_CLOSE = "740500"
 CMD_WINDOWS_OPEN = "740600"
 CMD_WINDOWS_VENT = "740E00"
+# Not yet fired on a live car — pending runtime confirmation.
+CMD_DEFOG_FRONT_ON = "741201"
+CMD_DEFOG_FRONT_OFF = "741200"
 
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {

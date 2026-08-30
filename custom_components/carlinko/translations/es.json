@@ -116,12 +116,10 @@
       "ignition": { "name": "Contacto" },
       "ac_on": { "name": "Climatización" },
       "charging": { "name": "Cargando" },
-      "defrost_front": { "name": "Desempañador Delantero" },
       "control_ac_switch": { "name": "Control: Climatización" },
       "control_ac_set_temperature": { "name": "Control: Temperatura de Climatización" },
       "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
       "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
-      "control_ac_defog": { "name": "Control: Desempañado" },
       "control_ac_driver_vent": { "name": "Control: Ventilación Asiento Conductor" },
       "control_ac_assistant_vent": { "name": "Control: Ventilación Asiento Acompañante" },
       "control_ac_driver_heater": { "name": "Control: Calefacción Asiento Conductor" },
@@ -147,6 +145,9 @@
       "window_front_right": { "name": "Ventana Delantera Derecha" },
       "window_rear_left": { "name": "Ventana Trasera Izquierda" },
       "window_rear_right": { "name": "Ventana Trasera Derecha" }
+    },
+    "switch": {
+      "defrost_front": { "name": "Desempañador Delantero" }
     }
   }
 }

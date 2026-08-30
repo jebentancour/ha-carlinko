@@ -69,13 +69,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
         value_fn=lambda d: d.get("charging"),
     ),
-    CarLinkoBinarySensorDescription(
-        key="defrost_front",
-        translation_key="defrost_front",
-        icon="mdi:car-defrost-front",
-        device_class=BinarySensorDeviceClass.RUNNING,
-        value_fn=lambda d: d.get("defrost_front"),
-    ),
 )
 
 
@@ -107,13 +100,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:fire",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("control_ac_rapid_heat"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_ac_defog",
-        translation_key="control_ac_defog",
-        icon="mdi:car-defrost-front",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_defog"),
     ),
     CarLinkoBinarySensorDescription(
         key="control_ac_driver_vent",

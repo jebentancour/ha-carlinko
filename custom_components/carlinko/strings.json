@@ -116,12 +116,10 @@
       "ignition": { "name": "Ignition" },
       "ac_on": { "name": "Climate Control" },
       "charging": { "name": "Charging" },
-      "defrost_front": { "name": "Front Defroster" },
       "control_ac_switch": { "name": "Control: A/C" },
       "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
       "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
       "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
-      "control_ac_defog": { "name": "Control: A/C Defog" },
       "control_ac_driver_vent": { "name": "Control: Driver Seat Ventilation" },
       "control_ac_assistant_vent": { "name": "Control: Passenger Seat Ventilation" },
       "control_ac_driver_heater": { "name": "Control: Driver Seat Heater" },
@@ -147,6 +145,9 @@
       "window_front_right": { "name": "Window Front Right" },
       "window_rear_left": { "name": "Window Rear Left" },
       "window_rear_right": { "name": "Window Rear Right" }
+    },
+    "switch": {
+      "defrost_front": { "name": "Front Defroster" }
     }
   }
 }
