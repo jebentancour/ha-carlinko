@@ -260,6 +260,7 @@ class _CarLinkoBinaryBase(CoordinatorEntity[CarLinkoCoordinator], BinarySensorEn
 class CarLinkoOnlineSensor(_CarLinkoBinaryBase):
     _attr_translation_key = "online"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry)
