@@ -54,6 +54,11 @@ CMD_SEAT_HEAT_RIGHT: dict[str, str] = {"off": "741600", "low": "741601", "medium
 CMD_SEAT_VENT_LEFT: dict[str, str] = {"off": "741A00", "low": "741A01", "medium": "741A02", "high": "741A03"}
 CMD_SEAT_VENT_RIGHT: dict[str, str] = {"off": "741B00", "low": "741B01", "medium": "741B02", "high": "741B03"}
 
+CMD_QUICK_HEAT_ON = "741F01"
+CMD_QUICK_HEAT_OFF = "741F00"
+CMD_QUICK_COOL_ON = "742001"
+CMD_QUICK_COOL_OFF = "742000"
+
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {
     "method": "PASSWORD",

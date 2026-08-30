@@ -102,8 +102,6 @@
       "charging": { "name": "Charging" },
       "control_ac_switch": { "name": "Control: A/C" },
       "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
-      "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
-      "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
       "control_ac_set_duration": { "name": "Control: A/C Pre-condition Duration" }
     },
     "image": {
@@ -127,7 +125,9 @@
       "window_rear_right": { "name": "Window Rear Right" }
     },
     "switch": {
-      "defrost_front": { "name": "Front Defroster" }
+      "defrost_front": { "name": "Front Defroster" },
+      "quick_heat": { "name": "Quick Heat" },
+      "quick_cool": { "name": "Quick Cool" }
     },
     "fan": {
       "seat_heat_left": { "name": "Seat Heating Left" },

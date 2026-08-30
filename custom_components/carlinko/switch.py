@@ -1,4 +1,4 @@
-"""Switch entity for the CarLinko integration."""
+"""Switch entities for the CarLinko integration."""
 from __future__ import annotations
 
 from typing import Any
@@ -16,21 +16,27 @@ from .coordinator import CarLinkoCoordinator
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
-    # Only offer the switch on cars whose vehicleControlConfig declares A/C.Defogging
-    # support — firing the opcode on a car that doesn't would just error.
-    if coordinator.data and coordinator.data.get("control_ac_defog"):
-        async_add_entities([CarLinkoDefrostSwitch(coordinator, entry)])
+    data = coordinator.data or {}
+    entities: list[SwitchEntity] = []
+    # Only offer each switch on cars whose vehicleControlConfig declares the matching
+    # capability — firing an opcode the car doesn't support would just error.
+    if data.get("control_ac_defog"):
+        entities.append(CarLinkoDefrostSwitch(coordinator, entry))
+    if data.get("control_ac_rapid_heat"):
+        entities.append(CarLinkoQuickHeatSwitch(coordinator, entry))
+    if data.get("control_ac_rapid_cool"):
+        entities.append(CarLinkoQuickCoolSwitch(coordinator, entry))
+    async_add_entities(entities)
 
 
-class CarLinkoDefrostSwitch(CoordinatorEntity[CarLinkoCoordinator], SwitchEntity):
+class _CarLinkoSwitchBase(CoordinatorEntity[CarLinkoCoordinator], SwitchEntity):
     _attr_has_entity_name = True
-    _attr_translation_key = "defrost_front"
-    _attr_icon = "mdi:car-defrost-front"
 
-    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, key: str) -> None:
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_defrost_front"
+        self._attr_translation_key = key
+        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_{key}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -42,6 +48,16 @@ class CarLinkoDefrostSwitch(CoordinatorEntity[CarLinkoCoordinator], SwitchEntity
             serial_number=self._entry.data[CONF_DEVICE_SN],
         )
 
+    def _vehicle_device(self) -> tuple[str, str]:
+        return self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+
+
+class CarLinkoDefrostSwitch(_CarLinkoSwitchBase):
+    _attr_icon = "mdi:car-defrost-front"
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "defrost_front")
+
     @property
     def is_on(self) -> bool | None:
         if not self.coordinator.data:
@@ -49,13 +65,61 @@ class CarLinkoDefrostSwitch(CoordinatorEntity[CarLinkoCoordinator], SwitchEntity
         return self.coordinator.data.get("defrost_front")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.coordinator.client.defrost_on(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
-        )
+        await self.coordinator.client.defrost_on(*self._vehicle_device())
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.client.defrost_off(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
-        )
+        await self.coordinator.client.defrost_off(*self._vehicle_device())
+        await self.coordinator.async_request_refresh()
+
+
+class _QuickAcSwitch(_CarLinkoSwitchBase):
+    """Quick Heat/Cool have no dedicated telemetry bit yet (byte 67's meaning is unconfirmed —
+    see the `raw_byte67` diagnostic sensor). Until that's nailed down, infer on/off from the
+    known-confirmed climate fields: A/C on and its target temperature pinned to the model's
+    extreme (max for quick heat, min for quick cool) — that's the behavior these modes drive.
+    """
+
+    _extreme_key: str  # "ac_temp_max" or "ac_temp_min", set by subclasses
+
+    @property
+    def is_on(self) -> bool | None:
+        data = self.coordinator.data
+        if not data:
+            return None
+        ac_on, ac_temp_c, extreme = data.get("ac_on"), data.get("ac_temp_c"), data.get(self._extreme_key)
+        if ac_on is None or ac_temp_c is None or extreme is None:
+            return None
+        return bool(ac_on) and ac_temp_c == extreme
+
+
+class CarLinkoQuickHeatSwitch(_QuickAcSwitch):
+    _attr_icon = "mdi:fire"
+    _extreme_key = "ac_temp_max"
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "quick_heat")
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self.coordinator.client.quick_heat_on(*self._vehicle_device())
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.client.quick_heat_off(*self._vehicle_device())
+        await self.coordinator.async_request_refresh()
+
+
+class CarLinkoQuickCoolSwitch(_QuickAcSwitch):
+    _attr_icon = "mdi:snowflake"
+    _extreme_key = "ac_temp_min"
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "quick_cool")
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self.coordinator.client.quick_cool_on(*self._vehicle_device())
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.client.quick_cool_off(*self._vehicle_device())
         await self.coordinator.async_request_refresh()

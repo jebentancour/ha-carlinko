@@ -88,20 +88,6 @@ CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("control_ac_set_temperature"),
     ),
     CarLinkoBinarySensorDescription(
-        key="control_ac_rapid_cool",
-        translation_key="control_ac_rapid_cool",
-        icon="mdi:snowflake",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_rapid_cool"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_ac_rapid_heat",
-        translation_key="control_ac_rapid_heat",
-        icon="mdi:fire",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_ac_rapid_heat"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="control_ac_set_duration",
         translation_key="control_ac_set_duration",
         icon="mdi:timer-cog-outline",

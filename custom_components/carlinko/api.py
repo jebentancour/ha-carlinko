@@ -24,6 +24,10 @@ from .const import (
     CMD_LIFTGATE_CLOSE,
     CMD_LIFTGATE_OPEN,
     CMD_LOCK,
+    CMD_QUICK_COOL_OFF,
+    CMD_QUICK_COOL_ON,
+    CMD_QUICK_HEAT_OFF,
+    CMD_QUICK_HEAT_ON,
     CMD_SEAT_HEAT_LEFT,
     CMD_SEAT_HEAT_RIGHT,
     CMD_SEAT_VENT_LEFT,
@@ -382,6 +386,18 @@ class CarLinkoClient:
     async def set_seat_vent_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_RIGHT[level])
 
+    async def quick_heat_on(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_HEAT_ON)
+
+    async def quick_heat_off(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_HEAT_OFF)
+
+    async def quick_cool_on(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_COOL_ON)
+
+    async def quick_cool_off(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_COOL_OFF)
+
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 
     async def get_vehicles(self) -> list[VehicleInfo]:
@@ -458,7 +474,7 @@ class CarLinkoClient:
             return None
         return await self._get_state(vehicle_id)
 
-RAW_TEST_BYTES: tuple[int, ...] = ()
+RAW_TEST_BYTES: tuple[int, ...] = (67,)
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
 
 CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 16: "dc_fast"}
@@ -566,7 +582,9 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture
     # byte 66: unused, always 0x00 across every capture
-    # byte 67: unused, varies (0x00/0xFF)
+    # byte 67: meaning unconfirmed, varies (0x00/0x02/0xFF) — exposed as a diagnostic sensor
+    # since it's a candidate for reflecting quick-heat/quick-cool state, not yet confirmed.
+    d["raw_byte67"] = b[67]
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture

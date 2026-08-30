@@ -102,8 +102,6 @@
       "charging": { "name": "Cargando" },
       "control_ac_switch": { "name": "Control: Climatización" },
       "control_ac_set_temperature": { "name": "Control: Temperatura de Climatización" },
-      "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
-      "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
       "control_ac_set_duration": { "name": "Control: Duración de Pre-acondicionamiento" }
     },
     "image": {
@@ -127,7 +125,9 @@
       "window_rear_right": { "name": "Ventana Trasera Derecha" }
     },
     "switch": {
-      "defrost_front": { "name": "Desempañador Delantero" }
+      "defrost_front": { "name": "Desempañador Delantero" },
+      "quick_heat": { "name": "Calefacción Rápida" },
+      "quick_cool": { "name": "Enfriamiento Rápido" }
     },
     "fan": {
       "seat_heat_left": { "name": "Calefacción Asiento Izquierdo" },
