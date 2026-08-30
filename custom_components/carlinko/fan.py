@@ -43,7 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class CarLinkoSeatFan(CoordinatorEntity[CarLinkoCoordinator], FanEntity):
     _attr_has_entity_name = True
-    _attr_supported_features = FanEntityFeature.SET_SPEED
+    _attr_supported_features = FanEntityFeature.SET_SPEED | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
     _attr_speed_count = len(SPEEDS)
 
     def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, key: str, icon: str, setter: str) -> None:
