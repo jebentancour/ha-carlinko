@@ -87,22 +87,6 @@
       "fuel_level": { "name": "Nivel de Combustible" },
       "fuel_consumption": { "name": "Consumo de Combustible" },
       "ac_temp": { "name": "Temperatura Objetivo de Climatización" },
-      "seat_heat_left": {
-        "name": "Calefacción Asiento Izquierdo",
-        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
-      },
-      "seat_heat_right": {
-        "name": "Calefacción Asiento Derecho",
-        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
-      },
-      "seat_vent_left": {
-        "name": "Ventilación Asiento Izquierdo",
-        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
-      },
-      "seat_vent_right": {
-        "name": "Ventilación Asiento Derecho",
-        "state": { "off": "Apagado", "low": "Bajo", "medium": "Medio", "high": "Alto" }
-      },
       "ac_temp_min": { "name": "Control: Temperatura Mínima de Climatización" },
       "ac_temp_max": { "name": "Control: Temperatura Máxima de Climatización" },
       "ac_temp_step": { "name": "Control: Paso de Temperatura de Climatización" }
@@ -120,10 +104,6 @@
       "control_ac_set_temperature": { "name": "Control: Temperatura de Climatización" },
       "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
       "control_ac_rapid_heat": { "name": "Control: Calefacción Rápida" },
-      "control_ac_driver_vent": { "name": "Control: Ventilación Asiento Conductor" },
-      "control_ac_assistant_vent": { "name": "Control: Ventilación Asiento Acompañante" },
-      "control_ac_driver_heater": { "name": "Control: Calefacción Asiento Conductor" },
-      "control_ac_assistant_heater": { "name": "Control: Calefacción Asiento Acompañante" },
       "control_ac_set_duration": { "name": "Control: Duración de Pre-acondicionamiento" }
     },
     "image": {
@@ -148,6 +128,12 @@
     },
     "switch": {
       "defrost_front": { "name": "Desempañador Delantero" }
+    },
+    "fan": {
+      "seat_heat_left": { "name": "Calefacción Asiento Izquierdo" },
+      "seat_heat_right": { "name": "Calefacción Asiento Derecho" },
+      "seat_vent_left": { "name": "Ventilación Asiento Izquierdo" },
+      "seat_vent_right": { "name": "Ventilación Asiento Derecho" }
     }
   }
 }

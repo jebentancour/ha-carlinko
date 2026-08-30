@@ -24,6 +24,10 @@ from .const import (
     CMD_LIFTGATE_CLOSE,
     CMD_LIFTGATE_OPEN,
     CMD_LOCK,
+    CMD_SEAT_HEAT_LEFT,
+    CMD_SEAT_HEAT_RIGHT,
+    CMD_SEAT_VENT_LEFT,
+    CMD_SEAT_VENT_RIGHT,
     CMD_STOP_CHARGING,
     CMD_SUNROOF_CLOSE,
     CMD_SUNROOF_OPEN,
@@ -365,6 +369,18 @@ class CarLinkoClient:
 
     async def defrost_off(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_FRONT_OFF)
+
+    async def set_seat_heat_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_LEFT[level])
+
+    async def set_seat_heat_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_RIGHT[level])
+
+    async def set_seat_vent_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_LEFT[level])
+
+    async def set_seat_vent_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_RIGHT[level])
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 

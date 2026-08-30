@@ -50,8 +50,7 @@ Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles 
 | Climate Target Temperature (°C) | 24 | raw |
 | Battery Level % | 28 | raw |
 | Battery Range (km) | 29–30 | uint16 |
-| Seat Heating Left / Right | 32, 33 | enum: 0=off, 1=low, 2=medium, 3=high |
-| Seat Ventilation Left / Right | 37, 38 | enum: 0=off, 1=low, 2=medium, 3=high |
+| Seat Heating/Ventilation Left / Right (`fan` entities) | 32, 33 / 37, 38 | enum: 0=off, 1=low, 2=medium, 3=high |
 | Front Defroster | 42 | nonzero = on |
 | Tyre pressure ×4 (psi) | 44–47 | raw × scale × 0.145, scale/invalid sentinel from `vehicleControlConfig` (default: 1.373, 0xFF = n/a) |
 | Tyre temperature ×4 (°C) | 48–51 | raw × 0.65 − 40, invalid sentinel from `vehicleControlConfig` (default: 0xFF = n/a) |
@@ -81,7 +80,7 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `A/C.Switch/SetTemperature/RapidCool/RapidHeat/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
+| Control: A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Pre-condition Duration | `A/C.Switch/SetTemperature/RapidCool/RapidHeat/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
 The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
 `Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
@@ -94,10 +93,12 @@ likewise removed as a diagnostic sensor and now gates the Find Car button below 
 integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag),
 `Control: Liftgate` (`PowerLiftgate` flag), `Control: Sunroof`/`Control: Sunroof Tilt`
 (`Sunroof`/`SunroofTilting` flags) and `Control: Windows Open`/`Windows Close`/`Windows Vent`
-(`WindowsOpen`/`WindowsClose`/`WindowsVent` flags) and `Control: A/C Defog` (`A/C.Defogging`
-flag) were likewise removed as diagnostic sensors and now gate the `lock`/`cover`/`switch`
-entities below instead of the old read-only `Lock`, `Liftgate`, `Sunroof`, `Window *` and
-`Front Defroster` binary_sensors.
+(`WindowsOpen`/`WindowsClose`/`WindowsVent` flags), `Control: A/C Defog` (`A/C.Defogging`
+flag) and `Control: Driver`/`Passenger Seat Ventilation`/`Heater`
+(`A/C.DriverVent`/`AssistantVent`/`DriverHeater`/`AssistantHeater` flags) were likewise
+removed as diagnostic sensors and now gate the `lock`/`cover`/`switch`/`fan` entities below
+instead of the old read-only `Lock`, `Liftgate`, `Sunroof`, `Window *` and `Front Defroster`
+binary_sensors and the `Seat Heating/Ventilation Left/Right` sensors.
 
 ## Controls
 
@@ -146,6 +147,15 @@ did the thing beyond re-polling telemetry right after.
   above, `741201`/`741200` haven't been fired on a live car yet — they come from a static
   decode of the app's command table rather than a runtime/log confirmation, so treat this one
   as slightly less certain than the rest until confirmed.
+- **Seat heating/ventilation** (`fan.<vehicle>_seat_{heat,vent}_{left,right}`, gated by
+  `A/C.DriverHeater`/`AssistantHeater`/`DriverVent`/`AssistantVent` respectively) — 4 `fan`
+  entities (not 1 combined entity with heat/cool preset modes, since heat and vent are
+  independent bytes/opcodes per seat and nothing confirms they're mutually exclusive on this
+  car), each reading its own 2-bit low/medium/high/off level from bytes 32/33 (heat) or 37/38
+  (vent) — same fields the old `Seat Heating/Ventilation Left/Right` sensors used — mapped to
+  a 3-speed `percentage` (33/67/100%, `speed_count=3`). Opcodes: seat heat left/right
+  `741501-03`/`741601-03` (off `741500`/`741600`), seat vent left/right `741A01-03`/`741B01-03`
+  (off `741A00`/`741B00`). Same not-yet-fired caveat as Front Defroster above.
 
 ## Options
 

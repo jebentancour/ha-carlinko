@@ -49,6 +49,12 @@ CMD_WINDOWS_VENT = "740E00"
 CMD_DEFOG_FRONT_ON = "741201"
 CMD_DEFOG_FRONT_OFF = "741200"
 
+# Same not-yet-fired caveat as above. Level keys match SEAT_LEVELS' values in api.py.
+CMD_SEAT_HEAT_LEFT: dict[str, str] = {"off": "741500", "low": "741501", "medium": "741502", "high": "741503"}
+CMD_SEAT_HEAT_RIGHT: dict[str, str] = {"off": "741600", "low": "741601", "medium": "741602", "high": "741603"}
+CMD_SEAT_VENT_LEFT: dict[str, str] = {"off": "741A00", "low": "741A01", "medium": "741A02", "high": "741A03"}
+CMD_SEAT_VENT_RIGHT: dict[str, str] = {"off": "741B00", "low": "741B01", "medium": "741B02", "high": "741B03"}
+
 USER_AGENT = "Dart/3.10 (dart:io)"
 APP_LOGIN_BODY = {
     "method": "PASSWORD",

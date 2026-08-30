@@ -18,6 +18,7 @@ PLATFORMS = [
     Platform.LOCK,
     Platform.COVER,
     Platform.SWITCH,
+    Platform.FAN,
 ]
 
 

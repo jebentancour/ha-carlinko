@@ -28,7 +28,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES, RAW_TEST_BYTES, RAW_WORD_PAIRS, SEAT_LEVELS
+from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES, RAW_TEST_BYTES, RAW_WORD_PAIRS
 from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
@@ -191,38 +191,6 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("ac_temp_c"),
-    ),
-    CarLinkoSensorDescription(
-        key="seat_heat_left",
-        translation_key="seat_heat_left",
-        icon="mdi:car-seat-heater",
-        device_class=SensorDeviceClass.ENUM,
-        options=list(SEAT_LEVELS.values()),
-        value_fn=lambda d: d.get("seat_heat_left"),
-    ),
-    CarLinkoSensorDescription(
-        key="seat_heat_right",
-        translation_key="seat_heat_right",
-        icon="mdi:car-seat-heater",
-        device_class=SensorDeviceClass.ENUM,
-        options=list(SEAT_LEVELS.values()),
-        value_fn=lambda d: d.get("seat_heat_right"),
-    ),
-    CarLinkoSensorDescription(
-        key="seat_vent_left",
-        translation_key="seat_vent_left",
-        icon="mdi:car-seat-cooler",
-        device_class=SensorDeviceClass.ENUM,
-        options=list(SEAT_LEVELS.values()),
-        value_fn=lambda d: d.get("seat_vent_left"),
-    ),
-    CarLinkoSensorDescription(
-        key="seat_vent_right",
-        translation_key="seat_vent_right",
-        icon="mdi:car-seat-cooler",
-        device_class=SensorDeviceClass.ENUM,
-        options=list(SEAT_LEVELS.values()),
-        value_fn=lambda d: d.get("seat_vent_right"),
     ),
     # From `vehicleControlConfig` (api._parse_vehicle_control_config) — per-model constants that
     # aren't simple capability booleans (those are control_* in binary_sensor.py instead).

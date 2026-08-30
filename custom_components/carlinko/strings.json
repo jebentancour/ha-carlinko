@@ -87,22 +87,6 @@
       "fuel_level": { "name": "Fuel Level" },
       "fuel_consumption": { "name": "Fuel Consumption" },
       "ac_temp": { "name": "Climate Target Temperature" },
-      "seat_heat_left": {
-        "name": "Seat Heating Left",
-        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
-      },
-      "seat_heat_right": {
-        "name": "Seat Heating Right",
-        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
-      },
-      "seat_vent_left": {
-        "name": "Seat Ventilation Left",
-        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
-      },
-      "seat_vent_right": {
-        "name": "Seat Ventilation Right",
-        "state": { "off": "Off", "low": "Low", "medium": "Medium", "high": "High" }
-      },
       "ac_temp_min": { "name": "Control: A/C Min Temperature" },
       "ac_temp_max": { "name": "Control: A/C Max Temperature" },
       "ac_temp_step": { "name": "Control: A/C Temperature Step" }
@@ -120,10 +104,6 @@
       "control_ac_set_temperature": { "name": "Control: A/C Temperature" },
       "control_ac_rapid_cool": { "name": "Control: A/C Rapid Cool" },
       "control_ac_rapid_heat": { "name": "Control: A/C Rapid Heat" },
-      "control_ac_driver_vent": { "name": "Control: Driver Seat Ventilation" },
-      "control_ac_assistant_vent": { "name": "Control: Passenger Seat Ventilation" },
-      "control_ac_driver_heater": { "name": "Control: Driver Seat Heater" },
-      "control_ac_assistant_heater": { "name": "Control: Passenger Seat Heater" },
       "control_ac_set_duration": { "name": "Control: A/C Pre-condition Duration" }
     },
     "image": {
@@ -148,6 +128,12 @@
     },
     "switch": {
       "defrost_front": { "name": "Front Defroster" }
+    },
+    "fan": {
+      "seat_heat_left": { "name": "Seat Heating Left" },
+      "seat_heat_right": { "name": "Seat Heating Right" },
+      "seat_vent_left": { "name": "Seat Ventilation Left" },
+      "seat_vent_right": { "name": "Seat Ventilation Right" }
     }
   }
 }
