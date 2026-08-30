@@ -52,30 +52,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         value_fn=lambda d: d.get("door_rear_right"),
     ),
     CarLinkoBinarySensorDescription(
-        key="window_front_left",
-        translation_key="window_front_left",
-        device_class=BinarySensorDeviceClass.WINDOW,
-        value_fn=lambda d: d.get("window_front_left"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="window_front_right",
-        translation_key="window_front_right",
-        device_class=BinarySensorDeviceClass.WINDOW,
-        value_fn=lambda d: d.get("window_front_right"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="window_rear_left",
-        translation_key="window_rear_left",
-        device_class=BinarySensorDeviceClass.WINDOW,
-        value_fn=lambda d: d.get("window_rear_left"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="window_rear_right",
-        translation_key="window_rear_right",
-        device_class=BinarySensorDeviceClass.WINDOW,
-        value_fn=lambda d: d.get("window_rear_right"),
-    ),
-    CarLinkoBinarySensorDescription(
         key="ignition",
         translation_key="ignition",
         device_class=BinarySensorDeviceClass.RUNNING,
@@ -104,27 +80,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
 
 
 CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
-    CarLinkoBinarySensorDescription(
-        key="control_windows_open",
-        translation_key="control_windows_open",
-        icon="mdi:arrow-expand-vertical",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_windows_open"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_windows_close",
-        translation_key="control_windows_close",
-        icon="mdi:arrow-collapse-vertical",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_windows_close"),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="control_windows_vent",
-        translation_key="control_windows_vent",
-        icon="mdi:window-open-variant",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("control_windows_vent"),
-    ),
     CarLinkoBinarySensorDescription(
         key="control_ac_switch",
         translation_key="control_ac_switch",

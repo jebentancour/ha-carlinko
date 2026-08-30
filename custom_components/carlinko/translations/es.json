@@ -113,17 +113,10 @@
       "door_front_right": { "name": "Puerta Delantera Derecha" },
       "door_rear_left": { "name": "Puerta Trasera Izquierda" },
       "door_rear_right": { "name": "Puerta Trasera Derecha" },
-      "window_front_left": { "name": "Ventana Delantera Izquierda" },
-      "window_front_right": { "name": "Ventana Delantera Derecha" },
-      "window_rear_left": { "name": "Ventana Trasera Izquierda" },
-      "window_rear_right": { "name": "Ventana Trasera Derecha" },
       "ignition": { "name": "Contacto" },
       "ac_on": { "name": "Climatización" },
       "charging": { "name": "Cargando" },
       "defrost_front": { "name": "Desempañador Delantero" },
-      "control_windows_open": { "name": "Control: Abrir Ventanas" },
-      "control_windows_close": { "name": "Control: Cerrar Ventanas" },
-      "control_windows_vent": { "name": "Control: Ventilar Ventanas" },
       "control_ac_switch": { "name": "Control: Climatización" },
       "control_ac_set_temperature": { "name": "Control: Temperatura de Climatización" },
       "control_ac_rapid_cool": { "name": "Control: Enfriamiento Rápido" },
@@ -149,7 +142,11 @@
     },
     "cover": {
       "liftgate": { "name": "Puerta Trasera" },
-      "sunroof": { "name": "Techo Solar" }
+      "sunroof": { "name": "Techo Solar" },
+      "window_front_left": { "name": "Ventana Delantera Izquierda" },
+      "window_front_right": { "name": "Ventana Delantera Derecha" },
+      "window_rear_left": { "name": "Ventana Trasera Izquierda" },
+      "window_rear_right": { "name": "Ventana Trasera Derecha" }
     }
   }
 }

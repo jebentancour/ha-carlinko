@@ -40,7 +40,7 @@ Fuel Level, Fuel Consumption and Power Consumption are only created on vehicles 
 | Lock | 3 | nonzero = unlocked |
 | Liftgate | 4 | nonzero = open |
 | Ignition | 5 | nonzero = on |
-| Windows: front left / front right / rear left / rear right | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | any bit set = open |
+| Windows: front left / front right / rear left / rear right | 8, 2 bits each (0xC0/0x30/0x0C/0x03) | enum per window: 00=closed, 01=open, 10=vent, 11=open (fallback) |
 | Sunroof | 9 | enum: 0x00=closed, 0x08=open, 0x0B=tilted (vent), else=open |
 | 12 V battery (V) | 12–13 | uint16 × 0.01 |
 | Speed (km/h) | 14–15 | uint16 ÷ 16 |
@@ -81,7 +81,7 @@ sentinels and charging-time invalid sentinels above, plus these diagnostic entit
 | Entity | Source | Meaning |
 | --- | --- | --- |
 | Control: A/C Min/Max Temperature (°C), Control: A/C Temperature Step | `A/C.SetTemperatureMin/Max`, `A/C.TemperatureStepValue` | the range/step the car's climate control accepts |
-| Control: Windows Open / Windows Close / Windows Vent / A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `WindowsOpen/Close/Vent`, `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
+| Control: A/C / A/C Temperature / A/C Rapid Cool / A/C Rapid Heat / A/C Defog / Driver\|Passenger Seat Ventilation / Driver\|Passenger Seat Heater / A/C Pre-condition Duration | `A/C.Switch/SetTemperature/RapidCool/RapidHeat/Defogging/DriverVent/AssistantVent/DriverHeater/AssistantHeater/SetDuration` | whether this car model *supports* that remote-control feature — informational only, doesn't itself send a command |
 
 The trip-schedule entities (from `terminalNoticeConfig`) were removed as unused. An earlier
 `Control: Charging Power` diagnostic sensor was also removed as unused, but its underlying
@@ -92,10 +92,11 @@ likewise removed as a diagnostic sensor and now gates the Find Car button below 
 `Control: Scheduled Charging Supported` and `Control: Scheduled Trip Supported`
 (`ScheduledCharging`/`ScheduledTravel` flags) were removed as unused — nothing in this
 integration reads or writes vehicle schedules. `Control: Lock` (`Lock` flag),
-`Control: Liftgate` (`PowerLiftgate` flag), `Control: Sunroof` and `Control: Sunroof Tilt`
-(`Sunroof`/`SunroofTilting` flags) were likewise removed as diagnostic sensors and now gate
-the `lock`/`cover` entities below instead of the old read-only `Lock`, `Liftgate` and
-`Sunroof` binary_sensors.
+`Control: Liftgate` (`PowerLiftgate` flag), `Control: Sunroof`/`Control: Sunroof Tilt`
+(`Sunroof`/`SunroofTilting` flags) and `Control: Windows Open`/`Windows Close`/`Windows Vent`
+(`WindowsOpen`/`WindowsClose`/`WindowsVent` flags) were likewise removed as diagnostic sensors
+and now gate the `lock`/`cover` entities below instead of the old read-only `Lock`,
+`Liftgate`, `Sunroof` and `Window *` binary_sensors.
 
 ## Controls
 
@@ -129,6 +130,15 @@ did the thing beyond re-polling telemetry right after.
   same command) and reports the tilted state as `current_cover_tilt_position` (100 when
   tilted, 0 otherwise — there's no graduated position, just the three states). Same
   telemetry-lag caveat as Lock above.
+- **Windows** (`cover.<vehicle>_window_{front,rear}_{left,right}`, gated by
+  `WindowsOpen`/`WindowsClose`, opcodes `740600`/`740500`) — 4 `cover` entities, one per
+  window, each reading its own 2-bit closed/open/vent state from byte 8 (same field the old
+  read-only `Window *` binary_sensors used). **CarLinko only has a single all-windows opcode,
+  not a per-window one** — opening/closing/venting *any* one of the 4 entities moves every
+  window on the car, not just that one; they're separate entities purely so each can report
+  its own individual state. If the car's config also reports `WindowsVent`, all 4 additionally
+  expose tilt open/close (opcode `740E00` for vent; closing the tilt reuses the plain close
+  opcode, same reasoning as Sunroof above). Same telemetry-lag caveat as Lock above.
 
 ## Options
 

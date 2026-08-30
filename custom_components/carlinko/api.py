@@ -27,6 +27,9 @@ from .const import (
     CMD_SUNROOF_OPEN,
     CMD_SUNROOF_TILT,
     CMD_UNLOCK,
+    CMD_WINDOWS_CLOSE,
+    CMD_WINDOWS_OPEN,
+    CMD_WINDOWS_VENT,
     SIGN_KEY,
     USER_AGENT,
 )
@@ -346,6 +349,15 @@ class CarLinkoClient:
     async def tilt_sunroof(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_TILT)
 
+    async def open_windows(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_OPEN)
+
+    async def close_windows(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_CLOSE)
+
+    async def vent_windows(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_VENT)
+
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 
     async def get_vehicles(self) -> list[VehicleInfo]:
@@ -440,6 +452,8 @@ SEAT_LEVELS: dict[int, str] = {0: "off", 1: "low", 2: "medium", 3: "high"}
 
 SUNROOF_STATES: dict[int, str] = {0x00: "closed", 0x08: "open", 0x0B: "tilted"}
 
+WINDOW_STATES: dict[int, str] = {0b00: "closed", 0b01: "open", 0b10: "vent"}
+
 
 def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
     """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`."""
@@ -473,10 +487,10 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # byte 6: unused, always 0x00 across every capture
     # byte 7: unused, always 0x00 across every capture
     windows = b[8]
-    d["window_front_left"] = bool((windows >> 6) & 0b11)
-    d["window_front_right"] = bool((windows >> 4) & 0b11)
-    d["window_rear_left"] = bool((windows >> 2) & 0b11)
-    d["window_rear_right"] = bool(windows & 0b11)
+    d["window_front_left"] = WINDOW_STATES.get((windows >> 6) & 0b11, "open")
+    d["window_front_right"] = WINDOW_STATES.get((windows >> 4) & 0b11, "open")
+    d["window_rear_left"] = WINDOW_STATES.get((windows >> 2) & 0b11, "open")
+    d["window_rear_right"] = WINDOW_STATES.get(windows & 0b11, "open")
     d["sunroof_state"] = SUNROOF_STATES.get(b[9], "open" if b[9] else "closed")
     # byte 10: unused, always 0xFF across every capture
     # byte 11: unused, always 0x7F across every capture
