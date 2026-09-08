@@ -74,13 +74,6 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
             return None
         if not ac_on:
             return HVACMode.OFF
-        rapid_mode = data.get("ac_rapid_mode")
-        if rapid_mode == "heat":
-            return HVACMode.HEAT
-        if rapid_mode == "cool":
-            return HVACMode.COOL
-        # ac_rapid_mode only updates on the frame Quick Heat/Cool actually kicks in; on
-        # every other frame it carries no new info, so fall back to the temperature-extreme tell.
         ac_temp_c = data.get("ac_temp_c")
         if ac_temp_c is not None and ac_temp_c == data.get("ac_temp_max"):
             return HVACMode.HEAT

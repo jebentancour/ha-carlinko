@@ -275,7 +275,11 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
         return values[self._wheel_idx]
 
 
-RAW_BYTE_LABELS: dict[int, str] = {}
+RAW_BYTE_LABELS: dict[int, str] = {
+    60: "AC Quick Heat Candidate",
+    61: "AC Quick Cool Candidate",
+    67: "AC Blower Gear Candidate",
+}
 RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {}
 RAW_WORD_LABELS: dict[tuple[int, int], str] = {}
 
