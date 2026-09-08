@@ -494,7 +494,7 @@ class CarLinkoClient:
             return None
         return await self._get_state(vehicle_id)
 
-RAW_TEST_BYTES: tuple[int, ...] = (67,)
+RAW_TEST_BYTES: tuple[int, ...] = ()
 RAW_WORD_PAIRS: tuple[tuple[int, int], ...] = ()
 
 CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 16: "dc_fast"}
@@ -602,8 +602,10 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture
     # byte 66: unused, always 0x00 across every capture
-    # byte 67: unknown meaning — varies (0x00/0x02/0xFF)
-    d["raw_byte67"] = b[67]
+    # byte 67: AC blower gear (Quick Cool/Heat kick the blower to a gear extreme).
+    # 0=low gear, 2=high gear; any other value (incl. the usual 255 sentinel) means
+    # this frame carries no gear update, not that the blower is off.
+    d["ac_blower_gear"] = {0: "low", 2: "high"}.get(b[67])
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture

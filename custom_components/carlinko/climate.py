@@ -74,6 +74,13 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
             return None
         if not ac_on:
             return HVACMode.OFF
+        blower_gear = data.get("ac_blower_gear")
+        if blower_gear == "high":
+            return HVACMode.HEAT
+        if blower_gear == "low":
+            return HVACMode.COOL
+        # Blower gear only updates on the frame Quick Heat/Cool actually kicks in; on every
+        # other frame it carries no new info, so fall back to the temperature-extreme tell.
         ac_temp_c = data.get("ac_temp_c")
         if ac_temp_c is not None and ac_temp_c == data.get("ac_temp_max"):
             return HVACMode.HEAT
