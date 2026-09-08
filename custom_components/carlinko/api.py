@@ -590,7 +590,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
     d["charging_connector"] = CHARGING_CONNECTOR_STATES.get(b[56], "disconnected")
     d["charging_status"] = CHARGING_STATUSES.get(b[57], "idle")
-    charging = d["charging_status"] != "idle"
+    charging = d["charging_connector"] != "disconnected"
     d["charging"] = charging
     d["charging_remaining_min"] = _charging_remaining((b[58] << 8) | b[59])
     # byte 60: unused, always 0x00 across every capture
