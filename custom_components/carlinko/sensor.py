@@ -158,12 +158,13 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
     ),
     CarLinkoSensorDescription(
         key="range_km",
-        translation_key="range",
-        icon="mdi:map-marker-distance",
+        translation_key="fuel_range",
+        icon="mdi:gas-station",
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("range_km"),
+        enabled_if=lambda d: bool(d.get("has_engine")),
     ),
     CarLinkoSensorDescription(
         key="fuel_pct",

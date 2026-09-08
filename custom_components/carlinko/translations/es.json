@@ -83,7 +83,7 @@
       },
       "charging_remaining": { "name": "Tiempo Restante de Carga" },
       "wltp_range": { "name": "Autonomía WLTP" },
-      "range": { "name": "Autonomía" },
+      "fuel_range": { "name": "Autonomía de Combustible" },
       "fuel_level": { "name": "Nivel de Combustible" },
       "fuel_consumption": { "name": "Consumo de Combustible" }
     },
