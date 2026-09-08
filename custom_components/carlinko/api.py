@@ -586,8 +586,11 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["tyre_temp_c"] = [_tyre_temp(x) for x in tt]
     # byte 52: unused, always 0x00 across every capture
     d["fuel_l_100"] = round(b[53] * 0.1, 1)
-    # byte 54: unknown meaning — reads 20 on every confirmed PHEV frame, 0 on every BEV frame
-    d["consumption_kwh_100km"] = round(b[55] * 0.1, 1)
+    consumption_mode = b[54] >> 4
+    consumption_mag = ((b[54] & 0xF) << 8) | b[55]
+    d["consumption_kwh_100km"] = round(
+        consumption_mag * 0.1 - (100 if consumption_mode == 1 else 0), 1
+    )
     d["charging_connector"] = CHARGING_CONNECTOR_STATES.get(b[56], "disconnected")
     d["charging_status"] = CHARGING_STATUSES.get(b[57], "idle")
     charging = d["charging_connector"] != "disconnected"
