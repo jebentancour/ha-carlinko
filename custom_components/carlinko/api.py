@@ -602,10 +602,10 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     # byte 64: unused, always 0x00 across every capture
     # byte 65: unused, always 0x00 across every capture
     # byte 66: unused, always 0x00 across every capture
-    # byte 67: AC blower gear (Quick Cool/Heat kick the blower to a gear extreme).
-    # 0=low gear, 2=high gear; any other value (incl. the usual 255 sentinel) means
-    # this frame carries no gear update, not that the blower is off.
-    d["ac_blower_gear"] = {0: "low", 2: "high"}.get(b[67])
+    # byte 67: which rapid A/C mode is active. 0=Quick Cool, 2=Quick Heat; any other
+    # value (incl. the usual 255 sentinel) means this frame carries no update, not
+    # that rapid mode is off.
+    d["ac_rapid_mode"] = {0: "cool", 2: "heat"}.get(b[67])
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["range_km"] = int.from_bytes(b[70:72], "big")
     # byte 72: unused, always 0x02 across every capture
