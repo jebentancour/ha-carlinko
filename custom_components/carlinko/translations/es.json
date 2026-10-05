@@ -18,6 +18,7 @@
       }
     },
     "error": {
+      "account_not_found": "No hay cuenta CarLinko con ese email en esta región — revisá el email o probá otra región (p. ej. emea, sea).",
       "invalid_auth": "Login fallido — revisá el email/contraseña.",
       "cannot_connect": "No se pudo conectar a los servidores de CarLinko.",
       "no_vehicles": "No se encontró ningún vehículo en esta cuenta.",

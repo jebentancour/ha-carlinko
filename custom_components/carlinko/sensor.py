@@ -28,7 +28,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES, RAW_TEST_BYTES, RAW_WORD_PAIRS
+from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES
 from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
@@ -199,8 +199,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 coordinator, entry, wheel_idx, label, "tyre_temp_c", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE
             )
         )
-    entities += [CarLinkoRawByteSensor(coordinator, entry, n) for n in RAW_TEST_BYTES]
-    entities += [CarLinkoRawWordSensor(coordinator, entry, hi, lo) for hi, lo in RAW_WORD_PAIRS]
     async_add_entities(entities)
 
 
@@ -275,58 +273,3 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
         return values[self._wheel_idx]
 
 
-RAW_BYTE_LABELS: dict[int, str] = {
-    60: "AC Quick Heat Candidate",
-    61: "AC Quick Cool Candidate",
-    67: "AC Blower Gear Candidate",
-}
-RAW_BYTE_UNITS: dict[int, tuple[str, float]] = {}
-RAW_WORD_LABELS: dict[tuple[int, int], str] = {}
-
-
-class CarLinkoRawByteSensor(_CarLinkoEntityBase, SensorEntity):
-    """Raw value of a byte whose meaning isn't confirmed yet — for testing."""
-
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_icon = "mdi:flask-outline"
-
-    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, byte_n: int) -> None:
-        super().__init__(coordinator, entry)
-        self._byte_n = byte_n
-        label = RAW_BYTE_LABELS.get(byte_n, f"Raw Byte {byte_n}")
-        self._attr_name = f"{label} (byte {byte_n})"
-        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_raw_byte{byte_n}"
-        self._scale: float | None = None
-        if byte_n in RAW_BYTE_UNITS:
-            unit, self._scale = RAW_BYTE_UNITS[byte_n]
-            self._attr_native_unit_of_measurement = unit
-            self._attr_state_class = SensorStateClass.MEASUREMENT
-
-    @property
-    def native_value(self) -> Any:
-        if not self.coordinator.data:
-            return None
-        raw = self.coordinator.data.get(f"raw_byte{self._byte_n}")
-        if raw is None or self._scale is None:
-            return raw
-        return round(raw * self._scale, 1)
-
-
-class CarLinkoRawWordSensor(_CarLinkoEntityBase, SensorEntity):
-    """Raw value of a high/low byte pair combined into a 16-bit value — for testing."""
-
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_icon = "mdi:flask-outline"
-
-    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, hi: int, lo: int) -> None:
-        super().__init__(coordinator, entry)
-        self._key = f"raw_word{hi}_{lo}"
-        label = RAW_WORD_LABELS.get((hi, lo), f"Raw Word {hi}:{lo}")
-        self._attr_name = f"{label} (bytes {hi}:{lo})"
-        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_{self._key}"
-
-    @property
-    def native_value(self) -> Any:
-        if not self.coordinator.data:
-            return None
-        return self.coordinator.data.get(self._key)

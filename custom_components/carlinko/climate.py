@@ -2,8 +2,8 @@
 
 Combines A/C power, target temperature and Quick Heat/Cool into a single entity. Power
 (`741001`/`741000`) and target temperature (`7411` + payload, see
-`api.CarLinkoClient.set_ac_temperature()`) are both writable now, but neither opcode has been
-fired live yet — unlike Quick Heat/Cool, which have. HEAT/COOL are actuated via the confirmed
+`api.CarLinkoClient.set_ac_temperature()`) are both live-confirmed on the Omoda E5 (whole-degree
+encoding; the half-degree branch is still untested). HEAT/COOL are actuated via the confirmed
 Quick Heat/Cool opcodes; AUTO turns the A/C on and cancels whichever quick mode is active.
 """
 from __future__ import annotations

@@ -11,7 +11,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
-from .api import CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError, VehicleInfo
+from .api import CarLinkoAccountNotFoundError, CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError, VehicleInfo
 from .const import (
     CONF_DEVICE_SN,
     CONF_REGION,
@@ -66,6 +66,8 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 await client.login()
                 self._vehicles = await client.get_vehicles()
+            except CarLinkoAccountNotFoundError:
+                errors["base"] = "account_not_found"
             except CarLinkoAuthError:
                 errors["base"] = "invalid_auth"
             except CarLinkoConnectionError as err:

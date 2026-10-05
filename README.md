@@ -161,9 +161,9 @@ did the thing beyond re-polling telemetry right after.
   2-hex-digit payload command's encoding is decoded — whole-degree (`raw = tempC`) or
   half-degree (`raw = (tempC × 2) | 0x80`) steps depending on this car's own
   `A/C.TemperatureStepValue` (`1` on this account = whole-degree, so e.g. 21°C → `741115`).
-  **None of the A/C on/off/temperature opcodes have been fired live yet** (unlike Quick
-  Heat/Cool) — treat them as decoded-not-confirmed like the Front Defroster and seat opcodes
-  were before the user tested those.
+  **A/C on/off and target temperature are live-confirmed on the Omoda E5** (whole-degree
+  encoding); the half-degree branch is still untested, since no car reporting
+  `TemperatureStepValue: 0.5` has been seen yet.
 
 ## Options
 
