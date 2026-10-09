@@ -1,10 +1,7 @@
 """Climate entity for the CarLinko integration.
 
-Combines A/C power, target temperature and Quick Heat/Cool into a single entity. Power
-(`741001`/`741000`) and target temperature (`7411` + payload, see
-`api.CarLinkoClient.set_ac_temperature()`) are both live-confirmed on the Omoda E5 (whole-degree
-encoding; the half-degree branch is still untested). HEAT/COOL are actuated via the confirmed
-Quick Heat/Cool opcodes; AUTO turns the A/C on and cancels whichever quick mode is active.
+Combines A/C power, target temperature and Quick Heat/Cool: HEAT/COOL trigger the quick
+modes, AUTO turns the A/C on and cancels whichever quick mode is active.
 """
 from __future__ import annotations
 
@@ -27,8 +24,6 @@ DEFAULT_MAX_TEMP = 32.0
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
-    # Only offer the entity on cars whose vehicleControlConfig declares A/C support at all —
-    # HEAT/COOL are gated per-mode below on the Rapid Heat/Cool flags specifically.
     if coordinator.data and coordinator.data.get("control_ac_switch"):
         async_add_entities([CarLinkoClimate(coordinator, entry)])
 
@@ -116,10 +111,8 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
         elif hvac_mode == HVACMode.COOL:
             await client.quick_cool_on(vehicle_id, device_sn)
         elif hvac_mode == HVACMode.AUTO:
-            # Explicit power-on covers the Off -> Auto transition (quick-mode-off alone
-            # wouldn't turn the A/C on); harmless no-op if it was already on. No dedicated
-            # "cancel quick mode" opcode either — turning off both is harmless if one was
-            # already off, and gets back to plain A/C without touching the temperature.
+            # Power on (for Off -> Auto), then cancel both quick modes; each is a no-op if
+            # already in that state.
             await client.ac_power_on(vehicle_id, device_sn)
             await client.quick_heat_off(vehicle_id, device_sn)
             await client.quick_cool_off(vehicle_id, device_sn)

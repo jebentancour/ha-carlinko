@@ -24,6 +24,7 @@ from .coordinator import CarLinkoCoordinator
 @dataclass(frozen=True, kw_only=True)
 class CarLinkoBinarySensorDescription(BinarySensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any] = lambda data: None
+    enabled_if: Callable[[dict[str, Any]], bool] | None = None
 
 
 BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
@@ -63,17 +64,50 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
         value_fn=lambda d: d.get("charging"),
     ),
+    CarLinkoBinarySensorDescription(
+        key="ac_compressor",
+        translation_key="ac_compressor",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        icon="mdi:air-conditioner",
+        value_fn=lambda d: d.get("ac_compressor"),
+    ),
+    # Climate extras, only on cars that report the matching capability.
+    CarLinkoBinarySensorDescription(
+        key="steering_wheel_heat",
+        translation_key="steering_wheel_heat",
+        icon="mdi:steering",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("steering_wheel_heat"),
+        enabled_if=lambda d: bool(d.get("control_ac_steering_wheel_heater")),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="air_purifier",
+        translation_key="air_purifier",
+        icon="mdi:air-purifier",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("air_purifier"),
+        enabled_if=lambda d: bool(d.get("control_ac_air_purification")),
+    ),
+    CarLinkoBinarySensorDescription(
+        key="windshield_heat",
+        translation_key="windshield_heat",
+        icon="mdi:car-defrost-front",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("windshield_heat"),
+        enabled_if=lambda d: bool(d.get("control_ac_front_windshield_heater")),
+    ),
 )
-
-
-CONTROL_CAPABILITY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = ()
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
+    data = coordinator.data or {}
     entities: list[BinarySensorEntity] = [CarLinkoOnlineSensor(coordinator, entry)]
-    entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in BINARY_SENSORS]
-    entities += [CarLinkoBinarySensor(coordinator, entry, desc) for desc in CONTROL_CAPABILITY_SENSORS]
+    entities += [
+        CarLinkoBinarySensor(coordinator, entry, desc)
+        for desc in BINARY_SENSORS
+        if desc.enabled_if is None or desc.enabled_if(data)
+    ]
     async_add_entities(entities)
 
 

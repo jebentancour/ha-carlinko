@@ -14,7 +14,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
-    EntityCategory,
     UnitOfElectricPotential,
     UnitOfLength,
     UnitOfPower,
@@ -38,7 +37,6 @@ TYRE_LABELS = ("Front Left", "Front Right", "Rear Left", "Rear Right")
 @dataclass(frozen=True, kw_only=True)
 class CarLinkoSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any] = lambda data: None
-    extra_state_attributes_fn: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None
     enabled_if: Callable[[dict[str, Any]], bool] | None = None
 
 
@@ -176,6 +174,15 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         enabled_if=lambda d: bool(d.get("has_engine")),
     ),
     CarLinkoSensorDescription(
+        key="engine_rpm",
+        translation_key="engine_rpm",
+        icon="mdi:engine",
+        native_unit_of_measurement="rpm",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("engine_rpm"),
+        enabled_if=lambda d: bool(d.get("has_engine")),
+    ),
+    CarLinkoSensorDescription(
         key="fuel_l_100",
         translation_key="fuel_consumption",
         icon="mdi:gas-station",
@@ -233,12 +240,6 @@ class CarLinkoSensor(_CarLinkoEntityBase, SensorEntity):
         if not self.coordinator.data:
             return None
         return self.entity_description.value_fn(self.coordinator.data)
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        if not self.coordinator.data or self.entity_description.extra_state_attributes_fn is None:
-            return None
-        return self.entity_description.extra_state_attributes_fn(self.coordinator.data)
 
 
 class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):

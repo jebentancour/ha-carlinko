@@ -16,8 +16,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = coordinator.data or {}
     entities: list[ButtonEntity] = []
-    # Only offer each button on cars whose vehicleControlConfig actually declares the matching
-    # capability — firing an opcode the car doesn't support would just error.
     if data.get("control_charging"):
         entities.append(CarLinkoStopChargingButton(coordinator, entry))
     if data.get("control_find"):

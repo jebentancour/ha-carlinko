@@ -86,7 +86,8 @@
       "wltp_range": { "name": "WLTP Range" },
       "fuel_range": { "name": "Fuel Range" },
       "fuel_level": { "name": "Fuel Level" },
-      "fuel_consumption": { "name": "Fuel Consumption" }
+      "fuel_consumption": { "name": "Fuel Consumption" },
+      "engine_rpm": { "name": "Engine RPM" }
     },
     "binary_sensor": {
       "online": { "name": "Online" },
@@ -95,7 +96,11 @@
       "door_rear_left": { "name": "Door Rear Left" },
       "door_rear_right": { "name": "Door Rear Right" },
       "ignition": { "name": "Ignition" },
-      "charging": { "name": "Charging" }
+      "charging": { "name": "Charging" },
+      "ac_compressor": { "name": "A/C Compressor" },
+      "steering_wheel_heat": { "name": "Steering Wheel Heating" },
+      "air_purifier": { "name": "Air Purifier" },
+      "windshield_heat": { "name": "Windshield Heater" }
     },
     "image": {
       "front": { "name": "Front" },
@@ -124,7 +129,11 @@
       "seat_heat_left": { "name": "Seat Heating Left" },
       "seat_heat_right": { "name": "Seat Heating Right" },
       "seat_vent_left": { "name": "Seat Ventilation Left" },
-      "seat_vent_right": { "name": "Seat Ventilation Right" }
+      "seat_vent_right": { "name": "Seat Ventilation Right" },
+      "seat_heat_rear_left": { "name": "Seat Heating Rear Left" },
+      "seat_heat_rear_right": { "name": "Seat Heating Rear Right" },
+      "seat_vent_rear_left": { "name": "Seat Ventilation Rear Left" },
+      "seat_vent_rear_right": { "name": "Seat Ventilation Rear Right" }
     },
     "climate": {
       "ac": { "name": "A/C" }

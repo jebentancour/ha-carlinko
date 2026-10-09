@@ -14,7 +14,7 @@ from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEH
 from .coordinator import CarLinkoCoordinator
 
 
-# (entity-id position suffix, telemetry dict key) for each of the 4 window covers.
+# (unique-id suffix, telemetry key) per window.
 _WINDOWS: tuple[tuple[str, str], ...] = (
     ("front_left", "window_front_left"),
     ("front_right", "window_front_right"),
@@ -27,8 +27,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = coordinator.data or {}
     entities: list[CoverEntity] = []
-    # Only offer each cover on cars whose vehicleControlConfig declares the matching
-    # capability — firing an opcode the car doesn't support would just error.
     if data.get("control_liftgate"):
         entities.append(CarLinkoLiftgateCover(coordinator, entry))
     if data.get("control_sunroof"):
@@ -89,8 +87,6 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
         self._entry = entry
         self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_sunroof"
         features = CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE
-        # SunroofTilting is a separate capability flag from Sunroof itself — only advertise
-        # the vent/tilt actions if this car's config actually declares it.
         if coordinator.data and coordinator.data.get("control_sunroof_tilt"):
             features |= CoverEntityFeature.OPEN_TILT | CoverEntityFeature.CLOSE_TILT
         self._attr_supported_features = features
@@ -114,8 +110,7 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
 
     @property
     def current_cover_tilt_position(self) -> int | None:
-        # No graduated position, just closed/open/tilted — represent the vent state as fully
-        # tilted (100) vs. not (0), same closed/open-only convention as is_closed above.
+        # No graduated position: tilted reads as 100, anything else as 0.
         if not self.coordinator.data:
             return None
         state = self.coordinator.data.get("sunroof_state")
@@ -140,8 +135,7 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
-        # There's no separate "leave closed but untilt" opcode — the car only has
-        # close/open/vent states, so closing the tilt is the same command as closing outright.
+        # No separate untilt opcode; closing the tilt closes the sunroof.
         await self.coordinator.client.close_sunroof(
             self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
         )
@@ -149,9 +143,7 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
 
 
 class CarLinkoWindowCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
-    """One of the 4 window covers. CarLinko only has a single all-windows opcode, not a
-    per-window one, so opening/closing/venting any one of these moves every window on the car.
-    """
+    """One window's state. Commands are all-windows: controlling any one moves all four."""
 
     _attr_has_entity_name = True
     _attr_device_class = CoverDeviceClass.WINDOW
@@ -191,8 +183,7 @@ class CarLinkoWindowCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
 
     @property
     def current_cover_tilt_position(self) -> int | None:
-        # Same closed/open-only convention as the sunroof: no graduated position, just the
-        # three states, so "vent" reads as fully tilted (100).
+        # Same convention as the sunroof: vent reads as 100.
         if not self.coordinator.data:
             return None
         state = self.coordinator.data.get(self._data_key)
@@ -217,7 +208,7 @@ class CarLinkoWindowCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
-        # No distinct "leave closed but unvent" opcode, same as the sunroof above.
+        # No separate unvent opcode; closing the tilt closes the windows.
         await self.coordinator.client.close_windows(
             self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
         )

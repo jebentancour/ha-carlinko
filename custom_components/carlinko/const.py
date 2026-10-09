@@ -1,19 +1,11 @@
-"""Constants for the CarLinko integration.
-
-Byte offsets below are the shared CarLinko/Chery telemetry blob layout, originally
-recovered on a Jaecoo J5 EV and confirmed byte-for-byte on an Omoda E5 (2026-07-14):
-battery, range, odometer, 12V, speed, consumption and tyre PSI/temp all matched the
-app's own displayed values exactly. Fields marked "tentative" vary with car state but
-their meaning isn't confirmed yet — treat them as diagnostic/raw only.
-"""
+"""Constants for the CarLinko integration."""
 
 DOMAIN = "carlinko"
 
 CONF_REGION = "region"
 DEFAULT_REGION = "sam"
 
-# CarLinko API regions, recovered from libapp.so (cqr-api-<region>.hzhjcl.com /
-# wss-cqr-<region>.hzhjcl.com). Order shown to the user in the config flow dropdown.
+# CarLinko API regions (cqr-api-<region>.hzhjcl.com), in config-flow dropdown order.
 REGIONS: tuple[str, ...] = ("sam", "sea", "ap", "emea", "me", "naf", "saf", "uzb", "vn")
 CONF_VEHICLE_ID = "vehicle_id"
 CONF_DEVICE_SN = "device_sn"
@@ -28,11 +20,10 @@ CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 120
 MIN_SCAN_INTERVAL = 30
 
-# App-global request-signing key (same string in every CarLinko install; see
-# tools/auth.py in the parent project for provenance).
+# App-global request-signing key (same in every CarLinko install).
 SIGN_KEY = b"mYj3fzMpn77bir66"
 
-# Remote-control opcodes for `POST /user/vehicle/remoteControl`'s `data` field. Confirmed.
+# Remote-control opcodes for `POST /user/vehicle/remoteControl`'s `data` field.
 CMD_STOP_CHARGING = "742701"
 CMD_FIND_CAR = "740400"
 CMD_LOCK = "740100"
@@ -48,19 +39,22 @@ CMD_WINDOWS_VENT = "740E00"
 CMD_DEFOG_FRONT_ON = "741201"
 CMD_DEFOG_FRONT_OFF = "741200"
 
-# Level keys match SEAT_LEVELS' values in api.py.
+# Seat opcodes keyed by SEAT_LEVELS' values in api.py. Left = driver, right = assistant.
 CMD_SEAT_HEAT_LEFT: dict[str, str] = {"off": "741500", "low": "741501", "medium": "741502", "high": "741503"}
 CMD_SEAT_HEAT_RIGHT: dict[str, str] = {"off": "741600", "low": "741601", "medium": "741602", "high": "741603"}
 CMD_SEAT_VENT_LEFT: dict[str, str] = {"off": "741A00", "low": "741A01", "medium": "741A02", "high": "741A03"}
 CMD_SEAT_VENT_RIGHT: dict[str, str] = {"off": "741B00", "low": "741B01", "medium": "741B02", "high": "741B03"}
+CMD_SEAT_HEAT_REAR_LEFT: dict[str, str] = {"off": "741700", "low": "741701", "medium": "741702", "high": "741703"}
+CMD_SEAT_HEAT_REAR_RIGHT: dict[str, str] = {"off": "741900", "low": "741901", "medium": "741902", "high": "741903"}
+CMD_SEAT_VENT_REAR_LEFT: dict[str, str] = {"off": "741C00", "low": "741C01", "medium": "741C02", "high": "741C03"}
+CMD_SEAT_VENT_REAR_RIGHT: dict[str, str] = {"off": "741E00", "low": "741E01", "medium": "741E02", "high": "741E03"}
 
 CMD_QUICK_HEAT_ON = "741F01"
 CMD_QUICK_HEAT_OFF = "741F00"
 CMD_QUICK_COOL_ON = "742001"
 CMD_QUICK_COOL_OFF = "742000"
 
-# `7411` + a 2-hex-digit payload: raw temp (whole-degree step) or (temp*2)|0x80 (half-degree
-# step, per VehicleControlConfig.ac_temp_step) — see api.CarLinkoClient.set_ac_temperature().
+# `7411` + 2-hex-digit temperature payload, see CarLinkoClient.set_ac_temperature().
 CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
 
 CMD_AC_ON = "741001"

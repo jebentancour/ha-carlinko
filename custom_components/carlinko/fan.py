@@ -14,25 +14,27 @@ from homeassistant.util.percentage import ordered_list_item_to_percentage, perce
 from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
 from .coordinator import CarLinkoCoordinator
 
-# SEAT_LEVELS in api.py is {0: "off", 1: "low", 2: "medium", 3: "high"} — speed steps exclude "off".
+# SEAT_LEVELS in api.py minus "off".
 SPEEDS: tuple[str, ...] = ("low", "medium", "high")
 
-# (unique-id/data-key suffix, icon, capability flag, CarLinkoClient setter method name).
-# Heat and vent are independent bytes/opcodes per seat, so each gets its own fan entity rather
-# than folding both into one entity with a heat/cool preset mode.
+# (data key, icon, capability flag, CarLinkoClient setter). Heat and vent are independent
+# per seat, so each gets its own entity.
 _SEAT_FANS: tuple[tuple[str, str, str, str], ...] = (
     ("seat_heat_left", "mdi:car-seat-heater", "control_ac_driver_heater", "set_seat_heat_left"),
     ("seat_heat_right", "mdi:car-seat-heater", "control_ac_assistant_heater", "set_seat_heat_right"),
     ("seat_vent_left", "mdi:car-seat-cooler", "control_ac_driver_vent", "set_seat_vent_left"),
     ("seat_vent_right", "mdi:car-seat-cooler", "control_ac_assistant_vent", "set_seat_vent_right"),
+    # Rear seats share one capability flag per function (no per-side flag).
+    ("seat_heat_rear_left", "mdi:car-seat-heater", "control_ac_rear_heater", "set_seat_heat_rear_left"),
+    ("seat_heat_rear_right", "mdi:car-seat-heater", "control_ac_rear_heater", "set_seat_heat_rear_right"),
+    ("seat_vent_rear_left", "mdi:car-seat-cooler", "control_ac_rear_vent", "set_seat_vent_rear_left"),
+    ("seat_vent_rear_right", "mdi:car-seat-cooler", "control_ac_rear_vent", "set_seat_vent_rear_right"),
 )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = coordinator.data or {}
-    # Only offer each fan on cars whose vehicleControlConfig declares the matching capability
-    # — firing an opcode the car doesn't support would just error.
     entities = [
         CarLinkoSeatFan(coordinator, entry, key, icon, setter)
         for key, icon, capability, setter in _SEAT_FANS

@@ -1,9 +1,6 @@
-"""Static vehicle photo entities (front/side/top) for the CarLinko integration.
+"""Vehicle photo entities (front/side/top) for the CarLinko integration.
 
-URLs come from vehicleImgConfig in the /user/vehicle response, captured once at config-flow
-time (see api.py get_vehicles()). They don't change between polls, so these aren't tied to
-the coordinator — the image platform's own async_image()/image_url plumbing (via ImageEntity)
-handles fetching and caching.
+URLs are captured at config-flow time and don't change, so these aren't coordinator entities.
 """
 from __future__ import annotations
 

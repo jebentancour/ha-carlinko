@@ -86,7 +86,8 @@
       "wltp_range": { "name": "Autonomía WLTP" },
       "fuel_range": { "name": "Autonomía de Combustible" },
       "fuel_level": { "name": "Nivel de Combustible" },
-      "fuel_consumption": { "name": "Consumo de Combustible" }
+      "fuel_consumption": { "name": "Consumo de Combustible" },
+      "engine_rpm": { "name": "RPM del Motor" }
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
@@ -95,7 +96,11 @@
       "door_rear_left": { "name": "Puerta Trasera Izquierda" },
       "door_rear_right": { "name": "Puerta Trasera Derecha" },
       "ignition": { "name": "Contacto" },
-      "charging": { "name": "Cargando" }
+      "charging": { "name": "Cargando" },
+      "ac_compressor": { "name": "Compresor del A/C" },
+      "steering_wheel_heat": { "name": "Calefacción del Volante" },
+      "air_purifier": { "name": "Purificador de Aire" },
+      "windshield_heat": { "name": "Calefacción del Parabrisas" }
     },
     "image": {
       "front": { "name": "Frente" },
@@ -124,7 +129,11 @@
       "seat_heat_left": { "name": "Calefacción Asiento Izquierdo" },
       "seat_heat_right": { "name": "Calefacción Asiento Derecho" },
       "seat_vent_left": { "name": "Ventilación Asiento Izquierdo" },
-      "seat_vent_right": { "name": "Ventilación Asiento Derecho" }
+      "seat_vent_right": { "name": "Ventilación Asiento Derecho" },
+      "seat_heat_rear_left": { "name": "Calefacción Asiento Trasero Izquierdo" },
+      "seat_heat_rear_right": { "name": "Calefacción Asiento Trasero Derecho" },
+      "seat_vent_rear_left": { "name": "Ventilación Asiento Trasero Izquierdo" },
+      "seat_vent_rear_right": { "name": "Ventilación Asiento Trasero Derecho" }
     },
     "climate": {
       "ac": { "name": "Climatización" }

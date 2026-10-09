@@ -16,8 +16,6 @@ from .coordinator import CarLinkoCoordinator
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
-    # Only offer the switch on cars whose vehicleControlConfig declares A/C.Defogging
-    # support — firing the opcode on a car that doesn't would just error.
     if coordinator.data and coordinator.data.get("control_ac_defog"):
         async_add_entities([CarLinkoDefrostSwitch(coordinator, entry)])
 
