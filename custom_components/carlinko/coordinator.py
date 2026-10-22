@@ -7,6 +7,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError
@@ -33,7 +34,7 @@ class CarLinkoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             data = await self.client.poll_telemetry(self.vehicle_id)
         except CarLinkoAuthError as err:
-            raise UpdateFailed(f"CarLinko login rejected: {err}") from err
+            raise ConfigEntryAuthFailed(f"CarLinko login rejected: {err}") from err
         except CarLinkoConnectionError as err:
             raise UpdateFailed(f"Could not reach CarLinko: {err}") from err
 

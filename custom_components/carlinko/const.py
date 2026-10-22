@@ -6,7 +6,7 @@ CONF_REGION = "region"
 DEFAULT_REGION = "sam"
 
 # CarLinko API regions (cqr-api-<region>.hzhjcl.com), in config-flow dropdown order.
-REGIONS: tuple[str, ...] = ("sam", "sea", "ap", "emea", "me", "naf", "saf", "uzb", "vn")
+REGIONS: tuple[str, ...] = ("sam", "sea", "ap", "emea", "me", "naf", "saf", "kaz", "uzb", "vn")
 CONF_VEHICLE_ID = "vehicle_id"
 CONF_DEVICE_SN = "device_sn"
 CONF_VEHICLE_MODEL = "vehicle_model"
@@ -60,16 +60,20 @@ CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
 CMD_AC_ON = "741001"
 CMD_AC_OFF = "741000"
 
+# Response code for an expired/invalidated session token (登录失效): log in again and retry.
+CODE_TOKEN_EXPIRED = "9997"
+
 USER_AGENT = "Dart/3.10 (dart:io)"
+APP_VERSION = "1.14.0"
+# Static part of the /user/login body; `timeZone` and `dateTime` both carry the IANA time zone.
 APP_LOGIN_BODY = {
     "method": "PASSWORD",
     "appType": "APP",
     "osType": "ANDROID",
     "appName": "CarLinko",
-    "appVersion": "1.12.0",
+    "appVersion": APP_VERSION,
     "osVersion": "13",
     "language": "en",
-    "timeZone": "Asia/Jakarta",
     "phoneBrand": "Google",
     "phoneModel": "Pixel 7 Pro",
     "md5": "",

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
@@ -53,6 +54,7 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
         self._password: str | None = None
         self._region: str = DEFAULT_REGION
         self._vehicles: list[VehicleInfo] = []
+        self._reauth_entry: ConfigEntry | None = None
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
         errors: dict[str, str] = {}
@@ -62,7 +64,7 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
             self._region = user_input[CONF_REGION] or DEFAULT_REGION
 
             session = async_get_clientsession(self.hass)
-            client = CarLinkoClient(session, self._email, self._password, self._region)
+            client = CarLinkoClient(session, self._email, self._password, self._region, self.hass.config.time_zone)
             try:
                 await client.login()
                 self._vehicles = await client.get_vehicles()
@@ -85,6 +87,45 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
                     return await self.async_step_pick_vehicle()
 
         return self.async_show_form(step_id="user", data_schema=STEP_USER_SCHEMA, errors=errors)
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> Any:
+        """Login was rejected with the stored password: ask for a new one."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> Any:
+        entry = self._reauth_entry
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            session = async_get_clientsession(self.hass)
+            client = CarLinkoClient(
+                session,
+                entry.data[CONF_EMAIL],
+                user_input[CONF_PASSWORD],
+                entry.data[CONF_REGION],
+                self.hass.config.time_zone,
+            )
+            try:
+                await client.login()
+            except CarLinkoAuthError:
+                errors["base"] = "invalid_auth"
+            except CarLinkoConnectionError as err:
+                _LOGGER.warning("Could not reach CarLinko region %s: %s", entry.data[CONF_REGION], err)
+                errors["base"] = "cannot_connect"
+            except Exception:
+                _LOGGER.exception("Unexpected error talking to CarLinko region %s", entry.data[CONF_REGION])
+                errors["base"] = "unknown"
+            else:
+                return self.async_update_reload_and_abort(
+                    entry, data={**entry.data, CONF_PASSWORD: user_input[CONF_PASSWORD]}
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            description_placeholders={"email": entry.data[CONF_EMAIL]},
+            errors=errors,
+        )
 
     async def async_step_pick_vehicle(self, user_input: dict[str, Any] | None = None) -> Any:
         if user_input is not None:

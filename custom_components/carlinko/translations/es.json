@@ -10,6 +10,13 @@
           "region": "Región"
         }
       },
+      "reauth_confirm": {
+        "title": "Volvé a ingresar tu contraseña de CarLinko",
+        "description": "CarLinko rechazó la contraseña guardada para {email}. Ingresá la actual.",
+        "data": {
+          "password": "Contraseña"
+        }
+      },
       "pick_vehicle": {
         "title": "Elegí tu vehículo",
         "data": {
@@ -25,7 +32,8 @@
       "unknown": "Error inesperado — revisá el log de Home Assistant para más detalles."
     },
     "abort": {
-      "already_configured": "Este vehículo ya está configurado."
+      "already_configured": "Este vehículo ya está configurado.",
+      "reauth_successful": "Contraseña actualizada."
     }
   },
   "selector": {
@@ -38,6 +46,7 @@
         "me": "Medio Oriente",
         "naf": "Norte de África",
         "saf": "Sur de África",
+        "kaz": "Kazajistán",
         "uzb": "Uzbekistán",
         "vn": "Vietnam"
       }

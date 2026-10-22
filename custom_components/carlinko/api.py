@@ -15,6 +15,7 @@ import aiohttp
 
 from .const import (
     APP_LOGIN_BODY,
+    APP_VERSION,
     CMD_AC_OFF,
     CMD_AC_ON,
     CMD_AC_SET_TEMPERATURE_PREFIX,
@@ -44,6 +45,7 @@ from .const import (
     CMD_WINDOWS_CLOSE,
     CMD_WINDOWS_OPEN,
     CMD_WINDOWS_VENT,
+    CODE_TOKEN_EXPIRED,
     SIGN_KEY,
     USER_AGENT,
 )
@@ -230,11 +232,13 @@ class CarLinkoClient:
         email: str,
         password: str,
         region: str,
+        time_zone: str,
     ) -> None:
         self._session = session
         self._email = email
         self._password = password
         self._region = region
+        self._time_zone = time_zone
         self.token: str | None = None
         self._control_config: VehicleControlConfig | None = None
 
@@ -247,7 +251,8 @@ class CarLinkoClient:
         body = {
             "account": self._email,
             "password": self._password,
-            "dateTime": _now_ms(),
+            "dateTime": self._time_zone,
+            "timeZone": self._time_zone,
             **APP_LOGIN_BODY,
         }
         ts = _now_ms()
@@ -257,6 +262,7 @@ class CarLinkoClient:
             "user-agent": USER_AGENT,
             "content-type": "application/json",
             "language": "en",
+            "version": APP_VERSION,
         }
         try:
             async with self._session.post(
@@ -283,7 +289,7 @@ class CarLinkoClient:
         return token
 
     async def _signed_get(self, path: str, _retried: bool = False) -> dict[str, Any]:
-        """GET a token-authed endpoint; re-logs in and retries once if the token is rejected."""
+        """GET a token-authed endpoint; re-logs in and retries once if the token has expired."""
         if not self.token:
             await self.login()
         headers = _headers_for({}, token=self.token)
@@ -299,11 +305,12 @@ class CarLinkoClient:
         except json.JSONDecodeError as err:
             raise CarLinkoConnectionError(f"non-JSON response from {self.api_base}{path}: {text[:200]!r}") from err
 
-        if str(data.get("code")) != "0000":
-            if _retried:
-                raise CarLinkoAuthError(data.get("msg") or f"request to {path} failed: {data}")
+        code = str(data.get("code"))
+        if code == CODE_TOKEN_EXPIRED and not _retried:
             await self.login()
             return await self._signed_get(path, _retried=True)
+        if code != "0000":
+            raise CarLinkoConnectionError(data.get("msg") or f"request to {path} failed: {data}")
         return data
 
     # ---- /user/vehicle/remoteControl — actuation commands ----
@@ -333,10 +340,11 @@ class CarLinkoClient:
                 raise CarLinkoConnectionError(f"non-JSON response from remoteControl: {text[:200]!r}") from err
 
         data = await _post(self.token)
-        if str(data.get("code")) != "0000":
+        # Only resend after an expired token: any other rejection may mean the car already got it.
+        if str(data.get("code")) == CODE_TOKEN_EXPIRED:
             data = await _post(await self.login())
-            if str(data.get("code")) != "0000":
-                raise CarLinkoConnectionError(data.get("msg") or f"remoteControl command rejected: {data}")
+        if str(data.get("code")) != "0000":
+            raise CarLinkoConnectionError(data.get("msg") or f"remoteControl command rejected: {data}")
 
     async def stop_charging(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_STOP_CHARGING)

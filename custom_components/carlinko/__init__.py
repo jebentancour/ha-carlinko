@@ -30,6 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_EMAIL],
         entry.data[CONF_PASSWORD],
         entry.data[CONF_REGION],
+        hass.config.time_zone,
     )
 
     coordinator = CarLinkoCoordinator(hass, entry, client)
