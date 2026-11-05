@@ -10,7 +10,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError
+from .api import (
+    CarLinkoAuthError,
+    CarLinkoClient,
+    CarLinkoConnectionError,
+    decode_control_config,
+)
 from .const import CONF_SCAN_INTERVAL, CONF_VEHICLE_ID, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,6 +46,16 @@ class CarLinkoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if data is None:
             # Car is offline (no signal) — keep last-known values, just flag it.
             previous = dict(self.data) if self.data else {}
+            # Capability flags are per-model and come from /user/vehicle, which
+            # answers even while the car is offline. poll_telemetry already fetched
+            # and cached the control config above, so merge the flags here too —
+            # otherwise, on a first refresh while the car is parked without signal,
+            # capability-dependent entities would not be created until a reload.
+            try:
+                control_config = await self.client.get_vehicle_control_config(self.vehicle_id)
+            except CarLinkoConnectionError as err:
+                raise UpdateFailed(f"Could not reach CarLinko: {err}") from err
+            previous.update(decode_control_config(control_config))
             previous["online"] = False
             return previous
 

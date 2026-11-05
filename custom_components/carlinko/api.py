@@ -496,7 +496,14 @@ class CarLinkoClient:
     # ---- combined poll, one update cycle ----
 
     async def poll_telemetry(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Poll one update cycle. None if the car is offline."""
+        """Poll one update cycle. None if the car is offline.
+
+        The per-model control config lives on `/user/vehicle`, which answers even
+        while the car has no signal, so fetch (and cache) it before the online
+        check. That way the offline branch can still expose the capability flags
+        and capability-dependent entities get created on the first refresh.
+        """
+        await self.get_vehicle_control_config(vehicle_id)
         if not await self._fetch_online(vehicle_id):
             return None
         return await self._get_state(vehicle_id)
