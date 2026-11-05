@@ -9,7 +9,7 @@ range, charging, doors, windows, tyres…) and remote controls (lock, A/C, windo
 seat heating…), so you can build dashboards, get notifications and automate your car
 alongside the rest of your home.
 
-[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jebentancour&repository=ha-carlinko&category=integration)
+[![Open your Home Assistant instance and open this repository in the Marketplace (HACS).](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jebentancour&repository=ha-carlinko&category=integration)
 
 ## Features
 
@@ -40,18 +40,25 @@ alongside the rest of your home.
 
 ## Requirements
 
-- Home Assistant 2024.1 or newer
+- Home Assistant 2024.1 or newer (on 2026.11+ the Marketplace, formerly HACS, is built in)
 - A CarLinko account with your car paired to it
 - Your car's connectivity module online (the same requirement as the official app)
 
 ## Installation
 
-### HACS (recommended)
+### Marketplace / HACS (recommended)
 
-1. In HACS, open the menu → **Custom repositories**, add
-   `https://github.com/jebentancour/ha-carlinko` with category **Integration** (or use the
-   button above).
-2. Search for **CarLinko** and install it.
+Starting with Home Assistant **2026.11**, HACS is built into Home Assistant as the
+**Marketplace** (**Settings → Marketplace**). On earlier versions, install HACS first and
+use it the same way — the steps below only differ in where you find the menu.
+
+1. Click the button above, or add this repository by hand:
+   - **Home Assistant 2026.11+:** go to **Settings → Marketplace → Add from link** (top
+     right), enter `jebentancour/ha-carlinko`, and select **Add**. Choose type
+     **Integration** if asked.
+   - **HACS (older versions):** open the HACS menu → **Custom repositories**, add
+     `https://github.com/jebentancour/ha-carlinko` with category **Integration**.
+2. Open the **CarLinko** entry and select **Install**.
 3. Restart Home Assistant.
 
 ### Manual
