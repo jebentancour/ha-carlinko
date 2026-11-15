@@ -179,7 +179,8 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
 
     has_fuel_consumption = bool(cfg.get("fuelConsumption"))
     has_power_consumption = bool(cfg.get("powerConsumption"))
-    has_engine = bool(cfg.get("Engine"))
+    # J7 PHEV reports Engine=false but fuelConsumption=true; either means there is a fuel tank.
+    has_engine = bool(cfg.get("Engine") or cfg.get("fuelConsumption"))
 
     ac = cfg.get("A/C") or {}
     capabilities = ControlCapabilities(
