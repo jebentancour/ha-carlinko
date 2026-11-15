@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "ac"
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
 
     def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -77,21 +77,21 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
         return HVACMode.AUTO
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         if not self.coordinator.data:
             return None
         return self.coordinator.data.get("ac_temp_c")
 
     @property
-    def min_temp(self) -> float:
+    def native_min_temp(self) -> float:
         return (self.coordinator.data or {}).get("ac_temp_min") or DEFAULT_MIN_TEMP
 
     @property
-    def max_temp(self) -> float:
+    def native_max_temp(self) -> float:
         return (self.coordinator.data or {}).get("ac_temp_max") or DEFAULT_MAX_TEMP
 
     @property
-    def target_temperature_step(self) -> float | None:
+    def native_target_temperature_step(self) -> float | None:
         return (self.coordinator.data or {}).get("ac_temp_step")
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
