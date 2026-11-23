@@ -542,7 +542,7 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
 
     b = bytes.fromhex(hexstr)
     d: dict[str, Any] = {}
-    if len(b) < 73:
+    if len(b) < 72:
         return d
 
     doors = b[2]
