@@ -162,7 +162,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("range_km"),
-        enabled_if=lambda d: bool(d.get("has_engine")),
+        enabled_if=lambda d: bool(d.get("has_fuel_consumption")),
     ),
     CarLinkoSensorDescription(
         key="fuel_pct",
@@ -171,7 +171,7 @@ SENSORS: tuple[CarLinkoSensorDescription, ...] = (
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.get("fuel_pct"),
-        enabled_if=lambda d: bool(d.get("has_engine")),
+        enabled_if=lambda d: bool(d.get("has_fuel_consumption")),
     ),
     CarLinkoSensorDescription(
         key="engine_rpm",
