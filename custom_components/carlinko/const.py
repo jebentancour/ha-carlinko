@@ -38,6 +38,10 @@ CMD_WINDOWS_OPEN = "740600"
 CMD_WINDOWS_VENT = "740E00"
 CMD_DEFOG_FRONT_ON = "741201"
 CMD_DEFOG_FRONT_OFF = "741200"
+CMD_ROOF_SUNSHADE_OPEN = "742801"
+CMD_ROOF_SUNSHADE_CLOSE = "742800"
+CMD_DEFOG_REAR_ON = "742901"
+CMD_DEFOG_REAR_OFF = "742900"
 
 # Seat opcodes keyed by SEAT_LEVELS' values in api.py. Left = driver, right = assistant.
 CMD_SEAT_HEAT_LEFT: dict[str, str] = {"off": "741500", "low": "741501", "medium": "741502", "high": "741503"}

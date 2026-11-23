@@ -126,13 +126,15 @@
     "cover": {
       "liftgate": { "name": "Puerta Trasera" },
       "sunroof": { "name": "Techo Solar" },
+      "roof_sunshade": { "name": "Cortina de Techo" },
       "window_front_left": { "name": "Ventana Delantera Izquierda" },
       "window_front_right": { "name": "Ventana Delantera Derecha" },
       "window_rear_left": { "name": "Ventana Trasera Izquierda" },
       "window_rear_right": { "name": "Ventana Trasera Derecha" }
     },
     "switch": {
-      "defrost_front": { "name": "Desempañador Delantero" }
+      "defrost_front": { "name": "Desempañador Delantero" },
+      "defrost_rear": { "name": "Desempañador Trasero" }
     },
     "fan": {
       "seat_heat_left": { "name": "Calefacción Asiento Izquierdo" },

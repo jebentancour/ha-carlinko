@@ -31,6 +31,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         entities.append(CarLinkoLiftgateCover(coordinator, entry))
     if data.get("control_sunroof"):
         entities.append(CarLinkoSunroofCover(coordinator, entry))
+    if data.get("control_roof_sunshade"):
+        entities.append(CarLinkoSunshadeCover(coordinator, entry))
     if data.get("control_windows_open") or data.get("control_windows_close"):
         entities += [CarLinkoWindowCover(coordinator, entry, position, key) for position, key in _WINDOWS]
     async_add_entities(entities)
@@ -137,6 +139,49 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         # No separate untilt opcode; closing the tilt closes the sunroof.
         await self.coordinator.client.close_sunroof(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        )
+        await self.coordinator.async_request_refresh()
+
+
+class CarLinkoSunshadeCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
+    """Powered roof sunshade."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "roof_sunshade"
+    _attr_device_class = CoverDeviceClass.SHADE
+    _attr_supported_features = CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._entry = entry
+        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_roof_sunshade"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._entry.data[CONF_VEHICLE_ID])},
+            name=self._entry.data[CONF_VEHICLE_PLATE],
+            manufacturer=self._entry.data[CONF_VEHICLE_BRAND],
+            model=self._entry.data[CONF_VEHICLE_MODEL],
+            serial_number=self._entry.data[CONF_DEVICE_SN],
+        )
+
+    @property
+    def is_closed(self) -> bool | None:
+        if not self.coordinator.data:
+            return None
+        open_ = self.coordinator.data.get("sunshade_open")
+        return None if open_ is None else not open_
+
+    async def async_open_cover(self, **kwargs: Any) -> None:
+        await self.coordinator.client.open_roof_sunshade(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        )
+        await self.coordinator.async_request_refresh()
+
+    async def async_close_cover(self, **kwargs: Any) -> None:
+        await self.coordinator.client.close_roof_sunshade(
             self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
         )
         await self.coordinator.async_request_refresh()

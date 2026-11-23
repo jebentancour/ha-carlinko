@@ -21,6 +21,8 @@ from .const import (
     CMD_AC_SET_TEMPERATURE_PREFIX,
     CMD_DEFOG_FRONT_OFF,
     CMD_DEFOG_FRONT_ON,
+    CMD_DEFOG_REAR_OFF,
+    CMD_DEFOG_REAR_ON,
     CMD_FIND_CAR,
     CMD_LIFTGATE_CLOSE,
     CMD_LIFTGATE_OPEN,
@@ -29,6 +31,8 @@ from .const import (
     CMD_QUICK_COOL_ON,
     CMD_QUICK_HEAT_OFF,
     CMD_QUICK_HEAT_ON,
+    CMD_ROOF_SUNSHADE_CLOSE,
+    CMD_ROOF_SUNSHADE_OPEN,
     CMD_SEAT_HEAT_LEFT,
     CMD_SEAT_HEAT_REAR_LEFT,
     CMD_SEAT_HEAT_REAR_RIGHT,
@@ -131,6 +135,8 @@ class ControlCapabilities:
     ac_steering_wheel_heater: bool = False
     ac_air_purification: bool = False
     ac_front_windshield_heater: bool = False
+    roof_sunshade: bool = False
+    rear_window_defog: bool = False
 
 
 @dataclass(frozen=True)
@@ -203,9 +209,11 @@ def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         ac_assistant_heater=bool(ac.get("AssistantHeater")),
         ac_rear_heater=bool(ac.get("RearHeater")),
         ac_rear_vent=bool(ac.get("RearVent")),
-        ac_steering_wheel_heater=bool(ac.get("SteeringWheelHeater")),
+        ac_steering_wheel_heater=bool(cfg.get("SteeringWheelHeater")),
         ac_air_purification=bool(ac.get("AirPurification")),
-        ac_front_windshield_heater=bool(ac.get("FrontWindshieldHeater")),
+        ac_front_windshield_heater=bool(cfg.get("FrontWindshieldHeater")),
+        roof_sunshade=bool(cfg.get("sunroofSunshade")),
+        rear_window_defog=bool(cfg.get("rearWindowDefog")),
     )
 
     return VehicleControlConfig(
@@ -387,6 +395,18 @@ class CarLinkoClient:
 
     async def defrost_off(self, vehicle_id: str, device_sn: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_FRONT_OFF)
+
+    async def rear_defog_on(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_REAR_ON)
+
+    async def rear_defog_off(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_REAR_OFF)
+
+    async def open_roof_sunshade(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_ROOF_SUNSHADE_OPEN)
+
+    async def close_roof_sunshade(self, vehicle_id: str, device_sn: str) -> None:
+        await self._send_remote_command(vehicle_id, device_sn, CMD_ROOF_SUNSHADE_CLOSE)
 
     async def set_seat_heat_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
         await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_LEFT[level])
@@ -601,6 +621,10 @@ def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None)
     d["air_purifier"] = bool(b[66])
     d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
     d["range_km"] = int.from_bytes(b[70:72], "big")
+    if len(b) > 73:
+        d["sunshade_open"] = bool(b[73])
+    if len(b) > 74:
+        d["rear_window_defog"] = bool(b[74])
 
     return d
 
