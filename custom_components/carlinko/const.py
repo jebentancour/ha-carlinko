@@ -20,6 +20,22 @@ CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 120
 MIN_SCAN_INTERVAL = 30
 
+# Per-vehicle data needed for BLE control and device discovery.
+CONF_VIN = "vin"
+CONF_USER_ID = "user_id"
+CONF_BLE_ADDRESS = "ble_address"
+
+# How remote commands + telemetry are transported.
+CONF_TRANSPORT_MODE = "transport_mode"
+TRANSPORT_CLOUD = "cloud"  # cloud only
+TRANSPORT_BLE_CLOUD = "ble_cloud"  # BLE in range, cloud when out of range
+TRANSPORT_BLE = "ble"  # BLE only
+TRANSPORT_MODES: tuple[str, ...] = (TRANSPORT_CLOUD, TRANSPORT_BLE_CLOUD, TRANSPORT_BLE)
+DEFAULT_TRANSPORT_MODE = TRANSPORT_CLOUD
+
+# Cloud response codes that mean the T-box has no cellular link -> try BLE instead.
+CODES_DEVICE_OFFLINE: frozenset[str] = frozenset({"50043", "50008"})
+
 # App-global request-signing key (same in every CarLinko install).
 SIGN_KEY = b"mYj3fzMpn77bir66"
 

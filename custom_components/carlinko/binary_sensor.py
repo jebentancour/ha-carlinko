@@ -17,7 +17,17 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CONF_DEVICE_SN,
+    CONF_TRANSPORT_MODE,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DEFAULT_TRANSPORT_MODE,
+    DOMAIN,
+    TRANSPORT_CLOUD,
+)
 from .coordinator import CarLinkoCoordinator
 
 
@@ -108,6 +118,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         for desc in BINARY_SENSORS
         if desc.enabled_if is None or desc.enabled_if(data)
     ]
+    # "At home" presence = car in BLE range; only when BLE is enabled.
+    if entry.options.get(CONF_TRANSPORT_MODE, DEFAULT_TRANSPORT_MODE) != TRANSPORT_CLOUD:
+        entities.append(CarLinkoPresenceSensor(coordinator, entry))
     async_add_entities(entities)
 
 
@@ -143,6 +156,23 @@ class CarLinkoOnlineSensor(_CarLinkoBinaryBase):
         if not self.coordinator.data:
             return None
         return bool(self.coordinator.data.get("online"))
+
+
+class CarLinkoPresenceSensor(_CarLinkoBinaryBase):
+    """On when the car is in BLE range (i.e. home)."""
+
+    _attr_translation_key = "at_home"
+    _attr_device_class = BinarySensorDeviceClass.PRESENCE
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_at_home"
+
+    @property
+    def is_on(self) -> bool | None:
+        if not self.coordinator.data:
+            return None
+        return bool(self.coordinator.data.get("ble_present"))
 
 
 class CarLinkoBinarySensor(_CarLinkoBinaryBase):

@@ -27,6 +27,7 @@ alongside the rest of your home.
   - Tyre pressure and temperature for each wheel
   - Online / offline status of the car's connectivity module
   - Vehicle photos (front, side, top) from your CarLinko account
+  - Data source (cloud / Bluetooth) and an "at home" presence sensor when Bluetooth is enabled
 - **Remote controls**
   - Lock / unlock
   - Liftgate open / close
@@ -36,6 +37,10 @@ alongside the rest of your home.
   - Seat heating and ventilation (front and rear, off / low / medium / high)
   - Front defroster
   - Find Car (horn and lights) and Stop Charging
+- **Local Bluetooth (optional)** — when the car is in range of a Home Assistant Bluetooth
+  adapter, commands and telemetry can go directly to the car over BLE: either alongside the
+  cloud (Bluetooth in range, cloud when out of range) or Bluetooth-only for when the cloud
+  account isn't available. See [Bluetooth](#bluetooth-local-control--telemetry).
 - **Translations** — English and Spanish.
 
 ## Requirements
@@ -88,6 +93,32 @@ different region — try another one from the list.
 
 - **Poll interval** — how often the car's status is refreshed. Default 120 s, minimum 30 s.
   CarLinko doesn't publish a rate limit, so keep it reasonable.
+- **Transport** — how commands and telemetry travel:
+  - **Cloud only** (default) — always use the CarLinko cloud.
+  - **Bluetooth and cloud** — use Bluetooth when the car is in range of a Home Assistant
+    Bluetooth adapter, and fall back to the cloud when the car is out of range.
+  - **Bluetooth only** — use only Bluetooth, never the cloud (for when the cloud account isn't
+    available). Commands and telemetry need the car in BLE range.
+
+## Bluetooth (local control & telemetry)
+
+When the car is near a Home Assistant Bluetooth adapter, the integration can talk to the car's
+T-box directly over Bluetooth Low Energy. This is handy when the cloud link is unreliable or
+absent.
+
+- **Enable it** in **Configure → Transport** (see above). No extra setup: the car is found by
+  its advertised name, and the details needed for local control are fetched automatically.
+- **Commands** use BLE when the car is in range; in *Bluetooth and cloud* they fall back to the
+  cloud when it isn't, while *Bluetooth only* has no cloud fallback.
+- **Telemetry** is read from whichever source is available; the sensors never jump backwards.
+  Because the odometer only ever increases, it's used as a simple freshness clock — a reading
+  is accepted only if its odometer is at least the last one seen. So a stale cloud reply (for
+  example after you drive out of Bluetooth range) is ignored instead of snapping the battery
+  and other sensors back to an old value.
+- **Entities:** a *Data Source* diagnostic sensor shows whether the current state came from the
+  cloud or Bluetooth, and an *At Home* presence sensor turns on while the car is in BLE range.
+- **Requirements:** a working Bluetooth adapter or ESPHome Bluetooth proxy within range of
+  where the car is parked, and the Home Assistant **Bluetooth** integration set up.
 
 ## Using the controls
 
@@ -113,8 +144,10 @@ different region — try another one from the list.
 
 ## Known limitations
 
-- Cloud polling only: the integration doesn't receive pushed updates, so a drive is recorded
-  as one data point per poll interval rather than a continuous stream.
+- Polling, not streaming: whether over the cloud or Bluetooth, the car is read once per poll
+  interval, so a drive is recorded as one data point per interval rather than a continuous stream.
+- Bluetooth needs the car in range of a Home Assistant Bluetooth adapter or proxy, and the car
+  accepts a single BLE client at a time — if the official app is connected, Home Assistant waits.
 - There's no per-window control (see above).
 - Only one active session per CarLinko account (see the setup tip).
 

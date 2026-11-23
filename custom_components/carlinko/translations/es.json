@@ -50,13 +50,24 @@
         "uzb": "Uzbekistán",
         "vn": "Vietnam"
       }
+    },
+    "transport_mode": {
+      "options": {
+        "cloud": "Solo nube",
+        "ble_cloud": "BLE y nube",
+        "ble": "Solo BLE"
+      }
     }
   },
   "options": {
     "step": {
       "init": {
         "data": {
-          "scan_interval": "Intervalo de consulta (segundos)"
+          "scan_interval": "Intervalo de consulta (segundos)",
+          "transport_mode": "Transporte"
+        },
+        "data_description": {
+          "transport_mode": "Solo nube usa la nube de CarLinko. BLE y nube usa Bluetooth cuando el auto está en rango de un adaptador Bluetooth de Home Assistant y recurre a la nube cuando está fuera de rango. Solo BLE nunca usa la nube — para cuando la cuenta de nube no está habilitada. Los sensores no retroceden: un dato se acepta solo si su odómetro es igual o mayor al último visto."
         }
       }
     }
@@ -96,10 +107,18 @@
       "fuel_range": { "name": "Autonomía de Combustible" },
       "fuel_level": { "name": "Nivel de Combustible" },
       "fuel_consumption": { "name": "Consumo de Combustible" },
-      "engine_rpm": { "name": "RPM del Motor" }
+      "engine_rpm": { "name": "RPM del Motor" },
+      "data_source": {
+        "name": "Fuente de Datos",
+        "state": {
+          "cloud": "Nube",
+          "ble": "Bluetooth"
+        }
+      }
     },
     "binary_sensor": {
       "online": { "name": "En línea" },
+      "at_home": { "name": "En Casa" },
       "door_front_left": { "name": "Puerta Delantera Izquierda" },
       "door_front_right": { "name": "Puerta Delantera Derecha" },
       "door_rear_left": { "name": "Puerta Trasera Izquierda" },

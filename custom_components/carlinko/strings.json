@@ -50,13 +50,24 @@
         "uzb": "Uzbekistan",
         "vn": "Vietnam"
       }
+    },
+    "transport_mode": {
+      "options": {
+        "cloud": "Cloud only",
+        "ble_cloud": "Bluetooth and cloud",
+        "ble": "Bluetooth only"
+      }
     }
   },
   "options": {
     "step": {
       "init": {
         "data": {
-          "scan_interval": "Poll interval (seconds)"
+          "scan_interval": "Poll interval (seconds)",
+          "transport_mode": "Transport"
+        },
+        "data_description": {
+          "transport_mode": "Cloud only uses the CarLinko cloud. Bluetooth and cloud uses Bluetooth when the car is in range of a Home Assistant Bluetooth adapter and falls back to the cloud when it is out of range. Bluetooth only never uses the cloud — for when the cloud account is not enabled. Sensors never go backwards: a reading is only accepted if its odometer is at least the last one seen."
         }
       }
     }
@@ -96,10 +107,18 @@
       "fuel_range": { "name": "Fuel Range" },
       "fuel_level": { "name": "Fuel Level" },
       "fuel_consumption": { "name": "Fuel Consumption" },
-      "engine_rpm": { "name": "Engine RPM" }
+      "engine_rpm": { "name": "Engine RPM" },
+      "data_source": {
+        "name": "Data Source",
+        "state": {
+          "cloud": "Cloud",
+          "ble": "Bluetooth"
+        }
+      }
     },
     "binary_sensor": {
       "online": { "name": "Online" },
+      "at_home": { "name": "At Home" },
       "door_front_left": { "name": "Door Front Left" },
       "door_front_right": { "name": "Door Front Right" },
       "door_rear_left": { "name": "Door Rear Left" },

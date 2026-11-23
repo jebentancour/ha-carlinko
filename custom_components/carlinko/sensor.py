@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    EntityCategory,
     UnitOfElectricPotential,
     UnitOfLength,
     UnitOfPower,
@@ -28,7 +29,17 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CONF_DEVICE_SN,
+    CONF_TRANSPORT_MODE,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DEFAULT_TRANSPORT_MODE,
+    DOMAIN,
+    TRANSPORT_CLOUD,
+)
 from .coordinator import CarLinkoCoordinator
 
 TYRE_LABELS = ("Front Left", "Front Right", "Rear Left", "Rear Right")
@@ -206,6 +217,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 coordinator, entry, wheel_idx, label, "tyre_temp_c", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE
             )
         )
+    # Which transport the current state came from — only meaningful once BLE is in the mix.
+    if entry.options.get(CONF_TRANSPORT_MODE, DEFAULT_TRANSPORT_MODE) != TRANSPORT_CLOUD:
+        entities.append(CarLinkoDataSourceSensor(coordinator, entry))
     async_add_entities(entities)
 
 
@@ -240,6 +254,26 @@ class CarLinkoSensor(_CarLinkoEntityBase, SensorEntity):
         if not self.coordinator.data:
             return None
         return self.entity_description.value_fn(self.coordinator.data)
+
+
+class CarLinkoDataSourceSensor(_CarLinkoEntityBase, SensorEntity):
+    """Diagnostic: whether the current state arrived over the cloud or BLE."""
+
+    _attr_translation_key = "data_source"
+    _attr_icon = "mdi:transit-connection-variant"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_options = ["cloud", "ble"]
+        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_data_source"
+
+    @property
+    def native_value(self) -> Any:
+        if not self.coordinator.data:
+            return None
+        return self.coordinator.data.get("data_source")
 
 
 class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):

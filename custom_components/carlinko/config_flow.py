@@ -6,17 +6,22 @@ from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
+from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
+from . import ble
 from .api import CarLinkoAccountNotFoundError, CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError, VehicleInfo
 from .const import (
+    CONF_BLE_ADDRESS,
     CONF_DEVICE_SN,
     CONF_REGION,
     CONF_SCAN_INTERVAL,
+    CONF_TRANSPORT_MODE,
+    CONF_USER_ID,
     CONF_VEHICLE_BRAND,
     CONF_VEHICLE_ID,
     CONF_VEHICLE_IMG_FRONT,
@@ -24,11 +29,14 @@ from .const import (
     CONF_VEHICLE_IMG_TOP,
     CONF_VEHICLE_MODEL,
     CONF_VEHICLE_PLATE,
+    CONF_VIN,
     DEFAULT_REGION,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_TRANSPORT_MODE,
     DOMAIN,
     MIN_SCAN_INTERVAL,
     REGIONS,
+    TRANSPORT_MODES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,6 +63,7 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
         self._region: str = DEFAULT_REGION
         self._vehicles: list[VehicleInfo] = []
         self._reauth_entry: ConfigEntry | None = None
+        self._client: CarLinkoClient | None = None
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
         errors: dict[str, str] = {}
@@ -68,6 +77,7 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 await client.login()
                 self._vehicles = await client.get_vehicles()
+                self._client = client
             except CarLinkoAccountNotFoundError:
                 errors["base"] = "account_not_found"
             except CarLinkoAuthError:
@@ -139,22 +149,42 @@ class CarLinkoConfigFlow(ConfigFlow, domain=DOMAIN):
     async def _finish(self, vehicle: VehicleInfo) -> Any:
         await self.async_set_unique_id(vehicle.vehicle_id)
         self._abort_if_unique_id_configured()
-        return self.async_create_entry(
-            title="CarLinko",
-            data={
-                CONF_EMAIL: self._email,
-                CONF_PASSWORD: self._password,
-                CONF_REGION: self._region,
-                CONF_VEHICLE_ID: vehicle.vehicle_id,
-                CONF_DEVICE_SN: vehicle.device_sn,
-                CONF_VEHICLE_MODEL: vehicle.model,
-                CONF_VEHICLE_BRAND: vehicle.brand,
-                CONF_VEHICLE_PLATE: vehicle.plate,
-                CONF_VEHICLE_IMG_FRONT: vehicle.img_front,
-                CONF_VEHICLE_IMG_SIDE: vehicle.img_side,
-                CONF_VEHICLE_IMG_TOP: vehicle.img_top,
-            },
-        )
+        data: dict[str, Any] = {
+            CONF_EMAIL: self._email,
+            CONF_PASSWORD: self._password,
+            CONF_REGION: self._region,
+            CONF_VEHICLE_ID: vehicle.vehicle_id,
+            CONF_DEVICE_SN: vehicle.device_sn,
+            CONF_VEHICLE_MODEL: vehicle.model,
+            CONF_VEHICLE_BRAND: vehicle.brand,
+            CONF_VEHICLE_PLATE: vehicle.plate,
+            CONF_VEHICLE_IMG_FRONT: vehicle.img_front,
+            CONF_VEHICLE_IMG_SIDE: vehicle.img_side,
+            CONF_VEHICLE_IMG_TOP: vehicle.img_top,
+            CONF_VIN: vehicle.vin,
+        }
+        # Stash what the BLE transport needs; failures here are backfilled on setup.
+        if self._client is not None:
+            try:
+                data[CONF_USER_ID] = await self._client.get_user_id()
+            except CarLinkoConnectionError:
+                _LOGGER.debug("Could not fetch userId at setup; will backfill later", exc_info=True)
+        address = self._discover_ble_address(vehicle.device_sn)
+        if address:
+            data[CONF_BLE_ADDRESS] = address
+        return self.async_create_entry(title="CarLinko", data=data)
+
+    def _discover_ble_address(self, device_sn: str) -> str | None:
+        """Best-effort: find the T-box's BLE address by its advertised name (CHR + last 8 of SN)."""
+        name = ble.device_name_from_sn(device_sn)
+        try:
+            for info in bluetooth.async_discovered_service_info(self.hass, connectable=True):
+                if info.name == name:
+                    return info.address
+        except Exception:  # bluetooth integration may be unavailable during the flow
+            _LOGGER.debug("BLE discovery unavailable during config flow", exc_info=True)
+            return None
+        return None
 
     @staticmethod
     @callback
@@ -171,10 +201,18 @@ class CarLinkoOptionsFlow(OptionsFlow):
             return self.async_create_entry(data=user_input)
 
         current_scan = self._entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        current_transport = self._entry.options.get(CONF_TRANSPORT_MODE, DEFAULT_TRANSPORT_MODE)
         schema = vol.Schema(
             {
                 vol.Required(CONF_SCAN_INTERVAL, default=current_scan): vol.All(
                     vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL)
+                ),
+                vol.Required(CONF_TRANSPORT_MODE, default=current_transport): SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(TRANSPORT_MODES),
+                        mode=SelectSelectorMode.DROPDOWN,
+                        translation_key="transport_mode",
+                    )
                 ),
             }
         )

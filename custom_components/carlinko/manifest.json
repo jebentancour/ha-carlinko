@@ -1,11 +1,13 @@
 {
   "domain": "carlinko",
   "name": "CarLinko (Jaecoo / Omoda / Chery EV)",
+  "bluetooth": [{ "local_name": "CHR*" }],
   "codeowners": ["@jebentancour"],
   "config_flow": true,
+  "dependencies": ["bluetooth"],
   "documentation": "https://github.com/jebentancour/ha-carlinko",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/jebentancour/ha-carlinko/issues",
-  "requirements": [],
-  "version": "0.13.5"
+  "requirements": ["bleak-retry-connector>=3.5.0"],
+  "version": "0.14.9"
 }
