@@ -145,13 +145,15 @@
     "cover": {
       "liftgate": { "name": "Liftgate" },
       "sunroof": { "name": "Sunroof" },
+      "roof_sunshade": { "name": "Roof Sunshade" },
       "window_front_left": { "name": "Window Front Left" },
       "window_front_right": { "name": "Window Front Right" },
       "window_rear_left": { "name": "Window Rear Left" },
       "window_rear_right": { "name": "Window Rear Right" }
     },
     "switch": {
-      "defrost_front": { "name": "Front Defroster" }
+      "defrost_front": { "name": "Front Defroster" },
+      "defrost_rear": { "name": "Rear Defroster" }
     },
     "fan": {
       "seat_heat_left": { "name": "Seat Heating Left" },

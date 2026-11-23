@@ -32,10 +32,11 @@ alongside the rest of your home.
   - Lock / unlock
   - Liftgate open / close
   - Sunroof open / close / tilt
+  - Roof sunshade open / close
   - Windows open / close / vent
   - A/C on / off, target temperature, Quick Heat and Quick Cool
   - Seat heating and ventilation (front and rear, off / low / medium / high)
-  - Front defroster
+  - Front and rear defroster
   - Find Car (horn and lights) and Stop Charging
 - **Local Bluetooth (optional)** — when the car is in range of a Home Assistant Bluetooth
   adapter, commands and telemetry can go directly to the car over BLE: either alongside the
