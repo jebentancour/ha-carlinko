@@ -1,7 +1,6 @@
 {
   "domain": "carlinko",
   "name": "CarLinko (Jaecoo / Omoda / Chery EV)",
-  "bluetooth": [{ "local_name": "CHR*" }],
   "codeowners": ["@jebentancour"],
   "config_flow": true,
   "dependencies": ["bluetooth"],
