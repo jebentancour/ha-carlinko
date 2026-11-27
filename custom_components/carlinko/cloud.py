@@ -157,13 +157,17 @@ class CloudTransport:
             raise CarLinkoConnectionError(data.get("msg") or f"request to {path} failed: {data}")
         return data
 
-    async def post_remote_control(
-        self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20
-    ) -> None:
-        """POST a remote-control opcode. Returns once CarLinko accepts it for delivery."""
+    async def _remote_control(
+        self, vehicle_id: str, device_sn: str, data_hex: str, timeout: int = 20
+    ) -> dict[str, Any]:
+        """POST a payload to ``/remoteControl`` and return the accepted response JSON.
+
+        The same payload travels identically over BLE and the cloud; the cloud echoes the car's reply
+        in the response ``data`` field (``deviceSn__<hex>``). Raises on an offline or rejected result.
+        """
         if not self.token:
             await self.login()
-        body = {"vehicleId": vehicle_id, "deviceSn": device_sn, "data": opcode, "timeOut": timeout}
+        body = {"vehicleId": vehicle_id, "deviceSn": device_sn, "data": data_hex, "timeOut": timeout}
 
         async def _post(token: str) -> dict[str, Any]:
             headers = _headers_for(body, token=token)
@@ -183,12 +187,34 @@ class CloudTransport:
             except json.JSONDecodeError as err:
                 raise CarLinkoConnectionError(f"non-JSON response from remoteControl: {text[:200]!r}") from err
 
-        data = await _post(self.token)
+        resp = await _post(self.token)
         # Only resend after an expired token: any other rejection may mean the car already got it.
-        if str(data.get("code")) == CODE_TOKEN_EXPIRED:
-            data = await _post(await self.login())
-        code = str(data.get("code"))
+        if str(resp.get("code")) == CODE_TOKEN_EXPIRED:
+            resp = await _post(await self.login())
+        code = str(resp.get("code"))
         if code in CODES_DEVICE_OFFLINE:
-            raise CarLinkoDeviceOfflineError(data.get("msg") or f"device offline (code {code})")
+            raise CarLinkoDeviceOfflineError(resp.get("msg") or f"device offline (code {code})")
         if code != "0000":
-            raise CarLinkoCommandError(data.get("msg") or f"remoteControl command rejected: {data}")
+            raise CarLinkoCommandError(resp.get("msg") or f"remoteControl command rejected: {resp}")
+        return resp
+
+    async def post_remote_control(
+        self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20
+    ) -> None:
+        """Send a control opcode. Returns once CarLinko accepts it for delivery."""
+        await self._remote_control(vehicle_id, device_sn, opcode, timeout)
+
+    async def query(
+        self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20
+    ) -> str | None:
+        """Issue a plain-text read opcode (``23``/``24``/``77``) and return the car's reply hex.
+
+        The reply comes back in the response ``data`` field as ``deviceSn__<hex>``; this strips the
+        prefix and returns the ``<hex>`` so it decodes byte-for-byte like a BLE reply.
+        """
+        resp = await self._remote_control(vehicle_id, device_sn, opcode, timeout)
+        reply = resp.get("data")
+        if not isinstance(reply, str) or "__" not in reply:
+            return None
+        # The hex payload never contains "__"; take whatever follows the last one.
+        return reply.rsplit("__", 1)[1] or None

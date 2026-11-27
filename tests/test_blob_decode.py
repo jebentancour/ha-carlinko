@@ -76,6 +76,23 @@ class Plausibility(unittest.TestCase):
         self.assertTrue(blob.is_plausible({"odometer_km": 7340}))
 
 
+class FirmwareVersion(unittest.TestCase):
+    def test_decodes_ascii_string(self):
+        # 24 00 <ascii> 00
+        reply = bytes.fromhex("2400") + b"2.3.1_050501S" + b"\x00"
+        self.assertEqual(blob.parse_fw_version(reply), "2.3.1_050501S")
+
+    def test_without_trailing_null(self):
+        reply = bytes.fromhex("2400") + b"1.0.0"
+        self.assertEqual(blob.parse_fw_version(reply), "1.0.0")
+
+    def test_rejects_wrong_opcode_or_short(self):
+        self.assertIsNone(blob.parse_fw_version(bytes.fromhex("230002")))  # fw-location, not version
+        self.assertIsNone(blob.parse_fw_version(b"\x24"))  # too short
+        self.assertIsNone(blob.parse_fw_version(None))
+        self.assertIsNone(blob.parse_fw_version(bytes.fromhex("240000")))  # empty string
+
+
 class Capabilities(unittest.TestCase):
     def test_flags_and_defaults(self):
         cfg = capabilities.parse_vehicle_control_config(

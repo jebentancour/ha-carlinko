@@ -48,6 +48,20 @@ def is_plausible(data: dict[str, Any]) -> bool:
     return True
 
 
+def parse_fw_version(reply: bytes | None) -> str | None:
+    """Decode a ``0x24`` firmware-version reply (``24 00 <ascii> 00``) into the version string."""
+    if not reply or len(reply) < 3 or reply[0] != 0x24:
+        return None
+    body = reply[2:]
+    end = body.find(0)
+    if end != -1:
+        body = body[:end]
+    try:
+        return body.decode("ascii").strip() or None
+    except UnicodeDecodeError:
+        return None
+
+
 def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
     """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`."""
     cfg = control_config or VehicleControlConfig()

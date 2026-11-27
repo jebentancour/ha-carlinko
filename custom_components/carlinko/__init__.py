@@ -52,6 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_REGION],
         hass.config.time_zone,
         transport_mode=transport_mode,
+        device_sn=entry.data[CONF_DEVICE_SN],
     )
 
     if transport_mode != TRANSPORT_CLOUD:
@@ -118,11 +119,11 @@ async def _setup_ble_transport(hass: HomeAssistant, entry: ConfigEntry, client: 
         addr_state["address"] = _discover_address(hass, device_sn)
         return addr_state["address"]
 
-    async def _ble_read() -> str | None:
+    async def _ble_read() -> tuple[str, str, str] | None:
         addr = _resolve_address()
         if not addr:
             return None
-        return await ble.async_read_state(hass, addr, device_sn)
+        return await ble.async_read_telemetry(hass, addr, device_sn)
 
     vehicle_id = entry.data[CONF_VEHICLE_ID]
 

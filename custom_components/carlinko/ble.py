@@ -256,16 +256,6 @@ class _Session:
         return body[1] == 0x01 and body[2] == 0x00
 
 
-async def _do_handshake(session: _Session) -> bytes:
-    """Run the init sequence the car expects on connect and return the status blob.
-
-    Raises :class:`CarLinkoBleUnavailable` if the status does not come back.
-    """
-    await session.query(CMD_FW_LOCATION)
-    await session.query(CMD_FW_VERSION)
-    return await session.read_status()
-
-
 @asynccontextmanager
 async def _connect(hass: HomeAssistant, address: str, device_sn: str) -> AsyncIterator[_Session]:
     """Open a short-lived connection, yield a ready session, and always disconnect afterwards.
@@ -305,14 +295,22 @@ async def _connect(hass: HomeAssistant, address: str, device_sn: str) -> AsyncIt
             _LOGGER.debug("BLE disconnect from %s failed", address, exc_info=True)
 
 
-async def async_read_state(hass: HomeAssistant, address: str, device_sn: str) -> str | None:
-    """One sporadic telemetry read: connect, read the status blob, disconnect. Hex, or None."""
+async def async_read_telemetry(
+    hass: HomeAssistant, address: str, device_sn: str
+) -> tuple[str, str, str] | None:
+    """One telemetry read: connect, run ``0x23`` -> ``0x24`` -> ``0x77``, disconnect.
+
+    Returns the three replies as hex ``(fw_location, fw_version, status)`` — the same sequence the
+    cloud runs over ``/remoteControl``. Raises :class:`CarLinkoBleUnavailable` if unreachable.
+    """
     from bleak.exc import BleakError
 
     try:
         async with _connect(hass, address, device_sn) as session:
+            r23, _ = await session.query(CMD_FW_LOCATION)
+            r24, _ = await session.query(CMD_FW_VERSION)
             blob = await session.read_status()
-            return blob.hex()
+            return r23.hex(), r24.hex(), blob.hex()
     except BleakError as err:
         raise CarLinkoBleUnavailable(f"BLE read from {address} failed: {err}") from err
 
@@ -326,8 +324,9 @@ async def async_send_control(
     opcode: str,
     get_remaining: Callable[[], Awaitable[int | None]] | None = None,
 ) -> str | None:
-    """One sporadic control: connect, handshake, send, enrol if needed, read result, close.
+    """One sporadic control: connect, send, enrol if needed, read result, close.
 
+    The car accepts the control straight off, like the cloud POST, so no init sequence precedes it.
     On a not-enrolled reply the userId is enrolled (seconds from ``get_remaining``) and the control
     retried once. Returns the follow-up status hex (or None if it didn't arrive — the control still
     succeeded). Bleak failures map to :class:`CarLinkoBleUnavailable`; a refusal raises
@@ -337,8 +336,6 @@ async def async_send_control(
 
     try:
         async with _connect(hass, address, device_sn) as session:
-            await _do_handshake(session)
-            _LOGGER.debug("BLE control %s: connected + handshake OK (%s)", opcode, address)
             control = encrypt_control(opcode, vin, user_id)
             code = await session.send_control(control)
             _LOGGER.debug("BLE control %s: car ack code=%s", opcode, _code_hex(code))

@@ -11,6 +11,7 @@ This module only decides *which pipe* carries a command or telemetry read and me
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -21,13 +22,13 @@ from typing import Any
 import aiohttp
 
 from .ble import CarLinkoBleError, CarLinkoBleUnavailable, is_status_body
-from .blob import decode_blob, decode_control_config, is_plausible
+from .blob import decode_blob, decode_control_config, is_plausible, parse_fw_version
 from .capabilities import (
     VehicleControlConfig,
     VehicleInfo,
     parse_vehicle_control_config,
 )
-from .cloud import CarLinkoConnectionError, CloudTransport
+from .cloud import CarLinkoConnectionError, CarLinkoDeviceOfflineError, CloudTransport
 from .const import (
     CMD_AC_SET_TEMPERATURE_PREFIX,
     DEFAULT_TRANSPORT_MODE,
@@ -38,8 +39,11 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# How long a status blob read back right after a BLE control stays usable for the follow-up poll.
-_BLE_FRESH_TTL = 20.0
+# How long a status blob read back right after a control stays usable for the follow-up poll.
+_FRESH_BLOB_TTL = 20.0
+
+# Wait after a cloud control before reading state back: the POST returns on delivery, not actuation.
+_POST_CONTROL_DELAY = 2.0
 
 # Authorization sentinel used for enrol when the account has no expiry window (owner accounts).
 BLE_AUTH_OWNER = 0xFFFFFFFF
@@ -56,23 +60,27 @@ class CarLinkoClient:
         region: str,
         time_zone: str,
         transport_mode: str = DEFAULT_TRANSPORT_MODE,
+        device_sn: str | None = None,
         ble_send: Callable[[str], Awaitable[str | None]] | None = None,
-        ble_read: Callable[[], Awaitable[str | None]] | None = None,
+        ble_read: Callable[[], Awaitable[tuple[str, str, str] | None]] | None = None,
     ) -> None:
         self._cloud = CloudTransport(session, email, password, region, time_zone)
         self._transport_mode = transport_mode
+        self._device_sn = device_sn
         # BLE transport callables, injected by __init__.py (keep this client HA/bleak-free).
         self._ble_send = ble_send
         self._ble_read = ble_read
-        # Status blob a BLE control read back right after acting, with its monotonic timestamp: the
-        # next telemetry poll uses it instead of opening a second BLE connection.
-        self._ble_fresh_blob: tuple[float, str] | None = None
+        # Status blob a control read back right after acting (with its source + monotonic timestamp):
+        # the next telemetry poll uses it instead of opening a fresh read.
+        self._fresh_blob: tuple[float, str, str] | None = None
+        # Last decoded firmware version, reused when a poll can't re-read it (e.g. the post-control blob).
+        self._last_fw: str | None = None
         self._control_config: VehicleControlConfig | None = None
 
     def set_ble_transport(
         self,
         ble_send: Callable[[str], Awaitable[str | None]] | None,
-        ble_read: Callable[[], Awaitable[str | None]] | None,
+        ble_read: Callable[[], Awaitable[tuple[str, str, str] | None]] | None,
     ) -> None:
         """Wire the BLE transport callables (built in __init__.py, which has the hass/bleak context)."""
         self._ble_send = ble_send
@@ -93,20 +101,33 @@ class CarLinkoClient:
 
     # ---- /user/vehicle/remoteControl — actuation commands ----
 
-    def _stash_ble_blob(self, blob: str | None) -> None:
-        """Remember the status a BLE control read back, so the next poll skips a second connect."""
+    def _stash_fresh_blob(self, blob: str | None, source: str) -> None:
+        """Remember the status a control read back, so the next poll reflects it without re-reading."""
         if blob:
-            self._ble_fresh_blob = (time.monotonic(), blob)
+            self._fresh_blob = (time.monotonic(), blob, source)
 
-    def _take_fresh_ble_blob(self) -> str | None:
-        """Pop the post-control status blob if it is still recent; it is consumed either way."""
-        if self._ble_fresh_blob is None:
+    def _take_fresh_blob(self) -> tuple[str, str] | None:
+        """Pop the post-control (blob, source) if it is still recent; it is consumed either way."""
+        if self._fresh_blob is None:
             return None
-        timestamp, blob = self._ble_fresh_blob
-        self._ble_fresh_blob = None
-        if time.monotonic() - timestamp <= _BLE_FRESH_TTL:
-            return blob
+        timestamp, blob, source = self._fresh_blob
+        self._fresh_blob = None
+        if time.monotonic() - timestamp <= _FRESH_BLOB_TTL:
+            return blob, source
         return None
+
+    async def _cloud_control(self, vehicle_id: str, device_sn: str, opcode: str, timeout: int) -> None:
+        """Post a control over the cloud, then read state back so the next poll reflects the action.
+
+        Unlike BLE (where the car pushes a status update on its own), the cloud returns on delivery
+        and sends nothing further, so we wait for the car to actuate and read the status explicitly.
+        """
+        await self._cloud.post_remote_control(vehicle_id, device_sn, opcode, timeout)
+        await asyncio.sleep(_POST_CONTROL_DELAY)
+        try:
+            self._stash_fresh_blob(await self._cloud.query(vehicle_id, device_sn, "77"), "cloud")
+        except CarLinkoConnectionError:
+            _LOGGER.debug("cloud control %s: follow-up status not captured; next poll will refresh", opcode)
 
     async def _send_remote_command(self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20) -> None:
         """Send a remote-control opcode over the configured transport.
@@ -120,7 +141,7 @@ class CarLinkoClient:
 
         if mode in (TRANSPORT_BLE, TRANSPORT_BLE_CLOUD) and self._ble_send is not None:
             try:
-                self._stash_ble_blob(await self._ble_send(opcode))
+                self._stash_fresh_blob(await self._ble_send(opcode), "ble")
                 _LOGGER.debug("remote command %s sent over BLE", opcode)
                 return
             except CarLinkoBleUnavailable as err:
@@ -128,14 +149,14 @@ class CarLinkoClient:
                     _LOGGER.debug("remote command %s: BLE unavailable (%s); BLE-only, no fallback", opcode, err)
                     raise
                 _LOGGER.debug("remote command %s: BLE unavailable (%s); falling back to cloud", opcode, err)
-                await self._cloud.post_remote_control(vehicle_id, device_sn, opcode, timeout)
+                await self._cloud_control(vehicle_id, device_sn, opcode, timeout)
                 return
 
         if mode == TRANSPORT_BLE:
             raise CarLinkoBleUnavailable("BLE-only mode but the BLE transport is not configured")
 
         # Cloud only.
-        await self._cloud.post_remote_control(vehicle_id, device_sn, opcode, timeout)
+        await self._cloud_control(vehicle_id, device_sn, opcode, timeout)
 
     async def send_control(self, vehicle_id: str, device_sn: str, opcode: str) -> None:
         """Send a remote-control opcode (the actuation entry point for every platform entity)."""
@@ -214,84 +235,101 @@ class CarLinkoClient:
         seconds = int((end - datetime.now(UTC)).total_seconds())
         return min(BLE_AUTH_OWNER, max(0, seconds))
 
-    # ---- /user/vehicle/isOnline/{id} ----
+    # ---- telemetry read: 23 (fw location / app mode) -> 24 (fw version) -> 77 (status) ----
 
-    async def _fetch_online(self, vehicle_id: str) -> bool:
-        online = await self._cloud.signed_get(f"/user/vehicle/isOnline/{vehicle_id}")
-        return bool(online.get("data"))
+    def _decode_candidate(
+        self, r23: str | None, r24: str | None, r77: str | None, source: str
+    ) -> dict[str, Any] | None:
+        """Decode one unified read into a tagged state, or None if it shouldn't be trusted.
 
-    # ---- /user/vehicle/state/{id} — telemetry blob ----
-
-    async def _get_state(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Fetch + decode the telemetry blob plus vehicle config. None if no blob was reported."""
-        state = await self._cloud.signed_get(f"/user/vehicle/state/{vehicle_id}")
-        blob = state.get("data")
-        if not isinstance(blob, str):
+        The ``0x23`` reply gates on app mode (``230002``); any other value means the car isn't
+        serving normal telemetry, so the read is dropped. ``0x24`` carries the firmware version
+        (cached), and ``0x77`` is the status blob, validated before decoding (same body as the BLE
+        path, no 55AA/CRC wrapper on the cloud side).
+        """
+        if r23 != "230002":
             return None
-        # Defense in depth: the cloud carries the same status body as BLE (without the 55AA/CRC
-        # wrapper), so reject anything that isn't a well-formed status blob before decoding it.
+        if not r77:
+            return None
+        try:
+            raw = bytes.fromhex(r77)
+        except ValueError:
+            return None
+        if not is_status_body(raw):
+            return None
+        data = decode_blob(r77, self._control_config)
+        if not data or not is_plausible(data):
+            # A corrupt / misaligned frame: drop it so it never reaches the sensors or poisons the
+            # odometer freshness gate.
+            return None
+        fw = parse_fw_version(bytes.fromhex(r24)) if r24 else None
+        if fw:
+            self._last_fw = fw
+        data.update(decode_control_config(self._control_config))
+        data["fw_version"] = fw or self._last_fw
+        data["source"] = source
+        return data
+
+    async def _cloud_state_candidate(self, vehicle_id: str) -> dict[str, Any] | None:
+        """Decoded cloud telemetry for this cycle, tagged source='cloud'. None if unreachable/offline.
+
+        Runs the same 23 -> 24 -> 77 sequence as BLE over ``/remoteControl`` (the cloud echoes each
+        reply in ``data`` as ``deviceSn__<hex>``). Network/offline errors are swallowed only when BLE
+        can still contribute; with no BLE source they propagate so the coordinator surfaces
+        UpdateFailed. Auth errors always propagate.
+        """
+        if not self._device_sn:
+            return None
+        try:
+            r23 = await self._cloud.query(vehicle_id, self._device_sn, "23")
+            r24 = await self._cloud.query(vehicle_id, self._device_sn, "24")
+            r77 = await self._cloud.query(vehicle_id, self._device_sn, "77")
+        except CarLinkoDeviceOfflineError:
+            # The T-box has no cellular link: no candidate, but not a failure — the coordinator keeps
+            # the last-known values and flags the car offline (same as the old isOnline=False path).
+            return None
+        except CarLinkoConnectionError:
+            if self._ble_read is not None:
+                return None
+            raise
+        return self._decode_candidate(r23, r24, r77, "cloud")
+
+    def _decode_fresh_blob(self, blob: str, source: str) -> dict[str, Any] | None:
+        """Decode a status blob a just-completed control read back (last-known firmware, no app gate)."""
         try:
             raw = bytes.fromhex(blob)
         except ValueError:
             return None
         if not is_status_body(raw):
             return None
-        control_config = await self.get_vehicle_control_config(vehicle_id)
-        data = decode_blob(blob, control_config)
-        data.update(decode_control_config(control_config))
-        return data
-
-    async def _cloud_state_candidate(self, vehicle_id: str) -> dict[str, Any] | None:
-        """Decoded cloud telemetry for this cycle, tagged source='cloud'. None if unreachable/offline.
-
-        Network errors are swallowed only when BLE can still contribute; with no BLE source they
-        propagate so the coordinator surfaces UpdateFailed as before. Auth errors always propagate.
-        """
-        try:
-            if not await self._fetch_online(vehicle_id):
-                return None
-            data = await self._get_state(vehicle_id)
-        except CarLinkoConnectionError:
-            if self._ble_read is not None:
-                return None
-            raise
-        if data is None or not is_plausible(data):
+        data = decode_blob(blob, self._control_config)
+        if not data or not is_plausible(data):
             return None
-        data["source"] = "cloud"
+        data.update(decode_control_config(self._control_config))
+        data["fw_version"] = self._last_fw
+        data["source"] = source
         return data
 
     async def _ble_state_candidate(self, vehicle_id: str) -> dict[str, Any] | None:
         """Decoded BLE telemetry for this cycle, tagged source='ble'. None if out of range.
 
-        If a control just read back a fresh blob, use that instead of opening another BLE connection
-        (the car takes one client at a time, so we avoid a needless second connect right after a
-        command); otherwise do a sporadic read over its own short-lived connection.
+        Runs the full 23 -> 24 -> 77 read over a short-lived connection.
         """
         if self._ble_read is None:
             return None
-        blob = self._take_fresh_ble_blob()
-        if blob is None:
-            try:
-                blob = await self._ble_read()
-            except CarLinkoBleError:
-                return None
-            except Exception:  # BLE is a best-effort secondary source; never fail the update over it
-                # Never let a BLE transport anomaly (a stray bleak/proxy error) escape and fail the
-                # whole update: the cloud candidate and the last-known values must survive it.
-                _LOGGER.warning(
-                    "CarLinko BLE telemetry read failed; skipping BLE this cycle", exc_info=True
-                )
-                return None
-        if not blob:
+        try:
+            replies = await self._ble_read()
+        except CarLinkoBleError:
             return None
-        data = decode_blob(blob, self._control_config)
-        if not data or not is_plausible(data):
-            # A corrupt / misaligned BLE frame: drop it so it never reaches the sensors or poisons
-            # the odometer gate. Cloud can still contribute this cycle.
+        except Exception:  # BLE is a best-effort secondary source; never fail the update over it
+            # Never let a BLE transport anomaly (a stray bleak/proxy error) escape and fail the whole
+            # update: the cloud candidate and the last-known values must survive it.
+            _LOGGER.warning("CarLinko BLE telemetry read failed; skipping BLE this cycle", exc_info=True)
             return None
-        data.update(decode_control_config(self._control_config))
-        data["source"] = "ble"
-        return data
+        if not replies:
+            return None
+        r23, r24, r77 = replies
+        return self._decode_candidate(r23, r24, r77, "ble")
 
     # ---- combined poll, one update cycle ----
 
@@ -306,6 +344,13 @@ class CarLinkoClient:
         BLE only, and ``ble_cloud`` reads both with BLE first (so a tie prefers the local source).
         """
         await self.get_vehicle_control_config(vehicle_id)
+        # A control just read state back: that is this cycle's state, so use it and skip a re-read
+        # (avoids a needless BLE reconnect / cloud round-trip right after acting).
+        fresh = self._take_fresh_blob()
+        if fresh is not None:
+            state = self._decode_fresh_blob(*fresh)
+            if state is not None:
+                return [state]
         mode = self._transport_mode
         if mode == TRANSPORT_CLOUD:
             order: tuple[str, ...] = ("cloud",)

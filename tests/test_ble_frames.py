@@ -150,7 +150,7 @@ class SendControlStream(unittest.TestCase):
 
 
 class CloudDefenseInDepth(unittest.TestCase):
-    """The cloud path (api._get_state) gates on is_status_body before decoding — same function."""
+    """The unified read (api._decode_candidate) gates on is_status_body before decoding — same function."""
 
     def test_non_status_cloud_response_rejected(self):
         # A `77 02 ...`-shaped hex payload (not a status blob) must not pass the decode gate.

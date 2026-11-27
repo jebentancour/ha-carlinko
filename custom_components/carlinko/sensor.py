@@ -220,6 +220,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     # Which transport the current state came from — only meaningful once BLE is in the mix.
     if entry.options.get(CONF_TRANSPORT_MODE, DEFAULT_TRANSPORT_MODE) != TRANSPORT_CLOUD:
         entities.append(CarLinkoDataSourceSensor(coordinator, entry))
+    entities.append(CarLinkoFirmwareSensor(coordinator, entry))
     async_add_entities(entities)
 
 
@@ -274,6 +275,24 @@ class CarLinkoDataSourceSensor(_CarLinkoEntityBase, SensorEntity):
         if not self.coordinator.data:
             return None
         return self.coordinator.data.get("data_source")
+
+
+class CarLinkoFirmwareSensor(_CarLinkoEntityBase, SensorEntity):
+    """Diagnostic: the T-box firmware version, read via the 0x24 query (BLE or cloud)."""
+
+    _attr_translation_key = "firmware_version"
+    _attr_icon = "mdi:chip"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_firmware_version"
+
+    @property
+    def native_value(self) -> Any:
+        if not self.coordinator.data:
+            return None
+        return self.coordinator.data.get("fw_version")
 
 
 class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):

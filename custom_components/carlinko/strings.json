@@ -108,6 +108,7 @@
       "fuel_level": { "name": "Fuel Level" },
       "fuel_consumption": { "name": "Fuel Consumption" },
       "engine_rpm": { "name": "Engine RPM" },
+      "firmware_version": { "name": "Firmware Version" },
       "data_source": {
         "name": "Data Source",
         "state": {
