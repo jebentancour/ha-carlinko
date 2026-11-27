@@ -55,8 +55,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         device_sn=entry.data[CONF_DEVICE_SN],
     )
 
+    vin, user_id = await _resolve_identity(hass, entry, client)
+    client.set_control_identity(vin, user_id)
+
     if transport_mode != TRANSPORT_CLOUD:
-        await _setup_ble_transport(hass, entry, client)
+        await _setup_ble_transport(hass, entry, client, vin, user_id)
 
     coordinator = CarLinkoCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
@@ -67,16 +70,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _setup_ble_transport(hass: HomeAssistant, entry: ConfigEntry, client: CarLinkoClient) -> None:
-    """Resolve VIN / userId / BLE address and wire the BLE transport onto the client.
+async def _resolve_identity(
+    hass: HomeAssistant, entry: ConfigEntry, client: CarLinkoClient
+) -> tuple[str | None, str | None]:
+    """VIN and userId sealed into every control, over BLE and cloud alike.
 
-    BLE telemetry and control both need the address, VIN and userId. Values are stored at
-    config-flow time; existing entries are backfilled here once.
+    Values are stored at config-flow time; existing entries are backfilled here once.
     """
-    device_sn = entry.data[CONF_DEVICE_SN]
     vin = entry.data.get(CONF_VIN)
     user_id = entry.data.get(CONF_USER_ID)
-    address = entry.data.get(CONF_BLE_ADDRESS)
     updates: dict[str, str] = {}
 
     if not vin:
@@ -96,19 +98,28 @@ async def _setup_ble_transport(hass: HomeAssistant, entry: ConfigEntry, client: 
         except CarLinkoConnectionError:
             user_id = None
 
-    if not address:
-        address = _discover_address(hass, device_sn)
-        if address:
-            updates[CONF_BLE_ADDRESS] = address
-
     if updates:
         hass.config_entries.async_update_entry(entry, data={**entry.data, **updates})
 
     if not (vin and user_id):
         _LOGGER.warning(
-            "CarLinko BLE enabled but VIN/userId could not be resolved and BLE needs both; "
-            "BLE control will stay disabled until the next reload"
+            "CarLinko VIN/userId could not be resolved and controls need both; "
+            "controls will fail until the next reload"
         )
+    return vin or None, user_id or None
+
+
+async def _setup_ble_transport(
+    hass: HomeAssistant, entry: ConfigEntry, client: CarLinkoClient, vin: str | None, user_id: str | None
+) -> None:
+    """Resolve the BLE address and wire the BLE transport onto the client."""
+    device_sn = entry.data[CONF_DEVICE_SN]
+    address = entry.data.get(CONF_BLE_ADDRESS)
+
+    if not address:
+        address = _discover_address(hass, device_sn)
+        if address:
+            hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_BLE_ADDRESS: address})
 
     # Re-resolve the address at call time too, so BLE starts working once the car is first seen.
     addr_state = {"address": address}
@@ -129,7 +140,7 @@ async def _setup_ble_transport(hass: HomeAssistant, entry: ConfigEntry, client: 
 
     async def _get_remaining() -> int | None:
         # Authorization seconds left, fetched only if the car refuses with 0x44 (enrol needed).
-        return await client.ble_auth_remaining(vehicle_id)
+        return await client.auth_remaining(vehicle_id)
 
     async def _ble_send(opcode: str) -> str | None:
         addr = _resolve_address()

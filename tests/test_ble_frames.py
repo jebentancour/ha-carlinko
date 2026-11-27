@@ -149,6 +149,110 @@ class SendControlStream(unittest.TestCase):
         self.assertEqual(code, 0x44)
 
 
+class _ScriptedSession:
+    """A connected session whose control/status calls return or raise from a script."""
+
+    def __init__(self, control) -> None:
+        self.control = control
+        self.controls = 0
+
+    async def send_control(self, _body):
+        self.controls += 1
+        if isinstance(self.control, Exception):
+            raise self.control
+        return self.control
+
+    async def read_status(self):
+        return STATUS_BYTES
+
+
+class SendControlOutcome(unittest.TestCase):
+    """Only a failure before the control is written may be resent over the cloud."""
+
+    def setUp(self):
+        from contextlib import asynccontextmanager
+
+        if "bleak.exc" not in sys.modules:
+            bleak_exc = types.ModuleType("bleak.exc")
+            bleak_exc.BleakError = type("BleakError", (Exception,), {})
+            sys.modules.setdefault("bleak", types.ModuleType("bleak"))
+            sys.modules["bleak.exc"] = bleak_exc
+        self._saved = (ble._connect, ble.encrypt_control, ble._POST_CONTROL_DELAY)
+        ble.encrypt_control = lambda opcode, vin, user_id: bytes.fromhex(opcode)
+        ble._POST_CONTROL_DELAY = 0
+        self.session = None
+        self.connect_error = None
+
+        @asynccontextmanager
+        async def fake_connect(_hass, _address, _sn):
+            if self.connect_error:
+                raise self.connect_error
+            yield self.session
+
+        ble._connect = fake_connect
+
+    def tearDown(self):
+        ble._connect, ble.encrypt_control, ble._POST_CONTROL_DELAY = self._saved
+
+    def _send(self):
+        return asyncio.run(ble.async_send_control(None, "addr", "sn", "VIN", "1", "740600"))
+
+    def test_not_connected_is_unavailable(self):
+        self.connect_error = ble.CarLinkoBleUnavailable("not in range")
+        with self.assertRaises(ble.CarLinkoBleUnavailable):
+            self._send()
+
+    def test_sent_without_ack_is_no_reply(self):
+        self.session = _ScriptedSession(ble.CarLinkoBleUnavailable("no valid 0x74 reply"))
+        with self.assertRaises(ble.CarLinkoControlNoReply):
+            self._send()
+        self.assertEqual(self.session.controls, 1)
+
+    def test_link_dropped_after_send_is_no_reply(self):
+        self.session = _ScriptedSession(sys.modules["bleak.exc"].BleakError("disconnected"))
+        with self.assertRaises(ble.CarLinkoControlNoReply):
+            self._send()
+
+    def test_executed_returns_status(self):
+        self.session = _ScriptedSession(0x00)
+        self.assertEqual(self._send(), STATUS)
+
+    def test_refused_is_rejected(self):
+        self.session = _ScriptedSession(0x97)
+        with self.assertRaises(ble.CarLinkoBleRejected):
+            self._send()
+
+
+class RefusalReason(unittest.TestCase):
+    def test_known_code_carries_reason(self):
+        err = ble.CarLinkoBleRejected(0x97)
+        self.assertEqual((err.code, err.reason), (0x97, "trunk_open"))
+        self.assertIn("0x97", str(err))
+
+    def test_unknown_code_has_no_reason(self):
+        err = ble.CarLinkoBleRejected(0xEE)
+        self.assertIsNone(err.reason)
+        self.assertIn("0xee", str(err))
+
+    def test_control_result_code(self):
+        self.assertEqual(ble.control_result_code(bytes.fromhex("74050000")), 0x00)
+        self.assertEqual(ble.control_result_code(bytes.fromhex("7405002b")), 0x2B)
+        self.assertEqual(ble.control_result_code(bytes.fromhex("7404")), 0x04)
+        self.assertIsNone(ble.control_result_code(bytes.fromhex("780100")))
+        self.assertIsNone(ble.control_result_code(b""))
+
+    def test_ble_refusal_is_a_control_refusal(self):
+        self.assertIsInstance(ble.CarLinkoBleRejected(0x97), ble.CarLinkoControlRejected)
+
+    def test_every_reason_is_translated(self):
+        import json
+
+        for lang in ("strings.json", "translations/en.json", "translations/es.json"):
+            exceptions = json.loads((_DIR / lang).read_text())["exceptions"]
+            for reason in set(const.CONTROL_RESULT_REASONS.values()):
+                self.assertIn(f"refused_{reason}", exceptions, lang)
+
+
 class CloudDefenseInDepth(unittest.TestCase):
     """The unified read (api._decode_candidate) gates on is_status_body before decoding — same function."""
 

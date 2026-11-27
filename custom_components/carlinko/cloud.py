@@ -199,10 +199,10 @@ class CloudTransport:
         return resp
 
     async def post_remote_control(
-        self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20
-    ) -> None:
-        """Send a control opcode. Returns once CarLinko accepts it for delivery."""
-        await self._remote_control(vehicle_id, device_sn, opcode, timeout)
+        self, vehicle_id: str, device_sn: str, payload_hex: str, timeout: int = 20
+    ) -> str | None:
+        """Send a control payload and return the car's reply hex (None if it sent none in time)."""
+        return _reply_hex(await self._remote_control(vehicle_id, device_sn, payload_hex, timeout))
 
     async def query(
         self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20
@@ -212,9 +212,13 @@ class CloudTransport:
         The reply comes back in the response ``data`` field as ``deviceSn__<hex>``; this strips the
         prefix and returns the ``<hex>`` so it decodes byte-for-byte like a BLE reply.
         """
-        resp = await self._remote_control(vehicle_id, device_sn, opcode, timeout)
-        reply = resp.get("data")
-        if not isinstance(reply, str) or "__" not in reply:
-            return None
-        # The hex payload never contains "__"; take whatever follows the last one.
-        return reply.rsplit("__", 1)[1] or None
+        return _reply_hex(await self._remote_control(vehicle_id, device_sn, opcode, timeout))
+
+
+def _reply_hex(resp: dict[str, Any]) -> str | None:
+    """The car's reply from a ``/remoteControl`` response ``data`` field (``deviceSn__<hex>``)."""
+    reply = resp.get("data")
+    if not isinstance(reply, str) or "__" not in reply:
+        return None
+    # The hex payload never contains "__"; take whatever follows the last one.
+    return reply.rsplit("__", 1)[1] or None

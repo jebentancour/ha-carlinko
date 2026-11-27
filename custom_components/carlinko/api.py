@@ -20,18 +20,32 @@ from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
+from homeassistant.exceptions import HomeAssistantError
 
-from .ble import CarLinkoBleError, CarLinkoBleUnavailable, is_status_body
+from .ble import (
+    CarLinkoBleError,
+    CarLinkoBleUnavailable,
+    CarLinkoControlNoReply,
+    CarLinkoControlRejected,
+    control_result_code,
+    encrypt_activate_key,
+    encrypt_control,
+    enrol_accepted,
+    is_status_body,
+)
 from .blob import decode_blob, decode_control_config, is_plausible, parse_fw_version
 from .capabilities import (
     VehicleControlConfig,
     VehicleInfo,
     parse_vehicle_control_config,
 )
-from .cloud import CarLinkoConnectionError, CarLinkoDeviceOfflineError, CloudTransport
+from .cloud import CarLinkoAuthError, CarLinkoConnectionError, CarLinkoDeviceOfflineError, CloudTransport
 from .const import (
     CMD_AC_SET_TEMPERATURE_PREFIX,
+    CONTROL_RESULT_NOT_ENROLLED,
+    CONTROL_RESULT_OK,
     DEFAULT_TRANSPORT_MODE,
+    DOMAIN,
     TRANSPORT_BLE,
     TRANSPORT_BLE_CLOUD,
     TRANSPORT_CLOUD,
@@ -46,7 +60,26 @@ _FRESH_BLOB_TTL = 20.0
 _POST_CONTROL_DELAY = 2.0
 
 # Authorization sentinel used for enrol when the account has no expiry window (owner accounts).
-BLE_AUTH_OWNER = 0xFFFFFFFF
+AUTH_OWNER = 0xFFFFFFFF
+
+
+def _control_error(err: Exception) -> HomeAssistantError:
+    """Map a transport failure on a control to a translated error shown to the user."""
+    if isinstance(err, CarLinkoControlRejected):
+        if err.reason:
+            return HomeAssistantError(translation_domain=DOMAIN, translation_key=f"refused_{err.reason}")
+        code = "None" if err.code is None else f"0x{err.code:02X}"
+        return HomeAssistantError(
+            translation_domain=DOMAIN, translation_key="refused_unknown", translation_placeholders={"code": code}
+        )
+    if isinstance(err, CarLinkoControlNoReply):
+        return HomeAssistantError(translation_domain=DOMAIN, translation_key="no_reply")
+    if isinstance(err, CarLinkoDeviceOfflineError):
+        return HomeAssistantError(translation_domain=DOMAIN, translation_key="device_offline")
+    key = "ble_unavailable" if isinstance(err, CarLinkoBleUnavailable) else "command_failed"
+    return HomeAssistantError(
+        translation_domain=DOMAIN, translation_key=key, translation_placeholders={"error": str(err)}
+    )
 
 
 class CarLinkoClient:
@@ -76,6 +109,9 @@ class CarLinkoClient:
         # Last decoded firmware version, reused when a poll can't re-read it (e.g. the post-control blob).
         self._last_fw: str | None = None
         self._control_config: VehicleControlConfig | None = None
+        # VIN + userId sealed into every control (the 0x66 envelope), set by __init__.py.
+        self._vin: str | None = None
+        self._user_id: str | None = None
 
     def set_ble_transport(
         self,
@@ -85,6 +121,11 @@ class CarLinkoClient:
         """Wire the BLE transport callables (built in __init__.py, which has the hass/bleak context)."""
         self._ble_send = ble_send
         self._ble_read = ble_read
+
+    def set_control_identity(self, vin: str | None, user_id: str | None) -> None:
+        """Set the VIN and userId the car checks inside each encrypted control."""
+        self._vin = vin or None
+        self._user_id = user_id or None
 
     async def login(self) -> str:
         """Log in with the stored account, return + cache the new session token."""
@@ -116,13 +157,41 @@ class CarLinkoClient:
             return blob, source
         return None
 
+    async def _cloud_post(self, vehicle_id: str, device_sn: str, body: bytes, timeout: int) -> bytes:
+        """Post an encrypted body over ``/remoteControl`` and return the car's reply (empty if none)."""
+        reply = await self._cloud.post_remote_control(vehicle_id, device_sn, body.hex(), timeout)
+        try:
+            return bytes.fromhex(reply) if reply else b""
+        except ValueError:
+            return b""
+
     async def _cloud_control(self, vehicle_id: str, device_sn: str, opcode: str, timeout: int) -> None:
         """Post a control over the cloud, then read state back so the next poll reflects the action.
 
-        Unlike BLE (where the car pushes a status update on its own), the cloud returns on delivery
-        and sends nothing further, so we wait for the car to actuate and read the status explicitly.
+        The HTTP code only confirms delivery; the car's own result comes back in the reply, like the
+        BLE ACK. On a not-enrolled reply the userId is enrolled and the control retried once. Unlike
+        BLE (where the car pushes a status update on its own), the cloud sends nothing further, so we
+        wait for the car to actuate and read the status explicitly.
         """
-        await self._cloud.post_remote_control(vehicle_id, device_sn, opcode, timeout)
+        if not (self._vin and self._user_id):
+            raise CarLinkoConnectionError("cloud control unavailable: missing VIN/userId")
+        control = encrypt_control(opcode, self._vin, self._user_id)
+        code = control_result_code(await self._cloud_post(vehicle_id, device_sn, control, timeout))
+        _LOGGER.debug("cloud control %s: car result code=%s", opcode, code)
+
+        if code == CONTROL_RESULT_NOT_ENROLLED:
+            remaining = await self.auth_remaining(vehicle_id)
+            _LOGGER.debug("cloud control %s: not enrolled, enrolling (remaining=%s)", opcode, remaining)
+            if remaining is not None:
+                enrol = encrypt_activate_key(self._vin, self._user_id, remaining)
+                if enrol_accepted(await self._cloud_post(vehicle_id, device_sn, enrol, timeout)):
+                    code = control_result_code(await self._cloud_post(vehicle_id, device_sn, control, timeout))
+                    _LOGGER.debug("cloud control %s: car result after enrol code=%s", opcode, code)
+
+        if code is None:
+            raise CarLinkoControlNoReply(f"cloud control {opcode} delivered but not confirmed by the car")
+        if code != CONTROL_RESULT_OK:
+            raise CarLinkoControlRejected(code)
         await asyncio.sleep(_POST_CONTROL_DELAY)
         try:
             self._stash_fresh_blob(await self._cloud.query(vehicle_id, device_sn, "77"), "cloud")
@@ -158,16 +227,30 @@ class CarLinkoClient:
         # Cloud only.
         await self._cloud_control(vehicle_id, device_sn, opcode, timeout)
 
+    async def _actuate(self, vehicle_id: str, device_sn: str, opcode: str) -> None:
+        """Send a control, turning transport failures and car refusals into user-facing errors."""
+        try:
+            await self._send_remote_command(vehicle_id, device_sn, opcode)
+        except (
+            CarLinkoAuthError,
+            CarLinkoBleError,
+            CarLinkoConnectionError,
+            CarLinkoControlNoReply,
+            CarLinkoControlRejected,
+        ) as err:
+            _LOGGER.debug("remote command %s failed: %s", opcode, err)
+            raise _control_error(err) from err
+
     async def send_control(self, vehicle_id: str, device_sn: str, opcode: str) -> None:
         """Send a remote-control opcode (the actuation entry point for every platform entity)."""
-        await self._send_remote_command(vehicle_id, device_sn, opcode)
+        await self._actuate(vehicle_id, device_sn, opcode)
 
     async def set_ac_temperature(self, vehicle_id: str, device_sn: str, target_temp_c: float) -> None:
         """Send an A/C target temperature: raw °C, or (°C × 2) | 0x80 on half-degree-step cars."""
         step = self._control_config.ac_temp_step if self._control_config else None
         raw = int(round(target_temp_c * 2)) | 0x80 if step == 0.5 else int(round(target_temp_c))
         opcode = f"{CMD_AC_SET_TEMPERATURE_PREFIX}{raw & 0xFF:02x}"
-        await self._send_remote_command(vehicle_id, device_sn, opcode)
+        await self._actuate(vehicle_id, device_sn, opcode)
 
     # ---- /user/vehicle — vehicle list + per-model vehicleControlConfig ----
 
@@ -207,7 +290,7 @@ class CarLinkoClient:
         self._control_config = parse_vehicle_control_config((vehicle or {}).get("vehicleControlConfig"))
         return self._control_config
 
-    async def ble_auth_remaining(self, vehicle_id: str) -> int | None:
+    async def auth_remaining(self, vehicle_id: str) -> int | None:
         """Authorization seconds for the user-enroll command, from ``/user/vehicle``.
 
         An owner account has no expiry window and uses the infinite sentinel; a shared account uses the
@@ -224,7 +307,7 @@ class CarLinkoClient:
         if vehicle is None:
             return None
         if vehicle.get("owner"):
-            return BLE_AUTH_OWNER
+            return AUTH_OWNER
         end_time = vehicle.get("endTime")
         if not end_time:
             return None
@@ -233,7 +316,7 @@ class CarLinkoClient:
         except (ValueError, TypeError):
             return None
         seconds = int((end - datetime.now(UTC)).total_seconds())
-        return min(BLE_AUTH_OWNER, max(0, seconds))
+        return min(AUTH_OWNER, max(0, seconds))
 
     # ---- telemetry read: 23 (fw location / app mode) -> 24 (fw version) -> 77 (status) ----
 

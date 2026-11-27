@@ -89,9 +89,54 @@ CMD_AC_ON = "741001"
 CMD_AC_OFF = "741000"
 
 # Control-result byte of a `74 CMD SS` BLE reply: 0x00 = executed, 0x44 = userId not enrolled (the
-# only two the integration acts on; any other non-zero value is reported as a refusal by its code).
+# only two the integration acts on); any other non-zero value is a refusal with the reason below.
 CONTROL_RESULT_OK = 0x00
 CONTROL_RESULT_NOT_ENROLLED = 0x44
+
+# Refusal reason per result byte, as the suffix of the `refused_<reason>` exception translation key.
+# A code not listed here is reported through `refused_unknown` with its hex value.
+CONTROL_RESULT_REASONS: dict[int, str] = {
+    0x04: "not_supported",
+    0x21: "door_open",
+    0x22: "door_unlocked",
+    0x23: "vehicle_on",
+    0x25: "lock_vehicle_on",
+    0x2A: "vehicle_moving",
+    0x2B: "hood_open",
+    0x35: "trunk_ajar",
+    0x44: "not_enrolled",
+    0x4D: "maintenance_mode",
+    0x66: "control_system_error",
+    0x75: "firmware_updating",
+    0x91: "driver_seated",
+    0x92: "ac_temperature_not_set",
+    0x93: "not_remote_mode",
+    0x94: "high_voltage_fault",
+    0x95: "low_12v_battery",
+    0x96: "key_inside",
+    0x97: "trunk_open",
+    0x98: "vin_mismatch",
+    0x99: "tbox_auth_failed",
+    0x9A: "not_in_park",
+    0x9B: "hazard_lights_on",
+    0x9C: "vehicle_fault",
+    0x9D: "high_voltage_fault",
+    0x9E: "low_state_of_charge",
+    0x9F: "vehicle_unlocked",
+    0xA0: "battery_abnormal",
+    0xA1: "vehicle_fault",
+    0xA2: "engine_not_off",
+    0xA3: "remote_start_limit",
+    0xA4: "remote_start_limit",
+    0xA5: "vehicle_fault",
+    0xA6: "low_oil_level",
+    0xA7: "high_temperature",
+    0xA8: "low_battery",
+    0xA9: "not_in_park",
+    0xAB: "not_charging",
+    0xAC: "fast_charging_stop",
+    0xB0: "child_presence",
+}
 
 # Response code for an expired/invalidated session token: log in again and retry.
 CODE_TOKEN_EXPIRED = "9997"

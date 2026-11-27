@@ -12,7 +12,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from .const import CONTROL_RESULT_NOT_ENROLLED, CONTROL_RESULT_OK
+from .const import CONTROL_RESULT_NOT_ENROLLED, CONTROL_RESULT_OK, CONTROL_RESULT_REASONS
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -68,6 +68,20 @@ def is_control_ack(body: bytes, crc_ok: bool) -> bool:
     return crc_ok and len(body) == CONTROL_REPLY_LEN and body[0] == CMD_CONTROL
 
 
+def control_result_code(reply: bytes) -> int | None:
+    """Result byte of a control reply: ``74 CMD SS code``, or ``74 code`` for a plain-text control."""
+    if len(reply) == CONTROL_REPLY_LEN and reply[0] == CMD_CONTROL:
+        return reply[3]
+    if len(reply) == 2 and reply[0] == CMD_CONTROL:
+        return reply[1]
+    return None
+
+
+def enrol_accepted(reply: bytes) -> bool:
+    """True for the ``78 01 00`` user-enroll acceptance."""
+    return reply == bytes((CMD_ENROL, 0x01, 0x00))
+
+
 def is_enrol_ack(body: bytes, crc_ok: bool) -> bool:
     """A user-enroll reply: good CRC and ``78 01 code`` (3 bytes)."""
     return crc_ok and len(body) == ENROL_REPLY_LEN and body[0] == CMD_ENROL
@@ -90,8 +104,24 @@ class CarLinkoBleUnavailable(CarLinkoBleError):
     """The car could not be reached over BLE: out of range, no scanner, or busy with the app."""
 
 
-class CarLinkoBleRejected(CarLinkoBleError):
-    """The car received the control but refused it (unregistered userId or unknown opcode)."""
+class CarLinkoControlRejected(Exception):
+    """The car received a control but refused it; ``code`` is the result byte, ``reason`` its key."""
+
+    def __init__(self, code: int | None) -> None:
+        self.code = code
+        self.reason = None if code is None else CONTROL_RESULT_REASONS.get(code)
+        super().__init__(f"car refused control (code={_code_hex(code)}): {self.reason or 'unknown reason'}")
+
+
+class CarLinkoControlNoReply(Exception):
+    """A control reached the car but no result came back, so it may or may not have run.
+
+    Never resent over another transport: a retry could run the action twice.
+    """
+
+
+class CarLinkoBleRejected(CarLinkoBleError, CarLinkoControlRejected):
+    """A control refused by the car over BLE."""
 
 
 # ---- pure protocol helpers (no HA / bleak) ----
@@ -253,7 +283,7 @@ class _Session:
         await self._client.write_gatt_char(RX, payload, response=False)
         # is_enrol_ack guarantees a good-CRC, 3-byte `78 01 code`; code 0x00 means enrolled.
         body, _ok = await self._wait_for(CMD_ENROL, timeout, validate=is_enrol_ack)
-        return body[1] == 0x01 and body[2] == 0x00
+        return enrol_accepted(body)
 
 
 @asynccontextmanager
@@ -329,14 +359,17 @@ async def async_send_control(
     The car accepts the control straight off, like the cloud POST, so no init sequence precedes it.
     On a not-enrolled reply the userId is enrolled (seconds from ``get_remaining``) and the control
     retried once. Returns the follow-up status hex (or None if it didn't arrive — the control still
-    succeeded). Bleak failures map to :class:`CarLinkoBleUnavailable`; a refusal raises
+    succeeded). A failure before the control is written raises :class:`CarLinkoBleUnavailable` (safe
+    to send over the cloud); after it, :class:`CarLinkoControlNoReply`. A refusal raises
     :class:`CarLinkoBleRejected`.
     """
     from bleak.exc import BleakError
 
+    sent = False
     try:
         async with _connect(hass, address, device_sn) as session:
             control = encrypt_control(opcode, vin, user_id)
+            sent = True
             code = await session.send_control(control)
             _LOGGER.debug("BLE control %s: car ack code=%s", opcode, _code_hex(code))
 
@@ -350,8 +383,7 @@ async def async_send_control(
                     _LOGGER.debug("BLE control %s: car ack after enrol code=%s", opcode, _code_hex(code))
 
             if code != CONTROL_RESULT_OK:
-                detail = "userId not enrolled" if code == CONTROL_RESULT_NOT_ENROLLED else "control refused"
-                raise CarLinkoBleRejected(f"car refused control (code={_code_hex(code)}): {detail}")
+                raise CarLinkoBleRejected(code)
 
             _LOGGER.debug("BLE control %s executed; reading follow-up status", opcode)
             await asyncio.sleep(_POST_CONTROL_DELAY)
@@ -359,8 +391,12 @@ async def async_send_control(
                 blob = await session.read_status()
                 _LOGGER.debug("BLE control %s: follow-up status read (%d bytes)", opcode, len(blob))
                 return blob.hex()
-            except CarLinkoBleUnavailable:
+            except (CarLinkoBleUnavailable, BleakError):
                 _LOGGER.debug("BLE control %s: follow-up status not captured; next poll will refresh", opcode)
                 return None
-    except BleakError as err:
+    except (CarLinkoBleUnavailable, BleakError) as err:
+        if sent:
+            raise CarLinkoControlNoReply(f"BLE control {opcode} sent but not confirmed: {err}") from err
+        if isinstance(err, CarLinkoBleUnavailable):
+            raise
         raise CarLinkoBleUnavailable(f"BLE control to {address} failed: {err}") from err
