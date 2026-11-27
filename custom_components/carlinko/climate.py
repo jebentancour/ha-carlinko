@@ -7,7 +7,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACMode,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -15,7 +19,20 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CMD_AC_OFF,
+    CMD_AC_ON,
+    CMD_QUICK_COOL_OFF,
+    CMD_QUICK_COOL_ON,
+    CMD_QUICK_HEAT_OFF,
+    CMD_QUICK_HEAT_ON,
+    CONF_DEVICE_SN,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DOMAIN,
+)
 from .coordinator import CarLinkoCoordinator
 
 DEFAULT_MIN_TEMP = 16.0
@@ -107,15 +124,15 @@ class CarLinkoClimate(CoordinatorEntity[CarLinkoCoordinator], ClimateEntity):
         client = self.coordinator.client
         vehicle_id, device_sn = self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
         if hvac_mode == HVACMode.HEAT:
-            await client.quick_heat_on(vehicle_id, device_sn)
+            await client.send_control(vehicle_id, device_sn, CMD_QUICK_HEAT_ON)
         elif hvac_mode == HVACMode.COOL:
-            await client.quick_cool_on(vehicle_id, device_sn)
+            await client.send_control(vehicle_id, device_sn, CMD_QUICK_COOL_ON)
         elif hvac_mode == HVACMode.AUTO:
             # Power on (for Off -> Auto), then cancel both quick modes; each is a no-op if
             # already in that state.
-            await client.ac_power_on(vehicle_id, device_sn)
-            await client.quick_heat_off(vehicle_id, device_sn)
-            await client.quick_cool_off(vehicle_id, device_sn)
+            await client.send_control(vehicle_id, device_sn, CMD_AC_ON)
+            await client.send_control(vehicle_id, device_sn, CMD_QUICK_HEAT_OFF)
+            await client.send_control(vehicle_id, device_sn, CMD_QUICK_COOL_OFF)
         else:
-            await client.ac_power_off(vehicle_id, device_sn)
+            await client.send_control(vehicle_id, device_sn, CMD_AC_OFF)
         await self.coordinator.async_request_refresh()

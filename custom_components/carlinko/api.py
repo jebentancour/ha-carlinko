@@ -1,66 +1,39 @@
-"""Async CarLinko client: signed login, telemetry polling and remote commands."""
+"""CarLinko client facade: orchestrates the cloud and BLE transports for one account/vehicle.
+
+The heavy lifting lives in the layers this ties together:
+
+- :mod:`.cloud` — request signing, login and signed GET/POST (the cloud pipe).
+- :mod:`.ble` — the BLE pipe (55AA framing, CRC, control/enrol/status exchanges).
+- :mod:`.blob` — decoding the status blob (identical from either pipe).
+- :mod:`.capabilities` — per-model metadata and capability flags from `/user/vehicle`.
+
+This module only decides *which pipe* carries a command or telemetry read and merges the results.
+"""
 from __future__ import annotations
 
-import base64
-import dataclasses
-import hashlib
-import hmac
 import json
 import logging
-import re
 import time
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
 
 from .ble import CarLinkoBleError, CarLinkoBleUnavailable, is_status_body
+from .blob import decode_blob, decode_control_config, is_plausible
+from .capabilities import (
+    VehicleControlConfig,
+    VehicleInfo,
+    parse_vehicle_control_config,
+)
+from .cloud import CarLinkoConnectionError, CloudTransport
 from .const import (
-    APP_LOGIN_BODY,
-    APP_VERSION,
-    CMD_AC_OFF,
-    CMD_AC_ON,
     CMD_AC_SET_TEMPERATURE_PREFIX,
-    CMD_DEFOG_FRONT_OFF,
-    CMD_DEFOG_FRONT_ON,
-    CMD_DEFOG_REAR_OFF,
-    CMD_DEFOG_REAR_ON,
-    CMD_FIND_CAR,
-    CMD_LIFTGATE_CLOSE,
-    CMD_LIFTGATE_OPEN,
-    CMD_LOCK,
-    CMD_QUICK_COOL_OFF,
-    CMD_QUICK_COOL_ON,
-    CMD_QUICK_HEAT_OFF,
-    CMD_QUICK_HEAT_ON,
-    CMD_ROOF_SUNSHADE_CLOSE,
-    CMD_ROOF_SUNSHADE_OPEN,
-    CMD_SEAT_HEAT_LEFT,
-    CMD_SEAT_HEAT_REAR_LEFT,
-    CMD_SEAT_HEAT_REAR_RIGHT,
-    CMD_SEAT_HEAT_RIGHT,
-    CMD_SEAT_VENT_LEFT,
-    CMD_SEAT_VENT_REAR_LEFT,
-    CMD_SEAT_VENT_REAR_RIGHT,
-    CMD_SEAT_VENT_RIGHT,
-    CMD_STOP_CHARGING,
-    CMD_SUNROOF_CLOSE,
-    CMD_SUNROOF_OPEN,
-    CMD_SUNROOF_TILT,
-    CMD_UNLOCK,
-    CMD_WINDOWS_CLOSE,
-    CMD_WINDOWS_OPEN,
-    CMD_WINDOWS_VENT,
-    CODE_TOKEN_EXPIRED,
-    CODES_DEVICE_OFFLINE,
     DEFAULT_TRANSPORT_MODE,
-    SIGN_KEY,
     TRANSPORT_BLE,
     TRANSPORT_BLE_CLOUD,
     TRANSPORT_CLOUD,
-    USER_AGENT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,193 +45,8 @@ _BLE_FRESH_TTL = 20.0
 BLE_AUTH_OWNER = 0xFFFFFFFF
 
 
-class CarLinkoAuthError(Exception):
-    """Login/credentials rejected."""
-
-
-class CarLinkoAccountNotFoundError(CarLinkoAuthError):
-    """Login rejected with code 10012: no account with this email in this region."""
-
-
-class CarLinkoConnectionError(Exception):
-    """Could not reach CarLinko."""
-
-
-class CarLinkoDeviceOfflineError(CarLinkoConnectionError):
-    """CarLinko accepted the request but the T-box has no cellular link (code 50043/50008)."""
-
-
-class CarLinkoCommandError(CarLinkoConnectionError):
-    """The cloud rejected a remote command for a reason other than the device being offline."""
-
-
-def _now_ms() -> str:
-    return str(int(time.time() * 1000))
-
-
-def _sign(params: dict[str, Any]) -> str:
-    m = {k: ("" if v is None else str(v)) for k, v in params.items()}
-    ordered = {k: m[k] for k in sorted(m.keys())}
-    msg = json.dumps(ordered, separators=(",", ":"), ensure_ascii=False).encode()
-    return base64.b64encode(hmac.new(SIGN_KEY, msg, hashlib.sha256).digest()).decode()
-
-
-def _headers_for(params: dict[str, Any], token: str | None = None) -> dict[str, str]:
-    ts = _now_ms()
-    h = {
-        "timestamp": ts,
-        "signature": _sign({**params, "timestamp": ts}),
-        "user-agent": USER_AGENT,
-        "language": "en",
-    }
-    if token:
-        h["token"] = token
-    return h
-
-
-@dataclass
-class VehicleInfo:
-    vehicle_id: str
-    device_sn: str
-    model: str
-    brand: str
-    plate: str
-    img_front: str
-    img_side: str
-    img_top: str
-    vin: str = ""
-
-
-DEFAULT_TPMS_SCALE = 1.373
-DEFAULT_TIRE_INVALID: frozenset[int] = frozenset({0xFF})
-DEFAULT_CHARGING_REMAINING_INVALID: frozenset[int] = frozenset({0x3FE, 0x3FF, 0x7FE, 0x7FF})
-
-
-@dataclass(frozen=True)
-class ControlCapabilities:
-    """What this car can be told to do, straight from vehicleControlConfig."""
-
-    lock: bool = False
-    windows_open: bool = False
-    windows_close: bool = False
-    windows_vent: bool = False
-    sunroof: bool = False
-    sunroof_tilt: bool = False
-    liftgate: bool = False
-    find: bool = False
-    charging: bool = False
-    ac_switch: bool = False
-    ac_set_temperature: bool = False
-    ac_rapid_cool: bool = False
-    ac_rapid_heat: bool = False
-    ac_defog: bool = False
-    ac_driver_vent: bool = False
-    ac_assistant_vent: bool = False
-    ac_driver_heater: bool = False
-    ac_assistant_heater: bool = False
-    ac_rear_heater: bool = False
-    ac_rear_vent: bool = False
-    ac_steering_wheel_heater: bool = False
-    ac_air_purification: bool = False
-    ac_front_windshield_heater: bool = False
-    roof_sunshade: bool = False
-    rear_window_defog: bool = False
-
-
-@dataclass(frozen=True)
-class VehicleControlConfig:
-    """Per-model constants CarLinko publishes on `/user/vehicle` -> vehicleControlConfig."""
-
-    tpms_scale: float = DEFAULT_TPMS_SCALE
-    tire_pressure_invalid: frozenset[int] = DEFAULT_TIRE_INVALID
-    tire_temp_invalid: frozenset[int] = DEFAULT_TIRE_INVALID
-    charging_remaining_invalid: frozenset[int] = DEFAULT_CHARGING_REMAINING_INVALID
-    has_engine: bool = False
-    has_fuel_consumption: bool = False
-    has_power_consumption: bool = False
-    ac_temp_min: float | None = None
-    ac_temp_max: float | None = None
-    ac_temp_step: float | None = None
-    capabilities: ControlCapabilities = ControlCapabilities()
-
-
-def _hex_set(values: Any) -> frozenset[int] | None:
-    if not isinstance(values, list) or not values:
-        return None
-    try:
-        return frozenset(int(str(v), 16) for v in values)
-    except (TypeError, ValueError):
-        return None
-
-
-def _parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
-    cfg = raw
-    if isinstance(cfg, str):
-        try:
-            cfg = json.loads(cfg or "{}")
-        except json.JSONDecodeError:
-            cfg = {}
-    if not isinstance(cfg, dict):
-        cfg = {}
-
-    formula = str(cfg.get("appKpaFormula") or cfg.get("webTirePressureFormula") or "")
-    m = re.search(r"data\s*\*\s*([0-9]*\.?[0-9]+)", formula)
-    tpms_scale = float(m.group(1)) if m else DEFAULT_TPMS_SCALE
-
-    tire_pressure_invalid = _hex_set(cfg.get("tirePressureInvalid")) or DEFAULT_TIRE_INVALID
-    tire_temp_invalid = _hex_set(cfg.get("tireTempInvalid")) or DEFAULT_TIRE_INVALID
-    charging_remaining_invalid = _hex_set(cfg.get("chargingTimeInvalidValue")) or DEFAULT_CHARGING_REMAINING_INVALID
-
-    has_fuel_consumption = bool(cfg.get("fuelConsumption"))
-    has_power_consumption = bool(cfg.get("powerConsumption"))
-    has_engine = bool(cfg.get("Engine"))
-
-    ac = cfg.get("A/C") or {}
-    capabilities = ControlCapabilities(
-        lock=bool(cfg.get("Lock")),
-        windows_open=bool(cfg.get("WindowsOpen")),
-        windows_close=bool(cfg.get("WindowsClose")),
-        windows_vent=bool(cfg.get("WindowsVent")),
-        sunroof=bool(cfg.get("Sunroof")),
-        sunroof_tilt=bool(cfg.get("SunroofTilting")),
-        liftgate=bool(cfg.get("PowerLiftgate")),
-        find=bool(cfg.get("Search")),
-        charging=bool(cfg.get("ChargingManagement")),
-        ac_switch=bool(ac.get("Switch")),
-        ac_set_temperature=bool(ac.get("SetTemperature")),
-        ac_rapid_cool=bool(ac.get("RapidCool")),
-        ac_rapid_heat=bool(ac.get("RapidHeat")),
-        ac_defog=bool(ac.get("Defogging")),
-        ac_driver_vent=bool(ac.get("DriverVent")),
-        ac_assistant_vent=bool(ac.get("AssistantVent")),
-        ac_driver_heater=bool(ac.get("DriverHeater")),
-        ac_assistant_heater=bool(ac.get("AssistantHeater")),
-        ac_rear_heater=bool(ac.get("RearHeater")),
-        ac_rear_vent=bool(ac.get("RearVent")),
-        ac_steering_wheel_heater=bool(cfg.get("SteeringWheelHeater")),
-        ac_air_purification=bool(ac.get("AirPurification")),
-        ac_front_windshield_heater=bool(cfg.get("FrontWindshieldHeater")),
-        roof_sunshade=bool(cfg.get("sunroofSunshade")),
-        rear_window_defog=bool(cfg.get("rearWindowDefog")),
-    )
-
-    return VehicleControlConfig(
-        tpms_scale=tpms_scale,
-        tire_pressure_invalid=tire_pressure_invalid,
-        tire_temp_invalid=tire_temp_invalid,
-        charging_remaining_invalid=charging_remaining_invalid,
-        has_engine=has_engine,
-        has_fuel_consumption=has_fuel_consumption,
-        has_power_consumption=has_power_consumption,
-        ac_temp_min=ac.get("SetTemperatureMin"),
-        ac_temp_max=ac.get("SetTemperatureMax"),
-        ac_temp_step=ac.get("TemperatureStepValue"),
-        capabilities=capabilities,
-    )
-
-
 class CarLinkoClient:
-    """Talks to a single CarLinko account's REST API."""
+    """Talks to a single CarLinko account over the cloud and (optionally) BLE transports."""
 
     def __init__(
         self,
@@ -271,11 +59,7 @@ class CarLinkoClient:
         ble_send: Callable[[str], Awaitable[str | None]] | None = None,
         ble_read: Callable[[], Awaitable[str | None]] | None = None,
     ) -> None:
-        self._session = session
-        self._email = email
-        self._password = password
-        self._region = region
-        self._time_zone = time_zone
+        self._cloud = CloudTransport(session, email, password, region, time_zone)
         self._transport_mode = transport_mode
         # BLE transport callables, injected by __init__.py (keep this client HA/bleak-free).
         self._ble_send = ble_send
@@ -283,7 +67,6 @@ class CarLinkoClient:
         # Status blob a BLE control read back right after acting, with its monotonic timestamp: the
         # next telemetry poll uses it instead of opening a second BLE connection.
         self._ble_fresh_blob: tuple[float, str] | None = None
-        self.token: str | None = None
         self._control_config: VehicleControlConfig | None = None
 
     def set_ble_transport(
@@ -295,80 +78,13 @@ class CarLinkoClient:
         self._ble_send = ble_send
         self._ble_read = ble_read
 
-    @property
-    def api_base(self) -> str:
-        return f"https://cqr-api-{self._region}.hzhjcl.com"
-
     async def login(self) -> str:
         """Log in with the stored account, return + cache the new session token."""
-        body = {
-            "account": self._email,
-            "password": self._password,
-            "dateTime": self._time_zone,
-            "timeZone": self._time_zone,
-            **APP_LOGIN_BODY,
-        }
-        ts = _now_ms()
-        headers = {
-            "timestamp": ts,
-            "signature": _sign({**body, "timestamp": ts}),
-            "user-agent": USER_AGENT,
-            "content-type": "application/json",
-            "language": "en",
-            "version": APP_VERSION,
-        }
-        try:
-            async with self._session.post(
-                f"{self.api_base}/user/login", json=body, headers=headers, timeout=aiohttp.ClientTimeout(total=20)
-            ) as resp:
-                text = await resp.text()
-        except aiohttp.ClientError as err:
-            raise CarLinkoConnectionError(str(err)) from err
-        try:
-            data = json.loads(text)
-        except json.JSONDecodeError as err:
-            raise CarLinkoConnectionError(f"non-JSON response from {self.api_base}: {text[:200]!r}") from err
-
-        code = str(data.get("code"))
-        if code == "10012":
-            raise CarLinkoAccountNotFoundError(data.get("msg") or f"login failed: {data}")
-        if code != "0000":
-            raise CarLinkoAuthError(data.get("msg") or f"login failed: {data}")
-        payload = data.get("data")
-        token = payload if isinstance(payload, str) else (payload or {}).get("token")
-        if not token:
-            raise CarLinkoAuthError(f"login ok but no token in response: {data}")
-        self.token = token
-        return token
-
-    async def _signed_get(self, path: str, _retried: bool = False) -> dict[str, Any]:
-        """GET a token-authed endpoint; re-logs in and retries once if the token has expired."""
-        if not self.token:
-            await self.login()
-        headers = _headers_for({}, token=self.token)
-        try:
-            async with self._session.get(
-                f"{self.api_base}{path}", headers=headers, timeout=aiohttp.ClientTimeout(total=20)
-            ) as resp:
-                text = await resp.text()
-        except aiohttp.ClientError as err:
-            raise CarLinkoConnectionError(str(err)) from err
-        try:
-            data = json.loads(text)
-        except json.JSONDecodeError as err:
-            raise CarLinkoConnectionError(f"non-JSON response from {self.api_base}{path}: {text[:200]!r}") from err
-
-        code = str(data.get("code"))
-        if code == CODE_TOKEN_EXPIRED and not _retried:
-            await self.login()
-            return await self._signed_get(path, _retried=True)
-        if code != "0000":
-            raise CarLinkoConnectionError(data.get("msg") or f"request to {path} failed: {data}")
-        return data
+        return await self._cloud.login()
 
     async def get_user_id(self) -> str:
         """Fetch the account's userId (`/user/info` -> data.id), needed for BLE control."""
-        data = await self._signed_get("/user/info")
+        data = await self._cloud.signed_get("/user/info")
         info = data.get("data") or {}
         user_id = info.get("id") if isinstance(info, dict) else None
         if user_id is None:
@@ -412,146 +128,18 @@ class CarLinkoClient:
                     _LOGGER.debug("remote command %s: BLE unavailable (%s); BLE-only, no fallback", opcode, err)
                     raise
                 _LOGGER.debug("remote command %s: BLE unavailable (%s); falling back to cloud", opcode, err)
-                await self._send_remote_command_cloud(vehicle_id, device_sn, opcode, timeout)
+                await self._cloud.post_remote_control(vehicle_id, device_sn, opcode, timeout)
                 return
 
         if mode == TRANSPORT_BLE:
             raise CarLinkoBleUnavailable("BLE-only mode but the BLE transport is not configured")
 
         # Cloud only.
-        await self._send_remote_command_cloud(vehicle_id, device_sn, opcode, timeout)
+        await self._cloud.post_remote_control(vehicle_id, device_sn, opcode, timeout)
 
-    async def _send_remote_command_cloud(
-        self, vehicle_id: str, device_sn: str, opcode: str, timeout: int = 20
-    ) -> None:
-        """POST a remote-control opcode. Returns once CarLinko accepts it for delivery."""
-        if not self.token:
-            await self.login()
-        body = {"vehicleId": vehicle_id, "deviceSn": device_sn, "data": opcode, "timeOut": timeout}
-
-        async def _post(token: str) -> dict[str, Any]:
-            headers = _headers_for(body, token=token)
-            headers["content-type"] = "application/json"
-            try:
-                async with self._session.post(
-                    f"{self.api_base}/user/vehicle/remoteControl",
-                    json=body,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=timeout + 8),
-                ) as resp:
-                    text = await resp.text()
-            except aiohttp.ClientError as err:
-                raise CarLinkoConnectionError(str(err)) from err
-            try:
-                return json.loads(text)
-            except json.JSONDecodeError as err:
-                raise CarLinkoConnectionError(f"non-JSON response from remoteControl: {text[:200]!r}") from err
-
-        data = await _post(self.token)
-        # Only resend after an expired token: any other rejection may mean the car already got it.
-        if str(data.get("code")) == CODE_TOKEN_EXPIRED:
-            data = await _post(await self.login())
-        code = str(data.get("code"))
-        if code in CODES_DEVICE_OFFLINE:
-            raise CarLinkoDeviceOfflineError(data.get("msg") or f"device offline (code {code})")
-        if code != "0000":
-            raise CarLinkoCommandError(data.get("msg") or f"remoteControl command rejected: {data}")
-
-    async def stop_charging(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_STOP_CHARGING)
-
-    async def find_car(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_FIND_CAR)
-
-    async def lock(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_LOCK)
-
-    async def unlock(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_UNLOCK)
-
-    async def open_liftgate(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_LIFTGATE_OPEN)
-
-    async def close_liftgate(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_LIFTGATE_CLOSE)
-
-    async def open_sunroof(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_OPEN)
-
-    async def close_sunroof(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_CLOSE)
-
-    async def tilt_sunroof(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SUNROOF_TILT)
-
-    async def open_windows(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_OPEN)
-
-    async def close_windows(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_CLOSE)
-
-    async def vent_windows(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_WINDOWS_VENT)
-
-    async def defrost_on(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_FRONT_ON)
-
-    async def defrost_off(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_FRONT_OFF)
-
-    async def rear_defog_on(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_REAR_ON)
-
-    async def rear_defog_off(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_DEFOG_REAR_OFF)
-
-    async def open_roof_sunshade(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_ROOF_SUNSHADE_OPEN)
-
-    async def close_roof_sunshade(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_ROOF_SUNSHADE_CLOSE)
-
-    async def set_seat_heat_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_LEFT[level])
-
-    async def set_seat_heat_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_RIGHT[level])
-
-    async def set_seat_vent_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_LEFT[level])
-
-    async def set_seat_vent_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_RIGHT[level])
-
-    async def set_seat_heat_rear_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_REAR_LEFT[level])
-
-    async def set_seat_heat_rear_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_HEAT_REAR_RIGHT[level])
-
-    async def set_seat_vent_rear_left(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_REAR_LEFT[level])
-
-    async def set_seat_vent_rear_right(self, vehicle_id: str, device_sn: str, level: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_SEAT_VENT_REAR_RIGHT[level])
-
-    async def quick_heat_on(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_HEAT_ON)
-
-    async def quick_heat_off(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_HEAT_OFF)
-
-    async def quick_cool_on(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_COOL_ON)
-
-    async def quick_cool_off(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_QUICK_COOL_OFF)
-
-    async def ac_power_on(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_AC_ON)
-
-    async def ac_power_off(self, vehicle_id: str, device_sn: str) -> None:
-        await self._send_remote_command(vehicle_id, device_sn, CMD_AC_OFF)
+    async def send_control(self, vehicle_id: str, device_sn: str, opcode: str) -> None:
+        """Send a remote-control opcode (the actuation entry point for every platform entity)."""
+        await self._send_remote_command(vehicle_id, device_sn, opcode)
 
     async def set_ac_temperature(self, vehicle_id: str, device_sn: str, target_temp_c: float) -> None:
         """Send an A/C target temperature: raw °C, or (°C × 2) | 0x80 on half-degree-step cars."""
@@ -564,7 +152,7 @@ class CarLinkoClient:
 
     async def get_vehicles(self) -> list[VehicleInfo]:
         """List vehicles on this account."""
-        data = await self._signed_get("/user/vehicle")
+        data = await self._cloud.signed_get("/user/vehicle")
         raw = data.get("data")
         items = raw if isinstance(raw, list) else ([raw] if raw else [])
         vehicles = []
@@ -591,11 +179,11 @@ class CarLinkoClient:
         """Fetch vehicleControlConfig once; it's per-model and doesn't change."""
         if self._control_config is not None:
             return self._control_config
-        data = await self._signed_get("/user/vehicle")
+        data = await self._cloud.signed_get("/user/vehicle")
         raw = data.get("data")
         items = raw if isinstance(raw, list) else ([raw] if raw else [])
         vehicle = next((v for v in items if str(v.get("vehicleId")) == str(vehicle_id)), None)
-        self._control_config = _parse_vehicle_control_config((vehicle or {}).get("vehicleControlConfig"))
+        self._control_config = parse_vehicle_control_config((vehicle or {}).get("vehicleControlConfig"))
         return self._control_config
 
     async def ble_auth_remaining(self, vehicle_id: str) -> int | None:
@@ -606,7 +194,7 @@ class CarLinkoClient:
         parsed; an already-enrolled userId still controls fine, since enrolment persists in the car.
         """
         try:
-            data = await self._signed_get("/user/vehicle")
+            data = await self._cloud.signed_get("/user/vehicle")
         except CarLinkoConnectionError:
             return None
         raw = data.get("data")
@@ -629,14 +217,14 @@ class CarLinkoClient:
     # ---- /user/vehicle/isOnline/{id} ----
 
     async def _fetch_online(self, vehicle_id: str) -> bool:
-        online = await self._signed_get(f"/user/vehicle/isOnline/{vehicle_id}")
+        online = await self._cloud.signed_get(f"/user/vehicle/isOnline/{vehicle_id}")
         return bool(online.get("data"))
 
     # ---- /user/vehicle/state/{id} — telemetry blob ----
 
     async def _get_state(self, vehicle_id: str) -> dict[str, Any] | None:
         """Fetch + decode the telemetry blob plus vehicle config. None if no blob was reported."""
-        state = await self._signed_get(f"/user/vehicle/state/{vehicle_id}")
+        state = await self._cloud.signed_get(f"/user/vehicle/state/{vehicle_id}")
         blob = state.get("data")
         if not isinstance(blob, str):
             return None
@@ -735,138 +323,3 @@ class CarLinkoClient:
             if state is not None:
                 candidates.append(state)
         return candidates
-
-CHARGING_CONNECTOR_STATES: dict[int, str] = {0: "disconnected", 1: "ac_slow", 16: "dc_fast"}
-
-CHARGING_STATUSES: dict[int, str] = {
-    0: "idle",
-    1: "charging",
-    2: "charge_complete",
-    3: "charge_canceled",
-    4: "hot_charging",
-    5: "stop_charging",
-}
-
-SEAT_LEVELS: dict[int, str] = {0: "off", 1: "low", 2: "medium", 3: "high"}
-
-SUNROOF_STATES: dict[int, str] = {0x00: "closed", 0x08: "open", 0x0B: "tilted"}
-
-WINDOW_STATES: dict[int, str] = {0b00: "closed", 0b01: "open", 0b10: "vent"}
-
-
-# Sanity bounds used to reject a corrupt / misaligned telemetry frame before it reaches the
-# sensors or the odometer freshness gate — a frame can pass the CRC and still be garbage.
-_PLAUSIBLE_RANGES: tuple[tuple[str, float, float], ...] = (
-    ("odometer_km", 0, 2_000_000),
-    ("speed_kmh", 0, 320),
-    ("volt12", 6, 20),
-    ("battery_pct", 0, 100),
-)
-
-
-def is_plausible(data: dict[str, Any]) -> bool:
-    """False if a decoded blob carries physically impossible values (a corrupt frame)."""
-    for key, low, high in _PLAUSIBLE_RANGES:
-        value = data.get(key)
-        if value is not None and not (low <= value <= high):
-            return False
-    return True
-
-
-def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
-    """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`."""
-    cfg = control_config or VehicleControlConfig()
-
-    def _psi(x: int) -> float | None:
-        return None if x in cfg.tire_pressure_invalid else round(x * cfg.tpms_scale * 0.145, 1)
-
-    def _tyre_temp(x: int) -> int | None:
-        # Truncated, not rounded, to match the app.
-        return None if x in cfg.tire_temp_invalid else int(x * 0.65 - 40)
-
-    def _charging_remaining(x: int) -> int | None:
-        return None if x in cfg.charging_remaining_invalid else x
-
-    b = bytes.fromhex(hexstr)
-    d: dict[str, Any] = {}
-    if len(b) < 72:
-        return d
-
-    doors = b[2]
-    d["door_front_left"] = bool(doors & 0x01)
-    d["door_front_right"] = bool(doors & 0x02)
-    d["door_rear_left"] = bool(doors & 0x04)
-    d["door_rear_right"] = bool(doors & 0x08)
-    d["lock_unlocked"] = bool(b[3])
-    d["liftgate_open"] = bool(b[4])
-    d["ignition_on"] = bool(b[5])
-    windows = b[8]
-    d["window_front_left"] = WINDOW_STATES.get((windows >> 6) & 0b11, "open")
-    d["window_front_right"] = WINDOW_STATES.get((windows >> 4) & 0b11, "open")
-    d["window_rear_left"] = WINDOW_STATES.get((windows >> 2) & 0b11, "open")
-    d["window_rear_right"] = WINDOW_STATES.get(windows & 0b11, "open")
-    d["sunroof_state"] = SUNROOF_STATES.get(b[9], "open" if b[9] else "closed")
-    d["volt12"] = round(int.from_bytes(b[12:14], "big") * 0.01, 2)
-    d["speed_kmh"] = round(int.from_bytes(b[14:16], "big") / 16.0, 1)
-    d["engine_rpm"] = int.from_bytes(b[16:18], "big")
-    d["odometer_km"] = int.from_bytes(b[18:21], "big")
-    d["fuel_pct"] = b[21]
-    d["ac_on"] = bool(b[23])
-    d["ac_temp_c"] = b[24]
-    d["ac_compressor"] = bool(b[26])
-    d["battery_pct"] = b[28]
-    d["battery_range_km"] = int.from_bytes(b[29:31], "big")
-    d["seat_heat_left"] = SEAT_LEVELS.get(b[32], "off")
-    d["seat_heat_right"] = SEAT_LEVELS.get(b[33], "off")
-    d["seat_heat_rear_left"] = SEAT_LEVELS.get(b[34], "off")
-    d["seat_heat_rear_right"] = SEAT_LEVELS.get(b[36], "off")
-    d["seat_vent_left"] = SEAT_LEVELS.get(b[37], "off")
-    d["seat_vent_right"] = SEAT_LEVELS.get(b[38], "off")
-    d["seat_vent_rear_left"] = SEAT_LEVELS.get(b[39], "off")
-    d["seat_vent_rear_right"] = SEAT_LEVELS.get(b[41], "off")
-    d["defrost_front"] = bool(b[42])
-    tp, tt = b[44:48], b[48:52]
-    d["tyre_psi"] = [_psi(x) for x in tp]
-    d["tyre_temp_c"] = [_tyre_temp(x) for x in tt]
-    d["fuel_l_100"] = round(b[53] * 0.1, 1)
-    consumption_mode = b[54] >> 4
-    consumption_mag = ((b[54] & 0xF) << 8) | b[55]
-    d["consumption_kwh_100km"] = round(
-        consumption_mag * 0.1 - (100 if consumption_mode == 1 else 0), 1
-    )
-    d["charging_connector"] = CHARGING_CONNECTOR_STATES.get(b[56], "disconnected")
-    d["charging_status"] = CHARGING_STATUSES.get(b[57], "idle")
-    charging = d["charging_connector"] != "disconnected"
-    d["charging"] = charging
-    d["charging_remaining_min"] = _charging_remaining((b[58] << 8) | b[59])
-    power_kw = round(((b[62] << 8) | b[63]) * 0.1, 1)
-    d["power_kw"] = power_kw
-    d["charge_power_kw"] = power_kw if charging else 0.0
-    d["regen_power_kw"] = power_kw if not charging else 0.0
-    d["windshield_heat"] = bool(b[64])
-    d["steering_wheel_heat"] = bool(b[65])
-    d["air_purifier"] = bool(b[66])
-    d["wltp_range_km"] = int.from_bytes(b[68:70], "big")
-    d["range_km"] = int.from_bytes(b[70:72], "big")
-    if len(b) > 73:
-        d["sunshade_open"] = bool(b[73])
-    if len(b) > 74:
-        d["rear_window_defog"] = bool(b[74])
-
-    return d
-
-
-def decode_control_config(control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
-    """Flatten vehicleControlConfig (per-model constants + capability flags) into entity data."""
-    cfg = control_config or VehicleControlConfig()
-    d: dict[str, Any] = {
-        "has_engine": cfg.has_engine,
-        "has_fuel_consumption": cfg.has_fuel_consumption,
-        "has_power_consumption": cfg.has_power_consumption,
-        "ac_temp_min": cfg.ac_temp_min,
-        "ac_temp_max": cfg.ac_temp_max,
-        "ac_temp_step": cfg.ac_temp_step,
-    }
-    for name, value in dataclasses.asdict(cfg.capabilities).items():
-        d[f"control_{name}"] = value
-    return d

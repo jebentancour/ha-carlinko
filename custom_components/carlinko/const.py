@@ -59,7 +59,7 @@ CMD_ROOF_SUNSHADE_CLOSE = "742800"
 CMD_DEFOG_REAR_ON = "742901"
 CMD_DEFOG_REAR_OFF = "742900"
 
-# Seat opcodes keyed by SEAT_LEVELS' values in api.py. Left = driver, right = assistant.
+# Seat opcodes keyed by SEAT_LEVELS' values in blob.py. Left = driver, right = assistant.
 CMD_SEAT_HEAT_LEFT: dict[str, str] = {"off": "741500", "low": "741501", "medium": "741502", "high": "741503"}
 CMD_SEAT_HEAT_RIGHT: dict[str, str] = {"off": "741600", "low": "741601", "medium": "741602", "high": "741603"}
 CMD_SEAT_VENT_LEFT: dict[str, str] = {"off": "741A00", "low": "741A01", "medium": "741A02", "high": "741A03"}

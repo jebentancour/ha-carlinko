@@ -10,8 +10,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from . import ble
-from .api import CarLinkoClient, CarLinkoConnectionError
+from .api import CarLinkoClient
 from .ble import CarLinkoBleUnavailable
+from .cloud import CarLinkoConnectionError
 from .const import (
     CONF_BLE_ADDRESS,
     CONF_DEVICE_SN,

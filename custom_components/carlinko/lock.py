@@ -10,7 +10,16 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CMD_LOCK,
+    CMD_UNLOCK,
+    CONF_DEVICE_SN,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DOMAIN,
+)
 from .coordinator import CarLinkoCoordinator
 
 
@@ -47,9 +56,13 @@ class CarLinkoLock(CoordinatorEntity[CarLinkoCoordinator], LockEntity):
         return None if unlocked is None else not unlocked
 
     async def async_lock(self, **kwargs: Any) -> None:
-        await self.coordinator.client.lock(self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN])
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_LOCK
+        )
         await self.coordinator.async_request_refresh()
 
     async def async_unlock(self, **kwargs: Any) -> None:
-        await self.coordinator.client.unlock(self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN])
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_UNLOCK
+        )
         await self.coordinator.async_request_refresh()

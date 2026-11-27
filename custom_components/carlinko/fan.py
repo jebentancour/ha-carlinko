@@ -9,26 +9,44 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util.percentage import ordered_list_item_to_percentage, percentage_to_ordered_list_item
+from homeassistant.util.percentage import (
+    ordered_list_item_to_percentage,
+    percentage_to_ordered_list_item,
+)
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CMD_SEAT_HEAT_LEFT,
+    CMD_SEAT_HEAT_REAR_LEFT,
+    CMD_SEAT_HEAT_REAR_RIGHT,
+    CMD_SEAT_HEAT_RIGHT,
+    CMD_SEAT_VENT_LEFT,
+    CMD_SEAT_VENT_REAR_LEFT,
+    CMD_SEAT_VENT_REAR_RIGHT,
+    CMD_SEAT_VENT_RIGHT,
+    CONF_DEVICE_SN,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DOMAIN,
+)
 from .coordinator import CarLinkoCoordinator
 
-# SEAT_LEVELS in api.py minus "off".
+# blob.SEAT_LEVELS minus "off".
 SPEEDS: tuple[str, ...] = ("low", "medium", "high")
 
-# (data key, icon, capability flag, CarLinkoClient setter). Heat and vent are independent
+# (data key, icon, capability flag, level->opcode map). Heat and vent are independent
 # per seat, so each gets its own entity.
-_SEAT_FANS: tuple[tuple[str, str, str, str], ...] = (
-    ("seat_heat_left", "mdi:car-seat-heater", "control_ac_driver_heater", "set_seat_heat_left"),
-    ("seat_heat_right", "mdi:car-seat-heater", "control_ac_assistant_heater", "set_seat_heat_right"),
-    ("seat_vent_left", "mdi:car-seat-cooler", "control_ac_driver_vent", "set_seat_vent_left"),
-    ("seat_vent_right", "mdi:car-seat-cooler", "control_ac_assistant_vent", "set_seat_vent_right"),
+_SEAT_FANS: tuple[tuple[str, str, str, dict[str, str]], ...] = (
+    ("seat_heat_left", "mdi:car-seat-heater", "control_ac_driver_heater", CMD_SEAT_HEAT_LEFT),
+    ("seat_heat_right", "mdi:car-seat-heater", "control_ac_assistant_heater", CMD_SEAT_HEAT_RIGHT),
+    ("seat_vent_left", "mdi:car-seat-cooler", "control_ac_driver_vent", CMD_SEAT_VENT_LEFT),
+    ("seat_vent_right", "mdi:car-seat-cooler", "control_ac_assistant_vent", CMD_SEAT_VENT_RIGHT),
     # Rear seats share one capability flag per function (no per-side flag).
-    ("seat_heat_rear_left", "mdi:car-seat-heater", "control_ac_rear_heater", "set_seat_heat_rear_left"),
-    ("seat_heat_rear_right", "mdi:car-seat-heater", "control_ac_rear_heater", "set_seat_heat_rear_right"),
-    ("seat_vent_rear_left", "mdi:car-seat-cooler", "control_ac_rear_vent", "set_seat_vent_rear_left"),
-    ("seat_vent_rear_right", "mdi:car-seat-cooler", "control_ac_rear_vent", "set_seat_vent_rear_right"),
+    ("seat_heat_rear_left", "mdi:car-seat-heater", "control_ac_rear_heater", CMD_SEAT_HEAT_REAR_LEFT),
+    ("seat_heat_rear_right", "mdi:car-seat-heater", "control_ac_rear_heater", CMD_SEAT_HEAT_REAR_RIGHT),
+    ("seat_vent_rear_left", "mdi:car-seat-cooler", "control_ac_rear_vent", CMD_SEAT_VENT_REAR_LEFT),
+    ("seat_vent_rear_right", "mdi:car-seat-cooler", "control_ac_rear_vent", CMD_SEAT_VENT_REAR_RIGHT),
 )
 
 
@@ -36,8 +54,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     coordinator: CarLinkoCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = coordinator.data or {}
     entities = [
-        CarLinkoSeatFan(coordinator, entry, key, icon, setter)
-        for key, icon, capability, setter in _SEAT_FANS
+        CarLinkoSeatFan(coordinator, entry, key, icon, opcodes)
+        for key, icon, capability, opcodes in _SEAT_FANS
         if data.get(capability)
     ]
     async_add_entities(entities)
@@ -48,11 +66,13 @@ class CarLinkoSeatFan(CoordinatorEntity[CarLinkoCoordinator], FanEntity):
     _attr_supported_features = FanEntityFeature.SET_SPEED | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
     _attr_speed_count = len(SPEEDS)
 
-    def __init__(self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, key: str, icon: str, setter: str) -> None:
+    def __init__(
+        self, coordinator: CarLinkoCoordinator, entry: ConfigEntry, key: str, icon: str, opcodes: dict[str, str]
+    ) -> None:
         super().__init__(coordinator)
         self._entry = entry
         self._data_key = key
-        self._setter = setter
+        self._opcodes = opcodes
         self._attr_translation_key = key
         self._attr_icon = icon
         self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_{key}"
@@ -84,8 +104,9 @@ class CarLinkoSeatFan(CoordinatorEntity[CarLinkoCoordinator], FanEntity):
         return 0 if level == "off" else ordered_list_item_to_percentage(SPEEDS, level)
 
     async def _async_set_level(self, level: str) -> None:
-        setter = getattr(self.coordinator.client, self._setter)
-        await setter(self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], level)
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], self._opcodes[level]
+        )
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(

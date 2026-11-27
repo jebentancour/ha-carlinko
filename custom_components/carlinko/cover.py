@@ -3,16 +3,36 @@ from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.components.cover import CoverDeviceClass, CoverEntity, CoverEntityFeature
+from homeassistant.components.cover import (
+    CoverDeviceClass,
+    CoverEntity,
+    CoverEntityFeature,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CMD_LIFTGATE_CLOSE,
+    CMD_LIFTGATE_OPEN,
+    CMD_ROOF_SUNSHADE_CLOSE,
+    CMD_ROOF_SUNSHADE_OPEN,
+    CMD_SUNROOF_CLOSE,
+    CMD_SUNROOF_OPEN,
+    CMD_SUNROOF_TILT,
+    CMD_WINDOWS_CLOSE,
+    CMD_WINDOWS_OPEN,
+    CMD_WINDOWS_VENT,
+    CONF_DEVICE_SN,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DOMAIN,
+)
 from .coordinator import CarLinkoCoordinator
-
 
 # (unique-id suffix, telemetry key) per window.
 _WINDOWS: tuple[tuple[str, str], ...] = (
@@ -67,14 +87,14 @@ class CarLinkoLiftgateCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity)
         return None if open_ is None else not open_
 
     async def async_open_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.open_liftgate(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_LIFTGATE_OPEN
         )
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.close_liftgate(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_LIFTGATE_CLOSE
         )
         await self.coordinator.async_request_refresh()
 
@@ -119,27 +139,27 @@ class CarLinkoSunroofCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
         return None if state is None else (100 if state == "tilted" else 0)
 
     async def async_open_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.open_sunroof(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_SUNROOF_OPEN
         )
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.close_sunroof(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_SUNROOF_CLOSE
         )
         await self.coordinator.async_request_refresh()
 
     async def async_open_cover_tilt(self, **kwargs: Any) -> None:
-        await self.coordinator.client.tilt_sunroof(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_SUNROOF_TILT
         )
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         # No separate untilt opcode; closing the tilt closes the sunroof.
-        await self.coordinator.client.close_sunroof(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_SUNROOF_CLOSE
         )
         await self.coordinator.async_request_refresh()
 
@@ -175,14 +195,14 @@ class CarLinkoSunshadeCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity)
         return None if open_ is None else not open_
 
     async def async_open_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.open_roof_sunshade(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_ROOF_SUNSHADE_OPEN
         )
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.close_roof_sunshade(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_ROOF_SUNSHADE_CLOSE
         )
         await self.coordinator.async_request_refresh()
 
@@ -235,26 +255,26 @@ class CarLinkoWindowCover(CoordinatorEntity[CarLinkoCoordinator], CoverEntity):
         return None if state is None else (100 if state == "vent" else 0)
 
     async def async_open_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.open_windows(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_WINDOWS_OPEN
         )
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover(self, **kwargs: Any) -> None:
-        await self.coordinator.client.close_windows(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_WINDOWS_CLOSE
         )
         await self.coordinator.async_request_refresh()
 
     async def async_open_cover_tilt(self, **kwargs: Any) -> None:
-        await self.coordinator.client.vent_windows(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_WINDOWS_VENT
         )
         await self.coordinator.async_request_refresh()
 
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         # No separate unvent opcode; closing the tilt closes the windows.
-        await self.coordinator.client.close_windows(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_WINDOWS_CLOSE
         )
         await self.coordinator.async_request_refresh()

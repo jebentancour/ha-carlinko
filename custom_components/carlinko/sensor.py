@@ -28,7 +28,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES
+from .blob import CHARGING_CONNECTOR_STATES, CHARGING_STATUSES
 from .const import (
     CONF_DEVICE_SN,
     CONF_TRANSPORT_MODE,

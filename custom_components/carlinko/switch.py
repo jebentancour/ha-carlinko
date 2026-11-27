@@ -10,7 +10,18 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CMD_DEFOG_FRONT_OFF,
+    CMD_DEFOG_FRONT_ON,
+    CMD_DEFOG_REAR_OFF,
+    CMD_DEFOG_REAR_ON,
+    CONF_DEVICE_SN,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DOMAIN,
+)
 from .coordinator import CarLinkoCoordinator
 
 
@@ -52,14 +63,14 @@ class CarLinkoDefrostSwitch(CoordinatorEntity[CarLinkoCoordinator], SwitchEntity
         return self.coordinator.data.get("defrost_front")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.coordinator.client.defrost_on(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_DEFOG_FRONT_ON
         )
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.client.defrost_off(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_DEFOG_FRONT_OFF
         )
         await self.coordinator.async_request_refresh()
 
@@ -91,13 +102,13 @@ class CarLinkoRearDefrostSwitch(CoordinatorEntity[CarLinkoCoordinator], SwitchEn
         return self.coordinator.data.get("rear_window_defog")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.coordinator.client.rear_defog_on(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_DEFOG_REAR_ON
         )
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.client.rear_defog_off(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_DEFOG_REAR_OFF
         )
         await self.coordinator.async_request_refresh()

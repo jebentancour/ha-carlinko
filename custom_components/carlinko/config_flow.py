@@ -11,10 +11,20 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from . import ble
-from .api import CarLinkoAccountNotFoundError, CarLinkoAuthError, CarLinkoClient, CarLinkoConnectionError, VehicleInfo
+from .api import CarLinkoClient
+from .capabilities import VehicleInfo
+from .cloud import (
+    CarLinkoAccountNotFoundError,
+    CarLinkoAuthError,
+    CarLinkoConnectionError,
+)
 from .const import (
     CONF_BLE_ADDRESS,
     CONF_DEVICE_SN,

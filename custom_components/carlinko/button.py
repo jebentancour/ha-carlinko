@@ -8,7 +8,16 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DEVICE_SN, CONF_VEHICLE_BRAND, CONF_VEHICLE_ID, CONF_VEHICLE_MODEL, CONF_VEHICLE_PLATE, DOMAIN
+from .const import (
+    CMD_FIND_CAR,
+    CMD_STOP_CHARGING,
+    CONF_DEVICE_SN,
+    CONF_VEHICLE_BRAND,
+    CONF_VEHICLE_ID,
+    CONF_VEHICLE_MODEL,
+    CONF_VEHICLE_PLATE,
+    DOMAIN,
+)
 from .coordinator import CarLinkoCoordinator
 
 
@@ -50,8 +59,8 @@ class CarLinkoStopChargingButton(_CarLinkoButtonBase):
         super().__init__(coordinator, entry, "stop_charging")
 
     async def async_press(self) -> None:
-        await self.coordinator.client.stop_charging(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_STOP_CHARGING
         )
         await self.coordinator.async_request_refresh()
 
@@ -64,6 +73,6 @@ class CarLinkoFindCarButton(_CarLinkoButtonBase):
         super().__init__(coordinator, entry, "find_car")
 
     async def async_press(self) -> None:
-        await self.coordinator.client.find_car(
-            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN]
+        await self.coordinator.client.send_control(
+            self._entry.data[CONF_VEHICLE_ID], self._entry.data[CONF_DEVICE_SN], CMD_FIND_CAR
         )
