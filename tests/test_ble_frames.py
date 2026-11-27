@@ -10,18 +10,31 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import pathlib
+import sys
+import types
 import unittest
 
-_BLE_PATH = (
-    pathlib.Path(__file__).resolve().parents[1]
-    / "custom_components"
-    / "carlinko"
-    / "ble.py"
-)
-_spec = importlib.util.spec_from_file_location("carlinko_ble", _BLE_PATH)
-ble = importlib.util.module_from_spec(_spec)
-assert _spec and _spec.loader
-_spec.loader.exec_module(ble)
+# ble.py does `from .const import ...`, so load both under a synthetic package (the real
+# custom_components.carlinko package __init__ pulls in Home Assistant).
+_DIR = pathlib.Path(__file__).resolve().parents[1] / "custom_components" / "carlinko"
+_PKG = "carlinko_offline"
+if _PKG not in sys.modules:
+    _pkg = types.ModuleType(_PKG)
+    _pkg.__path__ = [str(_DIR)]
+    sys.modules[_PKG] = _pkg
+
+
+def _load(name: str):
+    spec = importlib.util.spec_from_file_location(f"{_PKG}.{name}", _DIR / f"{name}.py")
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[f"{_PKG}.{name}"] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+const = _load("const")
+ble = _load("ble")
 
 # A synthetic status blob (73 bytes, parked and locked); not a real capture.
 STATUS = (

@@ -54,6 +54,8 @@ CMD_WINDOWS_OPEN = "740600"
 CMD_WINDOWS_VENT = "740E00"
 CMD_DEFOG_FRONT_ON = "741201"
 CMD_DEFOG_FRONT_OFF = "741200"
+# Roof sunshade and rear defog entities are created only when the car reports the
+# sunroofSunshade / rearWindowDefog capability, so cars without them never get the entity.
 CMD_ROOF_SUNSHADE_OPEN = "742801"
 CMD_ROOF_SUNSHADE_CLOSE = "742800"
 CMD_DEFOG_REAR_ON = "742901"
@@ -79,6 +81,11 @@ CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
 
 CMD_AC_ON = "741001"
 CMD_AC_OFF = "741000"
+
+# Control-result byte of a `74 CMD SS` BLE reply: 0x00 = executed, 0x44 = userId not enrolled (the
+# only two the integration acts on; any other non-zero value is reported as a refusal by its code).
+CONTROL_RESULT_OK = 0x00
+CONTROL_RESULT_NOT_ENROLLED = 0x44
 
 # Response code for an expired/invalidated session token: log in again and retry.
 CODE_TOKEN_EXPIRED = "9997"

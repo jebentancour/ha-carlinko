@@ -12,6 +12,8 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
+from .const import CONTROL_RESULT_NOT_ENROLLED, CONTROL_RESULT_OK
+
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
@@ -341,7 +343,7 @@ async def async_send_control(
             code = await session.send_control(control)
             _LOGGER.debug("BLE control %s: car ack code=%s", opcode, _code_hex(code))
 
-            if code == 0x44 and get_remaining is not None:
+            if code == CONTROL_RESULT_NOT_ENROLLED and get_remaining is not None:
                 remaining = await get_remaining()
                 _LOGGER.debug("BLE control %s: not enrolled, enrolling (remaining=%s)", opcode, remaining)
                 if remaining is not None and await session.activate_key(
@@ -350,11 +352,9 @@ async def async_send_control(
                     code = await session.send_control(control)
                     _LOGGER.debug("BLE control %s: car ack after enrol code=%s", opcode, _code_hex(code))
 
-            if code != 0x00:
-                raise CarLinkoBleRejected(
-                    f"car refused control (code={code}); "
-                    f"{'userId not enrolled' if code == 0x44 else 'invalid opcode'}"
-                )
+            if code != CONTROL_RESULT_OK:
+                detail = "userId not enrolled" if code == CONTROL_RESULT_NOT_ENROLLED else "control refused"
+                raise CarLinkoBleRejected(f"car refused control (code={_code_hex(code)}): {detail}")
 
             _LOGGER.debug("BLE control %s executed; reading follow-up status", opcode)
             await asyncio.sleep(_POST_CONTROL_DELAY)
