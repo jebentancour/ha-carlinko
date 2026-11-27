@@ -132,7 +132,7 @@ def parse_vehicle_control_config(raw: Any) -> VehicleControlConfig:
         ac_air_purification=bool(ac.get("AirPurification")),
         ac_front_windshield_heater=bool(cfg.get("FrontWindshieldHeater")),
         roof_sunshade=bool(cfg.get("sunroofSunshade")),
-        rear_window_defog=bool(cfg.get("rearWindowDefog")),
+        rear_window_defog=bool(ac.get("rearWindowDefog")),
     )
 
     return VehicleControlConfig(

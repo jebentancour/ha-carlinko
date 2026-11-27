@@ -81,31 +81,6 @@ BINARY_SENSORS: tuple[CarLinkoBinarySensorDescription, ...] = (
         icon="mdi:air-conditioner",
         value_fn=lambda d: d.get("ac_compressor"),
     ),
-    # Climate extras, only on cars that report the matching capability.
-    CarLinkoBinarySensorDescription(
-        key="steering_wheel_heat",
-        translation_key="steering_wheel_heat",
-        icon="mdi:steering",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("steering_wheel_heat"),
-        enabled_if=lambda d: bool(d.get("control_ac_steering_wheel_heater")),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="air_purifier",
-        translation_key="air_purifier",
-        icon="mdi:air-purifier",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("air_purifier"),
-        enabled_if=lambda d: bool(d.get("control_ac_air_purification")),
-    ),
-    CarLinkoBinarySensorDescription(
-        key="windshield_heat",
-        translation_key="windshield_heat",
-        icon="mdi:car-defrost-front",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: d.get("windshield_heat"),
-        enabled_if=lambda d: bool(d.get("control_ac_front_windshield_heater")),
-    ),
 )
 
 

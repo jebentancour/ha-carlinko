@@ -23,7 +23,7 @@ alongside the rest of your home.
   - Charging status, connector type (AC / DC), charging power, time remaining
   - Power, regen power and energy consumption
   - Fuel level, fuel consumption and engine RPM (on cars with an engine)
-  - Doors, ignition, A/C compressor, windshield / steering wheel heating, air purifier
+  - Doors, ignition, A/C compressor
   - Tyre pressure and temperature for each wheel
   - Online / offline status of the car's connectivity module
   - Vehicle photos (front, side, top) from your CarLinko account
@@ -37,6 +37,7 @@ alongside the rest of your home.
   - A/C on / off, target temperature, Quick Heat and Quick Cool
   - Seat heating and ventilation (front and rear, off / low / medium / high)
   - Front and rear defroster
+  - Windshield heating, steering wheel heating and air purifier
   - Find Car (horn and lights) and Stop Charging
 - **Local Bluetooth (optional)** — when the car is in range of a Home Assistant Bluetooth
   adapter, commands and telemetry can go directly to the car over BLE: either alongside the
