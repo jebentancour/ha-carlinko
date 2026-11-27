@@ -16,7 +16,7 @@ from typing import Any
 
 import aiohttp
 
-from .ble import CarLinkoBleError, CarLinkoBleUnavailable
+from .ble import CarLinkoBleError, CarLinkoBleUnavailable, is_status_body
 from .const import (
     APP_LOGIN_BODY,
     APP_VERSION,
@@ -77,7 +77,7 @@ class CarLinkoAuthError(Exception):
 
 
 class CarLinkoAccountNotFoundError(CarLinkoAuthError):
-    """Login rejected with code 10012 (用户不存在): no account with this email in this region."""
+    """Login rejected with code 10012: no account with this email in this region."""
 
 
 class CarLinkoConnectionError(Exception):
@@ -639,6 +639,14 @@ class CarLinkoClient:
         state = await self._signed_get(f"/user/vehicle/state/{vehicle_id}")
         blob = state.get("data")
         if not isinstance(blob, str):
+            return None
+        # Defense in depth: the cloud carries the same status body as BLE (without the 55AA/CRC
+        # wrapper), so reject anything that isn't a well-formed status blob before decoding it.
+        try:
+            raw = bytes.fromhex(blob)
+        except ValueError:
+            return None
+        if not is_status_body(raw):
             return None
         control_config = await self.get_vehicle_control_config(vehicle_id)
         data = decode_blob(blob, control_config)

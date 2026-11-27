@@ -80,7 +80,7 @@ CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
 CMD_AC_ON = "741001"
 CMD_AC_OFF = "741000"
 
-# Response code for an expired/invalidated session token (登录失效): log in again and retry.
+# Response code for an expired/invalidated session token: log in again and retry.
 CODE_TOKEN_EXPIRED = "9997"
 
 USER_AGENT = "Dart/3.10 (dart:io)"

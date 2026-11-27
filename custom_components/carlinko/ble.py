@@ -24,25 +24,56 @@ TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
 CMD_STATUS = 0x77
 CMD_FW_LOCATION = 0x23
 CMD_FW_VERSION = 0x24
+CMD_CONTROL = 0x74
+CMD_ENROL = 0x78
 
 AES_KEY = bytes.fromhex("A0F47CB6677BE6A3")
 
-STATE_BLOB_MIN_LEN = 72
 STATUS_START_MARKER = 0x77
 STATUS_SECOND_BYTE = 0x00
+# A full status blob is exactly 73 bytes, or 79 with the sunshade/rear-defog tail.
+STATE_BLOB_LENGTHS = (73, 79)
+# Reply lengths (opcode byte included) for the non-status exchanges.
+CONTROL_REPLY_LEN = 4  # 74 CMD SS code
+ENROL_REPLY_LEN = 3  # 78 01 code
+QUERY_REPLY_MIN_LEN = 2  # 23/24 <...>: opcode plus at least one byte
 
 
-def is_status_blob(body: bytes, crc_ok: bool) -> bool:
-    """A real status frame: good CRC, starts with ``77 00``, and at least the base length.
+# ---- response-shape validation (shared by BLE matchers and the cloud path) ----
 
-    Log frames start with ``77 02``; requiring both marker bytes keeps them out of telemetry.
+
+def is_status_body(body: bytes) -> bool:
+    """Structural check for a status blob: starts with ``77 00`` and is a full-length frame.
+
+    Shared by BLE (:func:`is_status_blob`, which also demands a good CRC) and the cloud path, which
+    carries the same body without the 55AA/CRC wrapper. Log frames start with ``77 02``; requiring
+    both marker bytes keeps them out of telemetry, and the exact length rejects short/partial frames.
     """
     return (
-        crc_ok
-        and len(body) >= STATE_BLOB_MIN_LEN
+        len(body) in STATE_BLOB_LENGTHS
         and body[0] == STATUS_START_MARKER
         and body[1] == STATUS_SECOND_BYTE
     )
+
+
+def is_status_blob(body: bytes, crc_ok: bool) -> bool:
+    """A real BLE status frame: good CRC plus a valid status body."""
+    return crc_ok and is_status_body(body)
+
+
+def is_control_ack(body: bytes, crc_ok: bool) -> bool:
+    """A control reply: good CRC and ``74 CMD SS code`` (4 bytes)."""
+    return crc_ok and len(body) == CONTROL_REPLY_LEN and body[0] == CMD_CONTROL
+
+
+def is_enrol_ack(body: bytes, crc_ok: bool) -> bool:
+    """A user-enroll reply: good CRC and ``78 01 code`` (3 bytes)."""
+    return crc_ok and len(body) == ENROL_REPLY_LEN and body[0] == CMD_ENROL
+
+
+def is_query_reply(opcode: int, body: bytes, crc_ok: bool) -> bool:
+    """A firmware query reply (``0x23``/``0x24``): good CRC and opcode plus at least one byte."""
+    return crc_ok and len(body) >= QUERY_REPLY_MIN_LEN and body[0] == opcode
 
 _CONNECT_TIMEOUT = 20.0
 _REPLY_TIMEOUT = 8.0
@@ -195,7 +226,9 @@ class _Session:
     async def query(self, opcode: int, timeout: float = _REPLY_TIMEOUT) -> tuple[bytes, bool]:
         self._drain()
         await self._client.write_gatt_char(RX, frame(bytes([opcode])), response=False)
-        return await self._wait_for(opcode, timeout)
+        return await self._wait_for(
+            opcode, timeout, validate=lambda body, ok: is_query_reply(opcode, body, ok)
+        )
 
     async def read_status(self, timeout: float = _REPLY_TIMEOUT) -> bytes:
         self._drain()
@@ -208,15 +241,17 @@ class _Session:
         self._drain()
         payload = frame(b"") + frame(control_body)
         await self._client.write_gatt_char(RX, payload, response=False)
-        body, _ok = await self._wait_for(0x74, timeout)
-        return body[3] if len(body) >= 4 else None
+        # is_control_ack guarantees a good-CRC, 4-byte `74 CMD SS code`, so body[3] is the result.
+        body, _ok = await self._wait_for(CMD_CONTROL, timeout, validate=is_control_ack)
+        return body[3]
 
     async def activate_key(self, activate_body: bytes, timeout: float = _REPLY_TIMEOUT) -> bool:
         self._drain()
         payload = frame(b"") + frame(activate_body)
         await self._client.write_gatt_char(RX, payload, response=False)
-        body, _ok = await self._wait_for(0x78, timeout)
-        return len(body) >= 3 and body[1] == 0x01 and body[2] == 0x00
+        # is_enrol_ack guarantees a good-CRC, 3-byte `78 01 code`; code 0x00 means enrolled.
+        body, _ok = await self._wait_for(CMD_ENROL, timeout, validate=is_enrol_ack)
+        return body[1] == 0x01 and body[2] == 0x00
 
 
 async def _do_handshake(session: _Session) -> bytes:
