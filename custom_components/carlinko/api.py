@@ -369,7 +369,7 @@ class CarLinkoClient:
             r77 = await self._cloud.query(vehicle_id, self._device_sn, "77")
         except CarLinkoDeviceOfflineError:
             # The T-box has no cellular link: no candidate, but not a failure — the coordinator keeps
-            # the last-known values and flags the car offline (same as the old isOnline=False path).
+            # the last-known values and flags the car offline.
             return None
         except CarLinkoConnectionError:
             if self._ble_read is not None:
@@ -404,9 +404,9 @@ class CarLinkoClient:
             replies = await self._ble_read()
         except CarLinkoBleError:
             return None
-        except Exception:  # BLE is a best-effort secondary source; never fail the update over it
-            # Never let a BLE transport anomaly (a stray bleak/proxy error) escape and fail the whole
-            # update: the cloud candidate and the last-known values must survive it.
+        except Exception:
+            # BLE is best-effort: a stray bleak/proxy error must not fail the whole update, so the
+            # cloud candidate and the last-known values survive it.
             _LOGGER.warning("CarLinko BLE telemetry read failed; skipping BLE this cycle", exc_info=True)
             return None
         if not replies:

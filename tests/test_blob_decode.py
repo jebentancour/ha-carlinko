@@ -1,7 +1,6 @@
-"""Offline regression for the Phase 2 split: blob decode + capabilities parsing.
+"""Offline checks for blob decoding and capabilities parsing.
 
-These modules moved out of ``api.py`` unchanged; this pins their behaviour so a future move can't
-drift. ``blob.py`` does ``from .capabilities import ...``, so both are loaded under a synthetic
+``blob.py`` does ``from .capabilities import ...``, so both are loaded under a synthetic
 package (the real ``custom_components.carlinko`` package ``__init__`` pulls in Home Assistant)::
 
     python -m unittest discover tests
@@ -34,7 +33,7 @@ def _load(name: str):
 capabilities = _load("capabilities")
 blob = _load("blob")
 
-# A synthetic status blob (73 bytes); not a real capture.
+# A synthetic status blob (73 bytes).
 STATUS = (
     "7700000000000000000000000514000000000027100000000000000050012c00000000000000000000000000"
     "d2d2d2d26464646400000000000000000000000000000000012c012c00"
@@ -79,8 +78,8 @@ class Plausibility(unittest.TestCase):
 class FirmwareVersion(unittest.TestCase):
     def test_decodes_ascii_string(self):
         # 24 00 <ascii> 00
-        reply = bytes.fromhex("2400") + b"2.3.1_050501S" + b"\x00"
-        self.assertEqual(blob.parse_fw_version(reply), "2.3.1_050501S")
+        reply = bytes.fromhex("2400") + b"1.2.3_000000A" + b"\x00"
+        self.assertEqual(blob.parse_fw_version(reply), "1.2.3_000000A")
 
     def test_without_trailing_null(self):
         reply = bytes.fromhex("2400") + b"1.0.0"

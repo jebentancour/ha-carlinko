@@ -93,7 +93,7 @@ def is_query_reply(opcode: int, body: bytes, crc_ok: bool) -> bool:
 
 _CONNECT_TIMEOUT = 20.0
 _REPLY_TIMEOUT = 8.0
-_POST_CONTROL_DELAY = 2.0  # stay connected after a control so the car actuates and pushes new status
+_POST_CONTROL_DELAY = 2.0  # Stay connected after a control so the car actuates and pushes new status.
 
 
 class CarLinkoBleError(Exception):
@@ -101,7 +101,7 @@ class CarLinkoBleError(Exception):
 
 
 class CarLinkoBleUnavailable(CarLinkoBleError):
-    """The car could not be reached over BLE: out of range, no scanner, or busy with the app."""
+    """The car could not be reached over BLE: out of range, no scanner, or busy with another client."""
 
 
 class CarLinkoControlRejected(Exception):
@@ -173,7 +173,7 @@ def _aes_ecb(key: bytes, data: bytes, decrypt: bool = False) -> bytes:
 
 
 def encrypt_control(opcode: str, vin: str, user_id: str | int, rnd: bytes | None = None) -> bytes:
-    """Build the control body the app sends over BLE."""
+    """Build the encrypted control body (the ``0x66`` envelope), identical over BLE and the cloud."""
     rnd = rnd or os.urandom(8)
     pt = bytes.fromhex(opcode) + vin.encode() + str(user_id).encode()
     pt += b"\x00" * (-len(pt) % 16)
@@ -291,7 +291,7 @@ async def _connect(hass: HomeAssistant, address: str, device_sn: str) -> AsyncIt
     """Open a short-lived connection, yield a ready session, and always disconnect afterwards.
 
     The car accepts only one BLE client, so we connect, work and disconnect quickly, leaving it
-    reachable from the phone app between polls.
+    free for other clients between polls.
     """
     from homeassistant.components import bluetooth
 
@@ -356,7 +356,6 @@ async def async_send_control(
 ) -> str | None:
     """One sporadic control: connect, send, enrol if needed, read result, close.
 
-    The car accepts the control straight off, like the cloud POST, so no init sequence precedes it.
     On a not-enrolled reply the userId is enrolled (seconds from ``get_remaining``) and the control
     retried once. Returns the follow-up status hex (or None if it didn't arrive — the control still
     succeeded). A failure before the control is written raises :class:`CarLinkoBleUnavailable` (safe

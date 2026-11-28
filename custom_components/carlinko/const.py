@@ -33,10 +33,10 @@ TRANSPORT_BLE = "ble"  # BLE only
 TRANSPORT_MODES: tuple[str, ...] = (TRANSPORT_CLOUD, TRANSPORT_BLE_CLOUD, TRANSPORT_BLE)
 DEFAULT_TRANSPORT_MODE = TRANSPORT_CLOUD
 
-# Cloud response codes that mean the T-box has no cellular link -> try BLE instead.
+# Cloud response codes that mean the T-box has no cellular link (BLE may still reach it).
 CODES_DEVICE_OFFLINE: frozenset[str] = frozenset({"50043", "50008"})
 
-# App-global request-signing key (same in every CarLinko install).
+# Request-signing key shared by every CarLinko account.
 SIGN_KEY = b"mYj3fzMpn77bir66"
 
 # Remote-control opcodes for `POST /user/vehicle/remoteControl`'s `data` field.
@@ -88,8 +88,9 @@ CMD_AC_SET_TEMPERATURE_PREFIX = "7411"
 CMD_AC_ON = "741001"
 CMD_AC_OFF = "741000"
 
-# Control-result byte of a `74 CMD SS` BLE reply: 0x00 = executed, 0x44 = userId not enrolled (the
-# only two the integration acts on); any other non-zero value is a refusal with the reason below.
+# Control-result byte of a `74 CMD SS code` reply (BLE ACK or cloud `data`): 0x00 = executed,
+# 0x44 = userId not enrolled (the only two the integration acts on); any other non-zero value is a
+# refusal with the reason below.
 CONTROL_RESULT_OK = 0x00
 CONTROL_RESULT_NOT_ENROLLED = 0x44
 

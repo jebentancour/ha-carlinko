@@ -1,4 +1,4 @@
-"""Offline checks for the BLE/cloud response-shape validation (Phase 1).
+"""Offline checks for the BLE/cloud response-shape validation.
 
 No Home Assistant, bleak or network. ``ble.py`` has no top-level HA/bleak/crypto imports, so it is
 loaded straight from its file to avoid the package ``__init__`` (which pulls in Home Assistant)::
@@ -36,7 +36,7 @@ def _load(name: str):
 const = _load("const")
 ble = _load("ble")
 
-# A synthetic status blob (73 bytes, parked and locked); not a real capture.
+# A synthetic status blob (73 bytes, parked and locked).
 STATUS = (
     "7700000000000000000000000514000000000027100000000000000050012c00000000000000000000000000"
     "d2d2d2d26464646400000000000000000000000000000000012c012c00"
@@ -84,11 +84,11 @@ class StatusShape(unittest.TestCase):
 
     def test_log_frame_rejected(self):
         # 77 02 <ascii> debug log — right first byte, wrong second byte.
-        self.assertFalse(ble.is_status_body(b"\x77\x02OK ready"))
+        self.assertFalse(ble.is_status_body(b"\x77\x02debug text"))
 
     def test_short_and_wrong_length_rejected(self):
         self.assertFalse(ble.is_status_body(b"\x77\x00" + bytes(25)))  # ~27-byte partial
-        self.assertFalse(ble.is_status_body(b"\x77\x00" + bytes(70)))  # 72 bytes, old threshold
+        self.assertFalse(ble.is_status_body(b"\x77\x00" + bytes(70)))  # 72 bytes, one short
 
     def test_crc_gate(self):
         self.assertTrue(ble.is_status_blob(STATUS_BYTES, True))

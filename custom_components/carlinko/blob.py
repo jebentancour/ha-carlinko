@@ -1,8 +1,7 @@
 """Decoder for the CarLinko vehicle status blob and the per-model config flattening.
 
-The blob is identical whether it arrives from the cloud (`/user/vehicle/state`) or over BLE (the
-``0x77`` status frame), so this module decodes bytes only — no Home Assistant, bleak or network. The
-byte mapping is the authority for this integration and is deliberately kept as-is.
+The blob is the ``0x77`` reply, identical whether it arrives over BLE or the cloud's
+``/remoteControl``, so this module decodes bytes only — no Home Assistant, bleak or network.
 """
 from __future__ import annotations
 
@@ -63,14 +62,14 @@ def parse_fw_version(reply: bytes | None) -> str | None:
 
 
 def decode_blob(hexstr: str, control_config: VehicleControlConfig | None = None) -> dict[str, Any]:
-    """Decode the vehicle status blob returned by `/user/vehicle/state/{id}`."""
+    """Decode the vehicle status blob (the ``0x77`` reply body)."""
     cfg = control_config or VehicleControlConfig()
 
     def _psi(x: int) -> float | None:
         return None if x in cfg.tire_pressure_invalid else round(x * cfg.tpms_scale * 0.145, 1)
 
     def _tyre_temp(x: int) -> int | None:
-        # Truncated, not rounded, to match the app.
+        # Truncated, not rounded.
         return None if x in cfg.tire_temp_invalid else int(x * 0.65 - 40)
 
     def _charging_remaining(x: int) -> int | None:
