@@ -19,13 +19,13 @@ alongside the rest of your home.
   and only creates the entities your model actually supports. A BEV won't get fuel sensors;
   a car without a sunroof won't get a sunroof cover.
 - **Telemetry**
-  - Battery level, electric range, WLTP range, total range, odometer, speed, 12 V battery
+  - Battery level, electric range, WLTP range, total range, odometer, speed, 12V battery
   - Charging status, connector type (AC / DC), charging power, time remaining
   - Power, regen power and energy consumption
   - Fuel level, fuel consumption and engine RPM (on cars with an engine)
   - Doors, ignition, A/C compressor
   - Tyre pressure and temperature for each wheel
-  - Online / offline status of the car's connectivity module
+  - Online / offline status of the car's connectivity module, and its firmware version
   - Vehicle photos (front, side, top) from your CarLinko account
   - Data source (cloud / Bluetooth) and an "at home" presence sensor when Bluetooth is enabled
 - **Remote controls**
@@ -38,12 +38,14 @@ alongside the rest of your home.
   - Seat heating and ventilation (front and rear, off / low / medium / high)
   - Front and rear defroster
   - Windshield heating, steering wheel heating and air purifier
-  - Find Car (horn and lights) and Stop Charging
+  - Find Vehicle (horn and lights) and Stop Charging
 - **Local Bluetooth (optional)** — when the car is in range of a Home Assistant Bluetooth
   adapter, commands and telemetry can go directly to the car over BLE: either alongside the
   cloud (Bluetooth in range, cloud when out of range) or Bluetooth-only for when the cloud
   account isn't available. See [Bluetooth](#bluetooth-local-control--telemetry).
-- **Translations** — English and Spanish.
+- **Clear feedback** — when the car refuses a command, Home Assistant tells you why (a door
+  is open, the vehicle is on…).
+- **Translations** — English and Spanish, including entity names and error messages.
 
 ## Requirements
 
@@ -124,9 +126,8 @@ absent.
 
 ## Using the controls
 
-- Commands are sent the same way the official app sends them. CarLinko acknowledges that a
-  command was delivered, and the integration refreshes the car's status right after, so
-  entity states catch up within a few seconds.
+- After each command the integration refreshes the car's status, so entity states catch up
+  within a few seconds. If the car refuses a command, you get an error with the reason.
 - **Windows:** the car only supports opening, closing or venting all windows at once. There's
   one entity per window so each can show its own state, but controlling any of them moves
   all four.
