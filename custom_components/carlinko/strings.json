@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connect your CarLinko account",
-        "description": "Use a second CarLinko account authorised on your car if possible — logging in here can sign you out of the official app on the primary account.",
+        "description": "Use a second CarLinko account authorised on your vehicle if possible — logging in here can sign you out of the official app on the primary account.",
         "data": {
           "email": "Email",
           "password": "Password",
@@ -67,7 +67,7 @@
           "transport_mode": "Transport"
         },
         "data_description": {
-          "transport_mode": "Cloud only uses the CarLinko cloud. Bluetooth and cloud uses Bluetooth when the car is in range of a Home Assistant Bluetooth adapter and falls back to the cloud when it is out of range. Bluetooth only never uses the cloud — for when the cloud account is not enabled. Sensors never go backwards: a reading is only accepted if its odometer is at least the last one seen."
+          "transport_mode": "Cloud only uses the CarLinko cloud. Bluetooth and cloud uses Bluetooth when the vehicle is in range of a Home Assistant Bluetooth adapter and falls back to the cloud when it is out of range. Bluetooth only never uses the cloud — for when the cloud account is not enabled. Sensors never go backwards: a reading is only accepted if its odometer is at least the last one seen."
         }
       }
     }
@@ -81,7 +81,7 @@
       "speed": { "name": "Speed" },
       "consumption": { "name": "Power Consumption" },
       "power": { "name": "Power" },
-      "charge_power": { "name": "Charge Power" },
+      "charge_power": { "name": "Charging Power" },
       "regen_power": { "name": "Regen Power" },
       "charging_status": {
         "name": "Charging Status",
@@ -109,6 +109,14 @@
       "fuel_consumption": { "name": "Fuel Consumption" },
       "engine_rpm": { "name": "Engine RPM" },
       "firmware_version": { "name": "Firmware Version" },
+      "tyre_front_left_pressure": { "name": "Tyre Front Left Pressure" },
+      "tyre_front_right_pressure": { "name": "Tyre Front Right Pressure" },
+      "tyre_rear_left_pressure": { "name": "Tyre Rear Left Pressure" },
+      "tyre_rear_right_pressure": { "name": "Tyre Rear Right Pressure" },
+      "tyre_front_left_temperature": { "name": "Tyre Front Left Temperature" },
+      "tyre_front_right_temperature": { "name": "Tyre Front Right Temperature" },
+      "tyre_rear_left_temperature": { "name": "Tyre Rear Left Temperature" },
+      "tyre_rear_right_temperature": { "name": "Tyre Rear Right Temperature" },
       "data_source": {
         "name": "Data Source",
         "state": {
@@ -135,7 +143,7 @@
     },
     "button": {
       "stop_charging": { "name": "Stop Charging" },
-      "find_car": { "name": "Find Car" }
+      "find_car": { "name": "Find Vehicle" }
     },
     "lock": {
       "lock": { "name": "Lock" }
@@ -152,15 +160,15 @@
     "switch": {
       "defrost_front": { "name": "Front Defroster" },
       "defrost_rear": { "name": "Rear Defroster" },
-      "windshield_heat": { "name": "Windshield Heater" },
+      "windshield_heat": { "name": "Windshield Heating" },
       "steering_wheel_heat": { "name": "Steering Wheel Heating" },
       "air_purifier": { "name": "Air Purifier" }
     },
     "fan": {
-      "seat_heat_left": { "name": "Seat Heating Left" },
-      "seat_heat_right": { "name": "Seat Heating Right" },
-      "seat_vent_left": { "name": "Seat Ventilation Left" },
-      "seat_vent_right": { "name": "Seat Ventilation Right" },
+      "seat_heat_left": { "name": "Seat Heating Front Left" },
+      "seat_heat_right": { "name": "Seat Heating Front Right" },
+      "seat_vent_left": { "name": "Seat Ventilation Front Left" },
+      "seat_vent_right": { "name": "Seat Ventilation Front Right" },
       "seat_heat_rear_left": { "name": "Seat Heating Rear Left" },
       "seat_heat_rear_right": { "name": "Seat Heating Rear Right" },
       "seat_vent_rear_left": { "name": "Seat Ventilation Rear Left" },
@@ -171,45 +179,45 @@
     }
   },
   "exceptions": {
-    "refused_not_supported": { "message": "The car refused the command: the command is not supported by this vehicle." },
-    "refused_door_open": { "message": "The car refused the command: a door is open." },
-    "refused_door_unlocked": { "message": "The car refused the command: a door is unlocked." },
-    "refused_vehicle_on": { "message": "The car refused the command: the vehicle is on." },
-    "refused_lock_vehicle_on": { "message": "The car refused the command: the vehicle cannot be locked or unlocked while it is on." },
-    "refused_vehicle_moving": { "message": "The car refused the command: the vehicle is moving." },
-    "refused_hood_open": { "message": "The car refused the command: the hood is open." },
-    "refused_trunk_ajar": { "message": "The car refused the command: the trunk is ajar." },
-    "refused_not_enrolled": { "message": "The car refused the command: this user is not enrolled on the car." },
-    "refused_maintenance_mode": { "message": "The car refused the command: maintenance mode is active." },
-    "refused_control_system_error": { "message": "The car refused the command: control system error." },
-    "refused_firmware_updating": { "message": "The car refused the command: the T-box firmware is updating." },
-    "refused_driver_seated": { "message": "The car refused the command: the driver is seated." },
-    "refused_ac_temperature_not_set": { "message": "The car refused the command: the A/C temperature could not be set." },
-    "refused_not_remote_mode": { "message": "The car refused the command: the vehicle is not in remote mode." },
-    "refused_high_voltage_fault": { "message": "The car refused the command: high-voltage system fault." },
-    "refused_low_12v_battery": { "message": "The car refused the command: the 12 V battery is low." },
-    "refused_key_inside": { "message": "The car refused the command: the key is inside the car." },
-    "refused_trunk_open": { "message": "The car refused the command: the trunk is open." },
-    "refused_vin_mismatch": { "message": "The car refused the command: VIN mismatch." },
-    "refused_tbox_auth_failed": { "message": "The car refused the command: T-box authentication failed." },
-    "refused_not_in_park": { "message": "The car refused the command: the vehicle is not in Park." },
-    "refused_hazard_lights_on": { "message": "The car refused the command: the hazard lights are on." },
-    "refused_vehicle_fault": { "message": "The car refused the command: vehicle fault." },
-    "refused_low_state_of_charge": { "message": "The car refused the command: the battery state of charge is too low." },
-    "refused_vehicle_unlocked": { "message": "The car refused the command: the vehicle is unlocked." },
-    "refused_battery_abnormal": { "message": "The car refused the command: battery abnormal." },
-    "refused_engine_not_off": { "message": "The car refused the command: the engine is not off." },
-    "refused_remote_start_limit": { "message": "The car refused the command: the remote-start limit has been reached." },
-    "refused_low_oil_level": { "message": "The car refused the command: the oil level is low." },
-    "refused_high_temperature": { "message": "The car refused the command: the temperature is too high." },
-    "refused_low_battery": { "message": "The car refused the command: the battery is low." },
-    "refused_not_charging": { "message": "The car refused the command: the vehicle is not charging." },
-    "refused_fast_charging_stop": { "message": "The car refused the command: fast charging cannot be stopped remotely." },
-    "refused_child_presence": { "message": "The car refused the command: the child-presence condition is not met." },
-    "refused_unknown": { "message": "The car refused the command (code {code})." },
-    "device_offline": { "message": "The car is offline: the T-box has no cellular connection." },
-    "ble_unavailable": { "message": "The car could not be reached over Bluetooth: {error}" },
-    "no_reply": { "message": "The car did not confirm the command; it may or may not have been executed." },
+    "refused_not_supported": { "message": "The vehicle refused the command: not supported by this vehicle." },
+    "refused_door_open": { "message": "The vehicle refused the command: a door is open." },
+    "refused_door_unlocked": { "message": "The vehicle refused the command: a door is unlocked." },
+    "refused_vehicle_on": { "message": "The vehicle refused the command: the vehicle is on." },
+    "refused_lock_vehicle_on": { "message": "The vehicle refused the command: the vehicle cannot be locked or unlocked while it is on." },
+    "refused_vehicle_moving": { "message": "The vehicle refused the command: the vehicle is moving." },
+    "refused_hood_open": { "message": "The vehicle refused the command: the hood is open." },
+    "refused_trunk_ajar": { "message": "The vehicle refused the command: the liftgate is ajar." },
+    "refused_not_enrolled": { "message": "The vehicle refused the command: this user is not enrolled in the vehicle." },
+    "refused_maintenance_mode": { "message": "The vehicle refused the command: maintenance mode is active." },
+    "refused_control_system_error": { "message": "The vehicle refused the command: control system fault." },
+    "refused_firmware_updating": { "message": "The vehicle refused the command: the T-box firmware is updating." },
+    "refused_driver_seated": { "message": "The vehicle refused the command: the driver is in the seat." },
+    "refused_ac_temperature_not_set": { "message": "The vehicle refused the command: the A/C temperature could not be set." },
+    "refused_not_remote_mode": { "message": "The vehicle refused the command: the vehicle is not in remote mode." },
+    "refused_high_voltage_fault": { "message": "The vehicle refused the command: high-voltage system fault." },
+    "refused_low_12v_battery": { "message": "The vehicle refused the command: the 12V battery is low." },
+    "refused_key_inside": { "message": "The vehicle refused the command: the key is inside the vehicle." },
+    "refused_trunk_open": { "message": "The vehicle refused the command: the liftgate is open." },
+    "refused_vin_mismatch": { "message": "The vehicle refused the command: VIN mismatch." },
+    "refused_tbox_auth_failed": { "message": "The vehicle refused the command: T-box authentication failed." },
+    "refused_not_in_park": { "message": "The vehicle refused the command: the vehicle is not in Park." },
+    "refused_hazard_lights_on": { "message": "The vehicle refused the command: the hazard lights are on." },
+    "refused_vehicle_fault": { "message": "The vehicle refused the command: the vehicle reports a fault." },
+    "refused_low_state_of_charge": { "message": "The vehicle refused the command: the battery state of charge is too low." },
+    "refused_vehicle_unlocked": { "message": "The vehicle refused the command: the vehicle is unlocked." },
+    "refused_battery_abnormal": { "message": "The vehicle refused the command: the battery is in an abnormal state." },
+    "refused_engine_not_off": { "message": "The vehicle refused the command: the engine is not off." },
+    "refused_remote_start_limit": { "message": "The vehicle refused the command: the remote-start limit has been reached." },
+    "refused_low_oil_level": { "message": "The vehicle refused the command: the oil level is low." },
+    "refused_high_temperature": { "message": "The vehicle refused the command: the temperature is too high." },
+    "refused_low_battery": { "message": "The vehicle refused the command: the battery is low." },
+    "refused_not_charging": { "message": "The vehicle refused the command: the vehicle is not charging." },
+    "refused_fast_charging_stop": { "message": "The vehicle refused the command: fast charging cannot be stopped remotely." },
+    "refused_child_presence": { "message": "The vehicle refused the command: the child-presence condition is not met." },
+    "refused_unknown": { "message": "The vehicle refused the command (code {code})." },
+    "device_offline": { "message": "The vehicle is offline: the T-box has no cellular connection." },
+    "ble_unavailable": { "message": "The vehicle could not be reached over Bluetooth: {error}" },
+    "no_reply": { "message": "The vehicle did not confirm the command; it may or may not have been executed." },
     "command_failed": { "message": "The command could not be sent: {error}" }
   }
 }

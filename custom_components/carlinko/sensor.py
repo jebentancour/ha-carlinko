@@ -42,7 +42,7 @@ from .const import (
 )
 from .coordinator import CarLinkoCoordinator
 
-TYRE_LABELS = ("Front Left", "Front Right", "Rear Left", "Rear Right")
+TYRE_POSITIONS = ("front_left", "front_right", "rear_left", "rear_right")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -210,11 +210,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities: list[SensorEntity] = [
         CarLinkoSensor(coordinator, entry, desc) for desc in SENSORS if desc.enabled_if is None or desc.enabled_if(data)
     ]
-    for wheel_idx, label in enumerate(TYRE_LABELS):
-        entities.append(CarLinkoTyreSensor(coordinator, entry, wheel_idx, label, "tyre_psi", UnitOfPressure.PSI, SensorDeviceClass.PRESSURE))
+    for wheel_idx, position in enumerate(TYRE_POSITIONS):
+        entities.append(CarLinkoTyreSensor(coordinator, entry, wheel_idx, position, "tyre_psi", UnitOfPressure.PSI, SensorDeviceClass.PRESSURE))
         entities.append(
             CarLinkoTyreSensor(
-                coordinator, entry, wheel_idx, label, "tyre_temp_c", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE
+                coordinator, entry, wheel_idx, position, "tyre_temp_c", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE
             )
         )
     # Which transport the current state came from — only meaningful once BLE is in the mix.
@@ -301,7 +301,7 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
         coordinator: CarLinkoCoordinator,
         entry: ConfigEntry,
         wheel_idx: int,
-        label: str,
+        position: str,
         data_key: str,
         unit: str,
         device_class: SensorDeviceClass,
@@ -309,8 +309,8 @@ class CarLinkoTyreSensor(_CarLinkoEntityBase, SensorEntity):
         super().__init__(coordinator, entry)
         self._wheel_idx = wheel_idx
         self._data_key = data_key
-        kind = "Pressure" if data_key == "tyre_psi" else "Temperature"
-        self._attr_name = f"Tyre {label} {kind}"
+        kind = "pressure" if data_key == "tyre_psi" else "temperature"
+        self._attr_translation_key = f"tyre_{position}_{kind}"
         self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_{data_key}_{wheel_idx}"
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class

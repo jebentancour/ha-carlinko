@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Conectá tu cuenta CarLinko",
-        "description": "Si podés, usá una segunda cuenta CarLinko autorizada en tu auto — iniciar sesión acá puede cerrar la sesión de la app oficial en la cuenta principal.",
+        "description": "Si podés, usá una segunda cuenta CarLinko autorizada en tu vehículo — iniciar sesión acá puede cerrar la sesión de la app oficial en la cuenta principal.",
         "data": {
           "email": "Email",
           "password": "Contraseña",
@@ -26,7 +26,7 @@
     },
     "error": {
       "account_not_found": "No hay cuenta CarLinko con ese email en esta región — revisá el email o probá otra región (p. ej. emea, sea).",
-      "invalid_auth": "Login fallido — revisá el email/contraseña.",
+      "invalid_auth": "Inicio de sesión fallido — revisá el email/contraseña.",
       "cannot_connect": "No se pudo conectar a los servidores de CarLinko.",
       "no_vehicles": "No se encontró ningún vehículo en esta cuenta.",
       "unknown": "Error inesperado — revisá el log de Home Assistant para más detalles."
@@ -54,8 +54,8 @@
     "transport_mode": {
       "options": {
         "cloud": "Solo nube",
-        "ble_cloud": "BLE y nube",
-        "ble": "Solo BLE"
+        "ble_cloud": "Bluetooth y nube",
+        "ble": "Solo Bluetooth"
       }
     }
   },
@@ -67,7 +67,7 @@
           "transport_mode": "Transporte"
         },
         "data_description": {
-          "transport_mode": "Solo nube usa la nube de CarLinko. BLE y nube usa Bluetooth cuando el auto está en rango de un adaptador Bluetooth de Home Assistant y recurre a la nube cuando está fuera de rango. Solo BLE nunca usa la nube — para cuando la cuenta de nube no está habilitada. Los sensores no retroceden: un dato se acepta solo si su odómetro es igual o mayor al último visto."
+          "transport_mode": "Solo nube usa la nube de CarLinko. Bluetooth y nube usa Bluetooth cuando el vehículo está en rango de un adaptador Bluetooth de Home Assistant y recurre a la nube cuando está fuera de rango. Solo Bluetooth nunca usa la nube — para cuando la cuenta de nube no está habilitada. Los sensores no retroceden: un dato se acepta solo si su odómetro es igual o mayor al último visto."
         }
       }
     }
@@ -109,6 +109,14 @@
       "fuel_consumption": { "name": "Consumo de Combustible" },
       "engine_rpm": { "name": "RPM del Motor" },
       "firmware_version": { "name": "Versión de Firmware" },
+      "tyre_front_left_pressure": { "name": "Presión Neumático Delantero Izquierdo" },
+      "tyre_front_right_pressure": { "name": "Presión Neumático Delantero Derecho" },
+      "tyre_rear_left_pressure": { "name": "Presión Neumático Trasero Izquierdo" },
+      "tyre_rear_right_pressure": { "name": "Presión Neumático Trasero Derecho" },
+      "tyre_front_left_temperature": { "name": "Temperatura Neumático Delantero Izquierdo" },
+      "tyre_front_right_temperature": { "name": "Temperatura Neumático Delantero Derecho" },
+      "tyre_rear_left_temperature": { "name": "Temperatura Neumático Trasero Izquierdo" },
+      "tyre_rear_right_temperature": { "name": "Temperatura Neumático Trasero Derecho" },
       "data_source": {
         "name": "Fuente de Datos",
         "state": {
@@ -118,7 +126,7 @@
       }
     },
     "binary_sensor": {
-      "online": { "name": "En línea" },
+      "online": { "name": "En Línea" },
       "at_home": { "name": "En Casa" },
       "door_front_left": { "name": "Puerta Delantera Izquierda" },
       "door_front_right": { "name": "Puerta Delantera Derecha" },
@@ -135,13 +143,13 @@
     },
     "button": {
       "stop_charging": { "name": "Detener Carga" },
-      "find_car": { "name": "Buscar Auto" }
+      "find_car": { "name": "Buscar Vehículo" }
     },
     "lock": {
       "lock": { "name": "Cerradura" }
     },
     "cover": {
-      "liftgate": { "name": "Puerta Trasera" },
+      "liftgate": { "name": "Portón Trasero" },
       "sunroof": { "name": "Techo Solar" },
       "roof_sunshade": { "name": "Cortina de Techo" },
       "window_front_left": { "name": "Ventana Delantera Izquierda" },
@@ -152,64 +160,64 @@
     "switch": {
       "defrost_front": { "name": "Desempañador Delantero" },
       "defrost_rear": { "name": "Desempañador Trasero" },
-      "windshield_heat": { "name": "Calefacción del Parabrisas" },
-      "steering_wheel_heat": { "name": "Calefacción del Volante" },
+      "windshield_heat": { "name": "Calefacción Parabrisas" },
+      "steering_wheel_heat": { "name": "Calefacción Volante" },
       "air_purifier": { "name": "Purificador de Aire" }
     },
     "fan": {
-      "seat_heat_left": { "name": "Calefacción Asiento Izquierdo" },
-      "seat_heat_right": { "name": "Calefacción Asiento Derecho" },
-      "seat_vent_left": { "name": "Ventilación Asiento Izquierdo" },
-      "seat_vent_right": { "name": "Ventilación Asiento Derecho" },
+      "seat_heat_left": { "name": "Calefacción Asiento Delantero Izquierdo" },
+      "seat_heat_right": { "name": "Calefacción Asiento Delantero Derecho" },
+      "seat_vent_left": { "name": "Ventilación Asiento Delantero Izquierdo" },
+      "seat_vent_right": { "name": "Ventilación Asiento Delantero Derecho" },
       "seat_heat_rear_left": { "name": "Calefacción Asiento Trasero Izquierdo" },
       "seat_heat_rear_right": { "name": "Calefacción Asiento Trasero Derecho" },
       "seat_vent_rear_left": { "name": "Ventilación Asiento Trasero Izquierdo" },
       "seat_vent_rear_right": { "name": "Ventilación Asiento Trasero Derecho" }
     },
     "climate": {
-      "ac": { "name": "Climatización" }
+      "ac": { "name": "A/C" }
     }
   },
   "exceptions": {
-    "refused_not_supported": { "message": "El auto rechazó el comando: el vehículo no admite este comando." },
-    "refused_door_open": { "message": "El auto rechazó el comando: hay una puerta abierta." },
-    "refused_door_unlocked": { "message": "El auto rechazó el comando: hay una puerta sin trabar." },
-    "refused_vehicle_on": { "message": "El auto rechazó el comando: el vehículo está encendido." },
-    "refused_lock_vehicle_on": { "message": "El auto rechazó el comando: no se puede trabar ni destrabar con el vehículo encendido." },
-    "refused_vehicle_moving": { "message": "El auto rechazó el comando: el vehículo está en movimiento." },
-    "refused_hood_open": { "message": "El auto rechazó el comando: el capó está abierto." },
-    "refused_trunk_ajar": { "message": "El auto rechazó el comando: la cajuela está entreabierta." },
-    "refused_not_enrolled": { "message": "El auto rechazó el comando: este usuario no está registrado en el auto." },
-    "refused_maintenance_mode": { "message": "El auto rechazó el comando: el modo mantenimiento está activo." },
-    "refused_control_system_error": { "message": "El auto rechazó el comando: error del sistema de control." },
-    "refused_firmware_updating": { "message": "El auto rechazó el comando: el firmware del T-box se está actualizando." },
-    "refused_driver_seated": { "message": "El auto rechazó el comando: el conductor está sentado." },
-    "refused_ac_temperature_not_set": { "message": "El auto rechazó el comando: no se pudo fijar la temperatura del aire acondicionado." },
-    "refused_not_remote_mode": { "message": "El auto rechazó el comando: el vehículo no está en modo remoto." },
-    "refused_high_voltage_fault": { "message": "El auto rechazó el comando: falla del sistema de alto voltaje." },
-    "refused_low_12v_battery": { "message": "El auto rechazó el comando: la batería de 12 V está baja." },
-    "refused_key_inside": { "message": "El auto rechazó el comando: la llave está dentro del auto." },
-    "refused_trunk_open": { "message": "El auto rechazó el comando: la cajuela está abierta." },
-    "refused_vin_mismatch": { "message": "El auto rechazó el comando: el VIN no coincide." },
-    "refused_tbox_auth_failed": { "message": "El auto rechazó el comando: falló la autenticación del T-box." },
-    "refused_not_in_park": { "message": "El auto rechazó el comando: el vehículo no está en Park." },
-    "refused_hazard_lights_on": { "message": "El auto rechazó el comando: las balizas están encendidas." },
-    "refused_vehicle_fault": { "message": "El auto rechazó el comando: falla del vehículo." },
-    "refused_low_state_of_charge": { "message": "El auto rechazó el comando: el nivel de carga de la batería es demasiado bajo." },
-    "refused_vehicle_unlocked": { "message": "El auto rechazó el comando: el vehículo está destrabado." },
-    "refused_battery_abnormal": { "message": "El auto rechazó el comando: batería en estado anormal." },
-    "refused_engine_not_off": { "message": "El auto rechazó el comando: el motor no está apagado." },
-    "refused_remote_start_limit": { "message": "El auto rechazó el comando: se alcanzó el límite de arranques remotos." },
-    "refused_low_oil_level": { "message": "El auto rechazó el comando: el nivel de aceite está bajo." },
-    "refused_high_temperature": { "message": "El auto rechazó el comando: la temperatura es demasiado alta." },
-    "refused_low_battery": { "message": "El auto rechazó el comando: la batería está baja." },
-    "refused_not_charging": { "message": "El auto rechazó el comando: el vehículo no está cargando." },
-    "refused_fast_charging_stop": { "message": "El auto rechazó el comando: la carga rápida no se puede detener a distancia." },
-    "refused_child_presence": { "message": "El auto rechazó el comando: no se cumple la condición de presencia infantil." },
-    "refused_unknown": { "message": "El auto rechazó el comando (código {code})." },
-    "device_offline": { "message": "El auto está desconectado: el T-box no tiene conexión celular." },
-    "ble_unavailable": { "message": "No se pudo contactar al auto por Bluetooth: {error}" },
-    "no_reply": { "message": "El auto no confirmó el comando; puede que se haya ejecutado o no." },
+    "refused_not_supported": { "message": "El vehículo rechazó el comando: no es compatible con este vehículo." },
+    "refused_door_open": { "message": "El vehículo rechazó el comando: hay una puerta abierta." },
+    "refused_door_unlocked": { "message": "El vehículo rechazó el comando: hay una puerta sin trabar." },
+    "refused_vehicle_on": { "message": "El vehículo rechazó el comando: el vehículo está encendido." },
+    "refused_lock_vehicle_on": { "message": "El vehículo rechazó el comando: no se puede trabar ni destrabar con el vehículo encendido." },
+    "refused_vehicle_moving": { "message": "El vehículo rechazó el comando: el vehículo está en movimiento." },
+    "refused_hood_open": { "message": "El vehículo rechazó el comando: el capó está abierto." },
+    "refused_trunk_ajar": { "message": "El vehículo rechazó el comando: el portón trasero está entreabierto." },
+    "refused_not_enrolled": { "message": "El vehículo rechazó el comando: este usuario no está registrado en el vehículo." },
+    "refused_maintenance_mode": { "message": "El vehículo rechazó el comando: el modo mantenimiento está activo." },
+    "refused_control_system_error": { "message": "El vehículo rechazó el comando: falla del sistema de control." },
+    "refused_firmware_updating": { "message": "El vehículo rechazó el comando: el firmware del T-box se está actualizando." },
+    "refused_driver_seated": { "message": "El vehículo rechazó el comando: el conductor está sentado." },
+    "refused_ac_temperature_not_set": { "message": "El vehículo rechazó el comando: no se pudo fijar la temperatura del A/C." },
+    "refused_not_remote_mode": { "message": "El vehículo rechazó el comando: el vehículo no está en modo remoto." },
+    "refused_high_voltage_fault": { "message": "El vehículo rechazó el comando: falla del sistema de alto voltaje." },
+    "refused_low_12v_battery": { "message": "El vehículo rechazó el comando: la batería de 12V está baja." },
+    "refused_key_inside": { "message": "El vehículo rechazó el comando: la llave está dentro del vehículo." },
+    "refused_trunk_open": { "message": "El vehículo rechazó el comando: el portón trasero está abierto." },
+    "refused_vin_mismatch": { "message": "El vehículo rechazó el comando: el VIN no coincide." },
+    "refused_tbox_auth_failed": { "message": "El vehículo rechazó el comando: falló la autenticación del T-box." },
+    "refused_not_in_park": { "message": "El vehículo rechazó el comando: el vehículo no está en Park." },
+    "refused_hazard_lights_on": { "message": "El vehículo rechazó el comando: las balizas están encendidas." },
+    "refused_vehicle_fault": { "message": "El vehículo rechazó el comando: el vehículo reporta una falla." },
+    "refused_low_state_of_charge": { "message": "El vehículo rechazó el comando: el nivel de carga de la batería es demasiado bajo." },
+    "refused_vehicle_unlocked": { "message": "El vehículo rechazó el comando: el vehículo está destrabado." },
+    "refused_battery_abnormal": { "message": "El vehículo rechazó el comando: la batería está en estado anormal." },
+    "refused_engine_not_off": { "message": "El vehículo rechazó el comando: el motor no está apagado." },
+    "refused_remote_start_limit": { "message": "El vehículo rechazó el comando: se alcanzó el límite de arranques remotos." },
+    "refused_low_oil_level": { "message": "El vehículo rechazó el comando: el nivel de aceite está bajo." },
+    "refused_high_temperature": { "message": "El vehículo rechazó el comando: la temperatura es demasiado alta." },
+    "refused_low_battery": { "message": "El vehículo rechazó el comando: la batería está baja." },
+    "refused_not_charging": { "message": "El vehículo rechazó el comando: el vehículo no está cargando." },
+    "refused_fast_charging_stop": { "message": "El vehículo rechazó el comando: la carga rápida no se puede detener a distancia." },
+    "refused_child_presence": { "message": "El vehículo rechazó el comando: no se cumple la condición de presencia infantil." },
+    "refused_unknown": { "message": "El vehículo rechazó el comando (código {code})." },
+    "device_offline": { "message": "El vehículo está desconectado: el T-box no tiene conexión celular." },
+    "ble_unavailable": { "message": "No se pudo contactar al vehículo por Bluetooth: {error}" },
+    "no_reply": { "message": "El vehículo no confirmó el comando; puede que se haya ejecutado o no." },
     "command_failed": { "message": "No se pudo enviar el comando: {error}" }
   }
 }
