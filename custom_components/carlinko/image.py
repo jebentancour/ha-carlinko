@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_DEVICE_SN,
@@ -43,6 +44,7 @@ class CarLinkoImage(ImageEntity):
         self._attr_translation_key = key
         self._attr_unique_id = f"{entry.data[CONF_VEHICLE_ID]}_image_{key}"
         self._attr_image_url = entry.data[conf_key]
+        self._attr_image_last_updated = dt_util.utcnow()
 
     @property
     def device_info(self) -> DeviceInfo:
